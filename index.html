@@ -2,208 +2,193 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tiger Parceiros</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --fd:'Archivo',system-ui,sans-serif; --fb:'IBM Plex Sans',system-ui,sans-serif; --fm:'IBM Plex Mono',ui-monospace,monospace;
-    --navy:#1F3864; --navy-dark:#152845; --blue:#2F5597; --orange:#F26B1D; --orange-dark:#D9560F;
-    --green:#1E7B34; --green-bg:#E3F5E7; --yellow:#8A6D00; --yellow-bg:#FFF6D9;
-    --red:#B3261E; --red-bg:#FCE8E6; --dark:#5A1E17; --dark-bg:#F0DAD8;
-    --line:#E3E6EC; --ink:#181B22; --muted:#5B6472; --bg:#F4F5F8; --surface:#FFFFFF;
-    --row-even:#FAFBFC; --row-hover:#F0F3F9;
-    --wa-bg:#E4F8EC; --wa-fg:#0F8A3F; --tg-bg:#E5F2FF; --tg-fg:#1477CC; --bg-pill-bg:#F0EBFA; --bg-pill-fg:#5B3FA8;
-    --script-box-bg:#FAFBFC; --script-box-fg:#333;
-    --contact-log-bg:#F0F4FF; --contact-log-fg:#173A66;
-    --alert-bg:var(--yellow-bg); --alert-border:#F0DE9E; --alert-fg:#6b5600;
-    --alert-blue-bg:#E7F0FE; --alert-blue-border:#BBD6F7; --alert-blue-fg:#173A66;
-    --semvenda-bg:#EAECF2; --semvenda-fg:#4A5468; --toast-bg:#181B22; --toast-fg:#fff;
-    --novo:#0891B2; --novo-bg:#E1F4F7;
-  }
-  /* Paleta escura — estrutura em camadas (bg de página != superfície de cartão/tabela != borda),
-     baseada no app do Penpot (github.com/penpot/penpot): #18181A de fundo, #212426 de superfície,
-     acento clareado em vez de invertido puro. Cores da marca Tiger (navy/laranja) mantidas. */
-  :root[data-theme="dark"]{
-    --bg:#18181A; --surface:#212426; --line:#33383D; --ink:#F0F0F2; --muted:#9AA3AF;
-    --orange:#FF7D33; --orange-dark:#F26B1D; --blue:#5B8DEF; --navy:#3D6BB3;
-    --green:#4ADE80; --green-bg:rgba(30,123,52,.22);
-    --yellow:#FFCA3A; --yellow-bg:rgba(138,109,0,.22);
-    --red:#FF6B5B; --red-bg:rgba(179,38,30,.22);
-    --dark:#FFA98A; --dark-bg:rgba(90,30,23,.32);
-    --row-even:rgba(255,255,255,.025); --row-hover:rgba(255,255,255,.05);
-    --wa-bg:rgba(15,138,63,.22); --wa-fg:#4ADE80; --tg-bg:rgba(20,119,204,.22); --tg-fg:#7CC4FF;
-    --bg-pill-bg:rgba(91,63,168,.28); --bg-pill-fg:#C9B6FF;
-    --script-box-bg:rgba(255,255,255,.04); --script-box-fg:var(--ink);
-    --contact-log-bg:rgba(47,85,151,.22); --contact-log-fg:#9CC3FF;
-    --alert-bg:rgba(227,181,5,.14); --alert-border:rgba(240,222,158,.35); --alert-fg:#FFD666;
-    --alert-blue-bg:rgba(47,85,151,.18); --alert-blue-border:rgba(187,214,247,.3); --alert-blue-fg:#BFE0FF;
-    --semvenda-bg:rgba(255,255,255,.08); --semvenda-fg:#B7C0CE; --toast-bg:#F0F0F2; --toast-fg:#181B22;
-    --novo:#4DD4E8; --novo-bg:rgba(8,145,178,.22);
-  }
-  *{box-sizing:border-box;}
-  body{margin:0; font-family:var(--fb); background:var(--bg); color:var(--ink); font-size:13px; transition:background .15s ease, color .15s ease;}
-  .num{font-family:var(--fm); font-variant-numeric:tabular-nums;}
-  th.r, td.r{text-align:right;}
-  a{color:inherit;}
-  .theme-toggle{display:flex; align-items:center; gap:8px; width:100%; padding:8px 10px; border-radius:5px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); color:#C7D0E0; font-size:11.5px; font-weight:600; cursor:pointer; font-family:inherit;}
-  .theme-toggle:hover{background:rgba(255,255,255,.09);}
-  .theme-toggle .icon{font-size:13px;}
+:root{
+  --bg:#FFFFFF; --bg-sub:#FAFAF9; --bg-hover:#F4F4F3; --bg-active:#EFEFEE;
+  --line:#EBEBEA; --line-strong:#DCDCDA;
+  --text:#1B1B1A; --text-2:#5C5C58; --text-3:#8F8F8A;
+  --accent:#F2682A; --accent-soft:#FEF0E9; --accent-text:#C24A12;
+  --green:#1F7A3D; --green-bg:#E8F5EC; --amber:#8A5A00; --amber-bg:#FDF3DC;
+  --red:#B42318; --red-bg:#FDECEA; --gray:#55595F; --gray-bg:#EFF0F1; --blue:#1D5FC4; --blue-bg:#E9F1FD;
+  --bar-gross:#E4E4E1;
+  --shadow:0 1px 2px rgba(20,20,18,.04), 0 8px 24px rgba(20,20,18,.08);
+  --radius:10px;
+}
+:root[data-theme="dark"]{
+  --bg:#141413; --bg-sub:#1A1A19; --bg-hover:#222220; --bg-active:#2A2A28;
+  --line:#2A2A28; --line-strong:#383835;
+  --text:#EDEDEA; --text-2:#A8A8A2; --text-3:#75756F;
+  --accent-soft:#3A2116; --accent-text:#FF9B6B;
+  --green:#6FD08F; --green-bg:#16301F; --amber:#F2C25B; --amber-bg:#352A12;
+  --red:#FF8A80; --red-bg:#3A1A17; --gray:#B5B8BD; --gray-bg:#26282B; --blue:#8AB4FF; --blue-bg:#172641;
+  --bar-gross:#34342F;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13.5px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-feature-settings:"cv11","ss01"}
+button{font:inherit;color:inherit;cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+svg{flex:none}
+kbd{font:500 10.5px Inter;color:var(--text-3);border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--bg)}
+.app{display:grid;grid-template-columns:240px 1fr;height:100vh}
 
-  /* ---------- app shell ---------- */
-  .app{min-height:100vh;}
-  .sidebar{width:238px; background:var(--navy-dark); color:#fff; display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; overflow-y:auto; z-index:10;}
-  .sidebar-brand{padding:18px 20px 16px; border-bottom:1px solid rgba(255,255,255,.12);}
-  .sidebar-brand .word{font-family:var(--fd); font-weight:700; font-size:14px; letter-spacing:.09em; text-transform:uppercase;}
-  .sidebar-brand .stripe{width:26px; height:3px; background:var(--orange); margin-top:9px; border-radius:1px;}
-  .sidebar-brand small{display:block; color:#93A0BD; font-weight:400; font-size:11px; margin-top:9px; line-height:1.5;}
-  .brand-badge{display:inline-flex; align-items:center; gap:5px; margin-top:11px; padding:3px 9px; border-radius:999px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.05); color:#C7D0E0; font-size:10px; font-weight:600; letter-spacing:.03em;}
-  .nav-section{padding:10px 10px 4px;}
-  .nav-heading{font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:#7C88A5; padding:6px 10px 4px; font-weight:700;}
-  .nav-item{display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:5px; color:#C7D0E0; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:1px; border:1px solid transparent; user-select:none;}
-  .nav-item:hover{background:rgba(255,255,255,.06);}
-  .nav-item.active{background:rgba(255,255,255,.1); color:#fff; border-color:rgba(255,255,255,.14);}
-  .nav-item .dot{width:7px; height:7px; border-radius:2px; flex:0 0 7px;}
-  .nav-item .label{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .nav-item .count{font-size:10.5px; font-weight:700; color:#93A0BD; background:rgba(255,255,255,.08); padding:1px 6px; border-radius:4px; min-width:20px; text-align:center;}
-  .nav-item.active .count{color:#fff; background:rgba(255,255,255,.16);}
-  #headerStats{display:flex; flex-direction:column; gap:7px; padding:14px 20px; border-top:1px solid rgba(255,255,255,.12); margin-top:10px;}
-  .stat-chip{background:rgba(255,255,255,0.055); border:1px solid rgba(255,255,255,0.14); border-radius:6px; padding:7px 10px; text-align:left; width:100%;}
-  .stat-chip b{display:block; font-family:var(--fm); font-size:16.5px; font-weight:600; font-variant-numeric:tabular-nums;}
-  .stat-chip span{font-size:10px; color:#93A0BD; text-transform:uppercase; letter-spacing:.04em;}
-  .sidebar-sync{padding:2px 20px 18px; display:flex; flex-direction:column; gap:8px;}
-  #syncBadge{display:block; font-size:10.5px; padding:6px 9px; border-radius:5px; font-weight:700; text-align:left;}
-  #syncBadge .dot{display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:6px; vertical-align:middle;}
+.side{background:var(--bg-sub);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:10px 8px;overflow-y:auto}
+.ws{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;margin-bottom:10px}
+.ws .logo{width:24px;height:24px;border-radius:6px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px}
+.ws b{font-weight:600}
+.ws small{display:block;color:var(--text-3);font-size:11.5px;margin-top:-1px}
+.side-search{display:flex;align-items:center;gap:8px;margin:0 2px 12px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text-3);cursor:pointer}
+.side-search kbd{margin-left:auto}
+.sec{font-size:11.5px;font-weight:500;color:var(--text-3);padding:12px 10px 4px}
+.nav{display:flex;align-items:center;gap:9px;padding:5px 10px;border-radius:7px;color:var(--text-2);font-weight:500;border:0;background:none;width:100%;text-align:left}
+.nav:hover{background:var(--bg-hover);color:var(--text)}
+.nav.on{background:var(--bg-active);color:var(--text)}
+.nav .ct{margin-left:auto;font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.plogo{width:18px;height:18px;border-radius:5px;display:grid;place-items:center;color:#fff;font-size:9.5px;font-weight:700;flex:none}
+.side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:8px}
+.sync{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-3);padding:6px 10px}
+.sync i{width:6px;height:6px;border-radius:50%;background:var(--green)}
 
-  .main{margin-left:238px; min-width:0;}
-  .wrap{max-width:1360px; margin:0 auto; padding:22px 26px 60px;}
-  .table-scroll{overflow-x:auto; border-radius:8px;}
-  .alert{background:var(--alert-bg); border:1px solid var(--alert-border); color:var(--alert-fg); border-left:4px solid #E3B505; border-radius:6px; padding:12px 16px; margin:16px 0; font-size:12.5px; line-height:1.55;}
-  .alert.blue{background:var(--alert-blue-bg); border-color:var(--alert-blue-border); color:var(--alert-blue-fg); border-left-color:var(--blue);}
-  .alert b{color:inherit;}
-  h2.section-title{color:var(--ink); font-family:var(--fd); font-size:16.5px; font-weight:700; margin:24px 0 11px; display:flex; align-items:center; gap:8px; letter-spacing:-.005em;}
-  h2.section-title .bar{width:3px; height:14px; background:var(--orange); border-radius:1px; display:inline-block;}
-  .row-name{cursor:pointer;} .row-name:hover{text-decoration:underline; color:var(--navy);}
-  .detail-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; margin:10px 0 14px;}
-  .detail-grid label{margin:0 0 4px;}
-  .period-tabs{display:flex; gap:5px; margin:14px 0 10px; flex-wrap:wrap;}
-  .period-tabs button{padding:5px 11px; border-radius:5px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-size:11.5px; font-weight:600; cursor:pointer;}
-  .period-tabs button.active{background:var(--navy); color:#fff; border-color:var(--navy);}
-  .chart-summary{font-size:12px; color:var(--muted); margin-bottom:8px;}
-  .chart-summary b{color:var(--ink);}
-  .chart-bars{display:flex; align-items:flex-end; gap:3px; height:110px; border-bottom:1px solid var(--line); padding-bottom:2px;}
-  .chart-bars .bar-col{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; min-width:4px;}
-  .chart-bars .bar{width:100%; background:var(--blue); border-radius:2px 2px 0 0; opacity:.85;}
-  .chart-bars .bar.zero{background:var(--line);}
-  .chart-labels{display:flex; gap:3px; margin-top:4px;}
-  .chart-labels span{flex:1; text-align:center; font-size:9.5px; color:var(--muted); min-width:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .chart-empty{color:var(--muted); font-size:12.5px; padding:20px 0; text-align:center;}
-  .toolbar{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 13px; display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin-bottom:11px;}
-  .toolbar input[type=text]{flex:1; min-width:180px; padding:7px 10px; border:1px solid var(--line); border-radius:5px; font-size:12.5px; background:var(--surface); color:var(--ink);}
-  .toolbar select{padding:7px 8px; border:1px solid var(--line); border-radius:5px; font-size:12px; background:var(--surface); color:var(--ink);}
-  .toolbar button{padding:7px 12px; border-radius:5px; border:none; font-weight:700; font-size:12px; cursor:pointer;}
-  .btn-navy{background:var(--navy); color:#fff;} .btn-navy:hover{background:#16294c;}
-  .btn-orange{background:var(--orange); color:#fff;} .btn-orange:hover{background:var(--orange-dark);}
-  #addAffiliateBtn{border:none; border-radius:999px; padding:9px 18px; font-weight:700; font-size:12.5px; cursor:pointer;}
-  .btn-ghost{background:var(--surface); color:var(--navy); border:1px solid var(--navy) !important;}
-  .legend{display:flex; gap:13px; font-size:11px; color:var(--muted); margin:0 2px 10px; flex-wrap:wrap; align-items:center;}
-  .legend .dot{display:inline-block; width:7px; height:7px; border-radius:2px; margin-right:5px;}
-  .legend .sep{color:var(--line);}
-  table{width:100%; border-collapse:collapse; background:var(--surface); border-radius:8px; overflow:hidden; border:1px solid var(--line);}
-  thead th{background:var(--navy); color:#fff; text-align:left; padding:9px 8px; font-size:10.3px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
-  tbody td{padding:9px 8px; font-size:12.3px; border-bottom:1px solid var(--line); vertical-align:middle;}
-  tbody td:first-child{border-left:4px solid transparent;}
-  tbody tr:nth-child(even){background:var(--row-even);}
-  tbody tr:hover{background:var(--row-hover);}
-  .badge{display:inline-block; padding:2.5px 7px; border-radius:4px; font-family:var(--fm); font-size:11.5px; font-weight:700; font-variant-numeric:tabular-nums;}
-  .b-novo{background:var(--novo-bg); color:var(--novo);}
-  .b-ativo{background:var(--green-bg); color:var(--green);}
-  .b-atencao{background:var(--yellow-bg); color:var(--yellow);}
-  .b-critico{background:var(--red-bg); color:var(--red);}
-  .b-sumido{background:var(--dark-bg); color:var(--dark);}
-  .b-sem_venda_2026{background:var(--semvenda-bg); color:var(--semvenda-fg);}
-  .conf{font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; margin-left:4px; text-transform:uppercase;}
-  .conf-alta{background:var(--green-bg); color:var(--green);}
-  .conf-media{background:var(--yellow-bg); color:var(--yellow);}
-  .conf-baixa{background:var(--red-bg); color:var(--red);}
-  .contact-links a{display:inline-flex; align-items:center; gap:3px; text-decoration:none; font-size:11.3px; font-weight:600; padding:3px 7px; border-radius:4px; margin:2px 3px 2px 0;}
-  .wa{background:var(--wa-bg); color:var(--wa-fg);} .tg{background:var(--tg-bg); color:var(--tg-fg);}
-  .bg-pill{display:inline-block; font-size:11px; font-weight:600; padding:3px 7px; border-radius:4px; background:var(--bg-pill-bg); color:var(--bg-pill-fg); margin-top:2px;}
-  .no-contact{color:var(--muted); font-size:11px; font-style:italic;}
-  .row-name{font-weight:700; color:var(--ink);}
-  .row-sub{color:var(--muted); font-size:10.5px;}
-  .vol{font-family:var(--fm); font-size:13.5px; font-weight:600; font-variant-numeric:tabular-nums;}
-  .actions{display:flex; gap:5px; flex-wrap:wrap;}
-  .actions button{background:none; border:1px solid var(--line); border-radius:5px; padding:4px 8px; font-size:10.8px; cursor:pointer; color:var(--navy); font-weight:600;}
-  .actions button:hover{background:var(--navy); border-color:var(--navy); color:#fff;}
-  .actions button.danger{border-color:var(--red-bg); color:var(--red);}
-  .actions button.danger:hover{background:var(--red); border-color:var(--red); color:#fff;}
-  .script-row{display:none;} .script-row.open{display:table-row;}
-  .script-box{background:var(--script-box-bg); border:1px dashed var(--line); border-radius:6px; padding:11px 13px; font-size:12.3px; line-height:1.5; color:var(--script-box-fg); margin:4px 0;}
-  .script-box .script-btns{margin-top:7px; display:flex; gap:7px;}
-  .script-box .script-btns button{font-size:11px; padding:5px 9px; border-radius:5px; border:1px solid var(--blue); background:var(--surface); color:var(--blue); cursor:pointer; font-weight:600;}
-  .script-box .script-btns button:hover{background:var(--blue); color:#fff;}
-  .toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--toast-bg); color:var(--toast-fg); padding:9px 16px; border-radius:6px; font-size:12.3px; box-shadow:0 6px 20px rgba(0,0,0,0.22); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:100;}
-  .toast.show{opacity:1;}
-  .footer-note{text-align:center; color:var(--muted); font-size:11px; margin-top:24px;}
-  .pager{display:flex; justify-content:center; gap:8px; margin-top:14px;}
-  .pager button{padding:6px 12px; border-radius:5px; border:1px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer; font-size:12px;}
-  .pager button.active{background:var(--navy); color:#fff; border-color:var(--navy);}
-  .pager button:disabled{opacity:.4; cursor:default;}
-  .trend-up{color:var(--green); font-weight:700;}
-  .trend-down{color:var(--red); font-weight:700;}
-  .trend-flat{color:var(--muted);}
-  .trend-cell{font-size:11.3px; line-height:1.5;}
-  .modal-bg{display:none; position:fixed; inset:0; background:rgba(15,25,45,0.5); z-index:50; align-items:center; justify-content:center; padding:16px;}
-  .modal-bg.show{display:flex;}
-  .modal{background:var(--surface); border-radius:10px; padding:22px 24px; width:100%; max-width:440px; box-shadow:0 16px 44px rgba(0,0,0,0.22); max-height:90vh; overflow-y:auto;}
-  .modal h3{margin:0 0 4px; color:var(--ink); font-family:var(--fd); font-weight:700; font-size:15.5px;}
-  .modal p.sub{color:var(--muted); font-size:12px; margin:0 0 14px; line-height:1.5;}
-  .modal label{display:block; font-size:11.3px; font-weight:700; color:var(--ink); margin:9px 0 4px;}
-  .modal input, .modal select, .modal textarea{width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:5px; font-size:13px; font-family:inherit; background:var(--surface); color:var(--ink);}
-  .modal textarea{resize:vertical; min-height:60px;}
-  .modal .modal-actions{display:flex; gap:9px; margin-top:16px;}
-  .modal .modal-actions button{flex:1; padding:9px; border-radius:5px; border:none; font-weight:700; cursor:pointer;}
-  .contact-log{background:var(--contact-log-bg); border-left:3px solid var(--blue); border-radius:4px; padding:6px 9px; font-size:11px; color:var(--contact-log-fg); margin-top:5px; line-height:1.4;}
-  .file-input-btn{position:relative; overflow:hidden; display:inline-block;}
-  .file-input-btn input[type=file]{position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;}
-  .banner-import{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:12px 15px; margin-bottom:11px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
-  .banner-import .info{flex:1; min-width:220px; font-size:11.8px; color:var(--muted);}
-  .banner-import .info b{color:var(--ink);}
+.main{display:flex;flex-direction:column;min-width:0;height:100vh}
+.top{display:flex;align-items:center;gap:10px;padding:0 24px;height:52px;border-bottom:1px solid var(--line);flex:none}
+.crumb{display:flex;align-items:center;gap:6px;color:var(--text-3);font-weight:500}
+.crumb b{color:var(--text);font-weight:600}
+.crumb a{color:inherit;text-decoration:none;cursor:pointer}
+.crumb a:hover{color:var(--text)}
+.sp{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:7px;border:1px solid var(--line-strong);background:var(--bg);font-weight:500;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--bg-hover)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+.btn.pri:hover{filter:brightness(.96)}
+.scroll{overflow:auto;flex:1}
+.pad{padding:20px 24px 0}
+.h1{font-size:20px;font-weight:650;letter-spacing:-.01em;margin:0 0 2px;display:flex;align-items:center;gap:10px}
+.sub{color:var(--text-3);margin:0 0 16px}
 
-  /* ---------- aba "Top parados" (cards) ---------- */
-  .cards-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(252px,1fr)); gap:14px; margin-top:4px;}
-  .top-card{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px;}
-  .top-card-head{display:flex; align-items:flex-start; gap:10px;}
-  .top-card .avatar{width:38px; height:38px; border-radius:50%; flex:0 0 38px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:13px; letter-spacing:.02em;}
-  .top-card-name{flex:1; min-width:0;}
-  .top-card-name .row-name{display:block; font-size:12.8px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .top-card-name .row-sub{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .top-card-contact{min-height:20px;}
-  .top-card-stats{display:grid; grid-template-columns:1fr 1fr; gap:8px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:9px 0;}
-  .top-card-stats div{display:flex; flex-direction:column; gap:2px;}
-  .top-stat-label{font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);}
-  .top-card-stats b{font-family:var(--fm); font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums;}
-  .top-card .actions{margin-top:-2px;}
-  .top-card .script-box{margin:0;}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.kpis.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kpi{border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px 10px;background:var(--bg)}
+.kpi .l{font-size:12px;color:var(--text-3);font-weight:500}
+.kpi .v{font-size:22px;font-weight:650;letter-spacing:-.02em;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:12px;color:var(--text-3);display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px}
+.kpi .d2{font-size:12px;color:var(--text-2);margin-top:2px}
+.up{color:var(--green)} .down{color:var(--red)}
 
-  /* ---------- aba "Vendas por dia" ---------- */
-  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:14px; margin-bottom:16px;}
-  .mini-kpi{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px 16px; position:relative;}
-  .mini-kpi::before{content:""; position:absolute; left:0; top:14px; bottom:14px; width:3px; border-radius:3px; background:var(--orange);}
-  .mini-kpi .lab{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700;}
-  .mini-kpi .val{font-family:var(--fm); font-size:26px; font-weight:600; color:var(--ink); margin:5px 0 2px; font-variant-numeric:tabular-nums;}
-  .mini-kpi .note{font-size:11px; color:var(--muted);}
-  @media (max-width:900px){
-    .sidebar{position:static; height:auto; width:100%;}
-    .main{margin-left:0;}
-  }
+.views{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 24px;position:sticky;top:0;background:var(--bg);z-index:3}
+.view{border:0;background:none;padding:9px 10px 10px;color:var(--text-2);font-weight:500;display:flex;gap:6px;align-items:center}
+.view:hover{color:var(--text)}
+.view.on{color:var(--text);box-shadow:inset 0 -2px 0 var(--text)}
+.view .ct{font-size:11.5px;color:var(--text-3);background:var(--bg-hover);border-radius:5px;padding:0 5px}
+
+.card{border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin:0 24px 16px;background:var(--bg)}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.card-h b{font-weight:600}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-3)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:7px;overflow:hidden}
+.seg button{border:0;background:var(--bg);padding:4px 10px;font-size:12px;font-weight:500;color:var(--text-2)}
+.seg button.on{background:var(--bg-active);color:var(--text)}
+
+table{width:100%;border-collapse:separate;border-spacing:0}
+thead th{position:sticky;top:41px;background:var(--bg);z-index:2;text-align:left;font-weight:500;font-size:12px;color:var(--text-3);padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th.r,td.r{text-align:right}
+td{padding:0 12px;height:52px;border-bottom:1px solid var(--line);white-space:nowrap}
+td:first-child,th:first-child{padding-left:24px}
+td:last-child,th:last-child{padding-right:24px}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--bg-hover)}
+.who{display:flex;align-items:center;gap:10px}
+.who .plogo{width:26px;height:26px;border-radius:7px;font-size:11px}
+.who b{font-weight:550;display:block}
+.who small{color:var(--text-3);font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:500}
+.pill i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.ok{background:var(--green-bg);color:var(--green)}
+.warn{background:var(--amber-bg);color:var(--amber)}
+.bad{background:var(--red-bg);color:var(--red)}
+.neu{background:var(--gray-bg);color:var(--gray)}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:12px;color:var(--text-2);background:var(--bg)}
+.muted{color:var(--text-3)}
+.money b{font-weight:550;display:block}
+.money small{font-size:11.5px;display:block}
+.share{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.share .bar{width:70px;height:6px;border-radius:3px;background:var(--bg-active);overflow:hidden}
+.share .bar i{display:block;height:100%;background:var(--accent)}
+tfoot td{font-weight:600;border-bottom:0;background:var(--bg-sub)}
+
+.empty{padding:40px 24px;text-align:center;color:var(--text-3)}
+.empty b{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
+
+.tl{position:relative;padding-left:22px;margin:4px 0}
+.tl:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:1px;background:var(--line-strong)}
+.ev{position:relative;margin-bottom:14px}
+.ev:before{content:"";position:absolute;left:-19px;top:4px;width:9px;height:9px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)}
+.ev .h{display:flex;gap:6px;align-items:center;font-size:12.5px;flex-wrap:wrap}
+.ev .h b{font-weight:600}
+.ev .h span{color:var(--text-3)}
+.ev p{margin:5px 0 0;color:var(--text-2);background:var(--bg-sub);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+
+.formula{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2)}
+.formula .t{border:1px solid var(--line);border-radius:6px;padding:2px 8px;background:var(--bg-sub)}
+.formula .t b{color:var(--text);font-weight:600}
+
+/* modal de import */
+.scrim{position:fixed;inset:0;background:rgba(20,20,18,.24);opacity:0;pointer-events:none;transition:opacity .15s;z-index:20}
+.scrim.on{opacity:1;pointer-events:auto}
+.modal{position:fixed;left:50%;top:12vh;transform:translateX(-50%) translateY(-6px);width:520px;max-width:calc(100vw - 32px);background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.15s;z-index:21}
+.modal.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
+.modal .mh{padding:16px 18px 6px;display:flex;align-items:center;gap:10px}
+.modal .mh b{font-size:16px;font-weight:650}
+.modal .mb{padding:6px 18px 18px}
+.drop{border:1.5px dashed var(--line-strong);border-radius:12px;padding:26px;text-align:center;color:var(--text-3);margin:10px 0 12px}
+.drop b{display:block;color:var(--text);font-weight:600;margin:6px 0 2px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer}
+.opt:hover{background:var(--bg-hover)}
+.opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.opt small{display:block;color:var(--text-3)}
+.preview{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:10px}
+.preview table td{height:38px}
+.preview table td:first-child{padding-left:12px}
+.preview table td:last-child{padding-right:12px}
+.mf{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+
+.cmdk{position:fixed;left:50%;top:14vh;transform:translateX(-50%);width:520px;max-width:calc(100vw - 32px);background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.14s;z-index:30}
+.cmdk.on{opacity:1;pointer-events:auto}
+.cmdk input{width:100%;border:0;outline:0;background:none;color:var(--text);font:inherit;font-size:15px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.cmdk .grp{font-size:11.5px;color:var(--text-3);padding:10px 16px 4px;font-weight:500}
+.cmdk .it{display:flex;gap:10px;align-items:center;padding:8px 10px;margin:0 6px;border-radius:8px;cursor:pointer}
+.cmdk .it:hover,.cmdk .it.hl{background:var(--bg-hover)}
+.cmdk .it span:last-child{margin-left:auto;color:var(--text-3);font-size:12px}
+.cmdk .end{height:8px}
+.tip{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:500;box-shadow:var(--shadow);opacity:0;transition:.2s;pointer-events:none;z-index:40}
+.tip.on{opacity:1}
+.banner{margin:0 24px 14px;padding:10px 14px;border-radius:10px;background:var(--amber-bg);color:var(--amber);font-size:12.5px;display:flex;gap:8px;align-items:center}
+.banner b{color:inherit}
+@media (max-width:900px){.app{grid-template-columns:1fr}.side{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.kpis.k3{grid-template-columns:1fr}.hide-sm{display:none}}
+
+.alert-err{margin:4px 0 12px;padding:10px 12px;border-radius:10px;background:var(--red-bg);color:var(--red);font-size:12.5px}
+.alert-warn{margin:10px 0;padding:10px 12px;border-radius:10px;background:var(--amber-bg);color:var(--amber);font-size:12.5px}
+.drop{display:block;cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.opt{cursor:default;display:block}
+.opt:hover{background:transparent}
+.muted-opt{opacity:.6}
+.det{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.preview thead th{position:static;top:auto;padding:8px 12px}
+.icon-x{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:7px;background:none;color:var(--text-3);cursor:pointer}
+.icon-x:hover{background:var(--bg-hover);color:var(--text)}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:500;box-shadow:var(--shadow);opacity:0;transition:.2s;pointer-events:none;z-index:40}
+.toast.show{opacity:1}
+.sync{cursor:default}
 </style>
 <script>
-  // aplica o tema antes da primeira pintura da página, pra não piscar claro→escuro
   (function(){
     try {
       const saved = localStorage.getItem('tiger_theme_v1');
@@ -214,93 +199,32 @@
 </script>
 </head>
 <body>
-
 <div class="app">
-<aside class="sidebar">
-  <div class="sidebar-brand">
-    <div class="word">Tiger Offers</div>
-    <div class="stripe"></div>
-    <span class="brand-badge">🤝 parceiros</span>
-    <small>Números dos parceiros — Sales Bound, Helpgrid, Email, SMS, iSellForU e NuYu</small>
-  </div>
-  <div class="nav-section">
-    <div class="nav-heading">Parceiros</div>
-    <div class="nav-item nav-item-canal" data-canal="welcome_salesbound">
-      <span class="dot" style="background:#7C3AED"></span>
-      <span class="label">👋 Sales Bound</span>
+  <aside class="side">
+    <div class="ws"><div class="logo">T</div><div><b>Tiger Offers</b><small>Parceiros</small></div></div>
+    <div class="side-search" id="sideSearch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar<kbd>Ctrl K</kbd></div>
+    <button class="nav" id="nav-overview"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Visão geral</button>
+    <button class="nav" id="nav-imports"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importações<span class="ct" id="ct-imp"></span></button>
+    <div class="sec">Parceiros</div>
+    <div id="navPartners"></div>
+    <div class="side-foot">
+      <button class="nav" id="themeToggle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg><span id="themeLbl">Modo escuro</span></button>
+      <div class="sync" id="syncBadge"></div>
     </div>
-    <div class="nav-item nav-item-canal" data-canal="helpgrid">
-      <span class="dot" style="background:#7C3AED"></span>
-      <span class="label">🛟 Helpgrid</span>
+  </aside>
+  <main class="main">
+    <div class="top">
+      <div class="crumb" id="crumb"></div>
+      <div class="sp"></div>
+      <button class="btn pri" id="topImport"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importar arquivo</button>
     </div>
-    <div class="nav-item nav-item-canal" data-canal="gestor5">
-      <span class="dot" style="background:#7C3AED"></span>
-      <span class="label">📧 Email (Gestor 5)</span>
-    </div>
-    <div class="nav-item nav-item-canal" data-canal="gestor3">
-      <span class="dot" style="background:#7C3AED"></span>
-      <span class="label">💬 SMS (Gestor 3)</span>
-    </div>
-    <div class="nav-item nav-item-canal" data-canal="welcome_isellforu">
-      <span class="dot" style="background:#7C3AED"></span>
-      <span class="label">👋 iSellForU</span>
-    </div>
-    <div class="nav-item nav-item-canal" data-canal="nuyu">
-      <span class="dot" style="background:#7C3AED"></span>
-      <span class="label">🤝 NuYu</span>
-    </div>
-  </div>
-  <div class="sidebar-sync">
-    <button class="theme-toggle" id="themeToggle" type="button">
-      <span class="icon" id="themeToggleIcon">🌙</span>
-      <span id="themeToggleLabel">Modo escuro</span>
-    </button>
-    <span id="syncBadge"></span>
-  </div>
-</aside>
-<main class="main">
-<div class="wrap">
-
-<div id="viewCanal">
-  <h2 class="section-title"><span class="bar"></span><span id="canalTitulo"></span></h2>
-  <div class="alert blue" id="canalInfoBanner">Alimentada pelo relatório diário da BuyGoods que você importa no painel de afiliados (affiliates-tiger) — não precisa importar de novo aqui. Esta visão soma as vendas atribuídas a essa conta interna, dia a dia — conta só o <b>pedido frontal</b> (upsell, downsell e frete não entram na contagem, só somam no bruto/líquido). <span id="canalInfo"></span></div>
-  <div id="canalNota" class="alert" style="display:none;"></div>
-  <div id="canalSalesboundImport" style="display:none; margin:0 0 16px;">
-    <span class="file-input-btn btn-orange" style="padding:9px 16px; border-radius:999px; font-weight:700; font-size:12.5px; color:#fff;">
-      📥 Importar planilha Salesbound
-      <input type="file" id="salesboundImportFile" accept=".xlsx">
-    </span>
-    <div class="row-sub" style="margin-top:6px;">Sobe o arquivo "Salesbound Financial Performance" (aba 📊 Dashboard) — pode subir toda segunda, atualiza os meses automaticamente.</div>
-  </div>
-  <div id="canalMasterImport" style="display:none; margin:0 0 16px;">
-    <span class="file-input-btn btn-orange" style="padding:9px 16px; border-radius:999px; font-weight:700; font-size:12.5px; color:#fff;">
-      📥 Importar Master Affiliates
-      <input type="file" id="masterMensalImportFile" accept=".xls,.xlsx">
-    </span>
-    <div class="row-sub" style="margin-top:6px;">Exporta o Master Affiliates do mês (dia 1 até hoje) e sobe aqui — pode subir toda semana, o mês atual é substituído pelo total mais novo.</div>
-  </div>
-  <div id="canalMensalChart" style="display:none; margin:0 0 18px;"></div>
-  <div id="canalLifetime" style="font-size:12px; margin:0 0 14px;"></div>
-  <div class="kpi-row" id="canalKpis"></div>
-  <div class="period-tabs" id="canalTabs">
-    <button class="active" data-periodo="dia">Por dia (últimos 14)</button>
-    <button data-periodo="semana">Por semana</button>
-    <button data-periodo="mes">Por mês</button>
-  </div>
-  <div class="table-scroll">
-  <table id="canalTableEl">
-    <thead><tr id="canalHead"></tr></thead>
-    <tbody id="canalBody"></tbody>
-  </table>
-  </div>
+    <div class="scroll" id="page"></div>
+  </main>
 </div>
-
-</div>
-</main>
-</div>
-
-<div class="toast" id="toast">Copiado!</div>
-
+<div class="scrim" id="scrim"></div>
+<div class="modal" id="importModal"></div>
+<div class="cmdk" id="cmdk"><input id="cmdq" placeholder="Buscar parceiro ou ação…"><div id="cmdres"></div><div class="end"></div></div>
+<div class="toast" id="toast"></div>
 <script>
 const CANAL_DEFS = [
   {key:'helpgrid', label:'Helpgrid', match:n => n.includes('helpgrid'),
@@ -399,20 +323,6 @@ function serverCanalMensalToLocal(obj){
   });
   return out;
 }
-function renderSyncBadge(){
-  const el = document.getElementById('syncBadge');
-  if(!el) return;
-  const map = {
-    desativado: ['Sem sincronização (config. Apps Script no código)', '#EAECF2', '#4A5468'],
-    pendente: ['Sincronizando...', '#FFF6D9', '#8A6D00'],
-    ok: ['Sincronizado com Google Sheets', '#E3F5E7', '#1E7B34'],
-    erro: ['Sem conexão — usando dados salvos neste navegador', '#FCE8E6', '#B3261E']
-  };
-  const [txt,bg,fg] = map[syncStatus] || map.desativado;
-  el.innerHTML = `<span class="dot" style="background:${fg}"></span>${escapeHtml(txt)}`;
-  el.style.background = 'rgba(255,255,255,.06)'; el.style.color = '#C7D0E0';
-  el.querySelector('.dot').style.background = fg;
-}
 function fmtMoney(v){ return v.toLocaleString('en-US', {style:'currency', currency:'USD', maximumFractionDigits:0}); }
 function fmtDate_(s){ if(!s) return ''; const m = String(s).match(/^\d{4}-\d{2}-\d{2}/); return m ? m[0] : String(s); }
 function escapeHtml(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -420,19 +330,6 @@ function showToast(msg){
   const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
   setTimeout(()=> t.classList.remove('show'), 1800);
 }
-function applyThemeUI_(theme){
-  document.getElementById('themeToggleIcon').textContent = theme === 'dark' ? '☀️' : '🌙';
-  document.getElementById('themeToggleLabel').textContent = theme === 'dark' ? 'Modo claro' : 'Modo escuro';
-}
-applyThemeUI_(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
-document.getElementById('themeToggle').addEventListener('click', () => {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const next = isDark ? 'light' : 'dark';
-  if(next === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-  else document.documentElement.removeAttribute('data-theme');
-  try { localStorage.setItem('tiger_theme_v1', next); } catch(e){}
-  applyThemeUI_(next);
-});
 function netOf_(v){
   if(!v) return null;
   return (v.gross||0) - (v.refund||0) - (v.chargeback||0) - (v.shipping||0) - (v.taxes||0);
@@ -452,83 +349,6 @@ function netCanal_(key, v){
   if(key === 'welcome_salesbound') return 0.55 * (0.9*(v.gross||0) - (v.refund||0));
   return netOf_(v);
 }
-// Mesmo arquivo "Master Affiliates" acima, mas pro histórico geral (sem data) das contas internas
-// (Helpgrid, Welcome · Sales Bound/iSellForU, Gestor 5/3) — ao contrário do processMasterAffiliatesImport,
-// aqui é justamente essas contas que interessam (isExcludedName exclui elas do ranking normal de
-// afiliados). Faz merge por canal (não substitui a aba inteira), então rodar de novo com um arquivo
-// de outro período é seguro — só atualiza os canais que aparecerem nesse arquivo. Sem botão na tela
-// de propósito (é uma atualização pontual, não um import diário): rodar via console/tarefa quando
-// precisar.
-function processCanalLifetimeImport(wb, filename){
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
-
-  let hpos = -1;
-  for(let i=0; i<rows.length; i++){
-    if(rows[i] && rows[i][0]==='Account' && rows[i][1]==='Affiliate'){ hpos = i; break; }
-  }
-  if(hpos === -1){
-    alert('Não encontrei o cabeçalho esperado (Account, Affiliate) — confira se é o arquivo Master Affiliates certo.');
-    return;
-  }
-  const header = rows[hpos];
-  const hidx = {};
-  header.forEach((h,i) => hidx[h] = i);
-  const need = ['Account','Affiliate','Orders (FE+BE)','Gross Sales','Net Sales','Total CBs & Refunds','Taxes'];
-  if(!need.every(h => h in hidx)){
-    alert('Faltam colunas esperadas nesse arquivo — confira se é o Master Affiliates certo.');
-    return;
-  }
-  const tituloBruto = rows[0] && rows[0][0] ? String(rows[0][0]) : '';
-  const periodo = tituloBruto.replace(/^Master Affiliates\s*/i,'').trim();
-
-  const byCanal = {};
-  for(let i=hpos+1; i<rows.length; i++){
-    const row = rows[i];
-    if(!row) continue;
-    const nome = row[hidx['Affiliate']];
-    const account = row[hidx['Account']];
-    if(!nome || account === 'Total') continue;
-    const canalKey = canalDoNome_(normName(nome));
-    if(!canalKey) continue;
-    if(!byCanal[canalKey]) byCanal[canalKey] = {orders:0, gross:0, net:0, refunds:0, taxes:0};
-    const rec = byCanal[canalKey];
-    rec.orders += Number(row[hidx['Orders (FE+BE)']]) || 0;
-    rec.gross += Number(row[hidx['Gross Sales']]) || 0;
-    rec.net += Number(row[hidx['Net Sales']]) || 0;
-    rec.refunds += Number(row[hidx['Total CBs & Refunds']]) || 0;
-    rec.taxes += Number(row[hidx['Taxes']]) || 0;
-  }
-
-  const keys = Object.keys(byCanal);
-  if(!keys.length){ alert('Não encontrei nenhuma linha de Helpgrid/Welcome/Gestor nesse arquivo.'); return; }
-  const labelDe = k => (CANAL_DEFS.find(c => c.key===k) || {label:k}).label;
-  if(!confirm(`Encontrei dados de ${keys.map(labelDe).join(', ')} nesse arquivo (período: ${periodo}). Isso atualiza o histórico geral só desses canais (os outros ficam como estão). Confirmar?`)) return;
-
-  keys.forEach(key => {
-    const rec = byCanal[key];
-    canalLifetime[key] = {
-      orders: rec.orders,
-      gross: Math.round(rec.gross*100)/100,
-      net: Math.round(rec.net*100)/100,
-      refunds: Math.round(rec.refunds*100)/100,
-      taxes: Math.round(rec.taxes*100)/100,
-      periodo
-    };
-  });
-  saveLS(LS_CANAL_LIFETIME, canalLifetime);
-  if(canalAtivo) renderCanal();
-  showToast(`Histórico geral atualizado: ${keys.map(labelDe).join(', ')}` + (APPS_SCRIPT_URL ? ' — sincronizando...' : ' (salvo neste navegador)'));
-
-  if(APPS_SCRIPT_URL){
-    const batch = keys.map(key => Object.assign({canal: key}, canalLifetime[key]));
-    apiPost('importCanalLifetimeBatch', batch).then(res => {
-      if(res && res.ok){ syncStatus='ok'; showToast(`Sincronizado: ${res.processed} canal(is) no Google Sheets ✓`); }
-      else { syncStatus='erro'; showToast('Salvo localmente, mas não sincronizou com o Sheets ainda'); }
-      renderSyncBadge();
-    });
-  }
-}
 const MESES_EN_ = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
 function parseMesInicioTitulo_(tituloBruto){
   const m = tituloBruto.match(/([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})/);
@@ -536,84 +356,6 @@ function parseMesInicioTitulo_(tituloBruto){
   const mesNum = MESES_EN_[m[1].toLowerCase()];
   if(!mesNum) return null;
   return `${m[3]}-${String(mesNum).padStart(2,'0')}`;
-}
-// Mesmo arquivo "Master Affiliates" acima, mas quando ela exporta um mês de cada vez (em vez do
-// período inteiro de uma tacada só) — dá granularidade real de mês pra completar a coluna "Por mês"
-// das contas internas, mesmo sem import diário do BuyGoods pra elas ainda. Merge por canal+mês, então
-// reimportar um mês (pra corrigir ou complementar) é seguro.
-async function processCanalMensalImport(wb, filename){
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
-
-  let hpos = -1;
-  for(let i=0; i<rows.length; i++){
-    if(rows[i] && rows[i][0]==='Account' && rows[i][1]==='Affiliate'){ hpos = i; break; }
-  }
-  if(hpos === -1){
-    alert('Não encontrei o cabeçalho esperado (Account, Affiliate) — confira se é o arquivo Master Affiliates certo.');
-    return;
-  }
-  const header = rows[hpos];
-  const hidx = {};
-  header.forEach((h,i) => hidx[h] = i);
-  const need = ['Account','Affiliate','Orders (FE+BE)','Gross Sales','Net Sales','Total CBs & Refunds','Taxes'];
-  if(!need.every(h => h in hidx)){
-    alert('Faltam colunas esperadas nesse arquivo — confira se é o Master Affiliates certo.');
-    return;
-  }
-  const tituloBruto = rows[0] && rows[0][0] ? String(rows[0][0]) : '';
-  const mesKey = parseMesInicioTitulo_(tituloBruto);
-  if(!mesKey){
-    alert('Não consegui identificar o mês pelo título do arquivo ("'+tituloBruto+'") — confira se é um export de um mês só.');
-    return;
-  }
-
-  const byCanal = {};
-  for(let i=hpos+1; i<rows.length; i++){
-    const row = rows[i];
-    if(!row) continue;
-    const nome = row[hidx['Affiliate']];
-    const account = row[hidx['Account']];
-    if(!nome || account === 'Total') continue;
-    const canalKey = canalDoNome_(normName(nome));
-    if(!canalKey) continue;
-    if(!byCanal[canalKey]) byCanal[canalKey] = {orders:0, gross:0, net:0, refunds:0, taxes:0};
-    const rec = byCanal[canalKey];
-    rec.orders += Number(row[hidx['Orders (FE+BE)']]) || 0;
-    rec.gross += Number(row[hidx['Gross Sales']]) || 0;
-    rec.net += Number(row[hidx['Net Sales']]) || 0;
-    rec.refunds += Number(row[hidx['Total CBs & Refunds']]) || 0;
-    rec.taxes += Number(row[hidx['Taxes']]) || 0;
-  }
-
-  const keys = Object.keys(byCanal);
-  if(!keys.length){ alert('Não encontrei nenhuma linha de Helpgrid/Welcome/Gestor nesse arquivo.'); return; }
-  const labelDe = k => (CANAL_DEFS.find(c => c.key===k) || {label:k}).label;
-  if(!confirm(`Encontrei dados de ${keys.map(labelDe).join(', ')} pra ${mesLblCurto_(mesKey)} nesse arquivo. Isso atualiza esse mês só desses canais (outros meses/canais ficam como estão). Confirmar?`)) return;
-
-  keys.forEach(key => {
-    const rec = byCanal[key];
-    if(!canalMensal[key]) canalMensal[key] = {};
-    canalMensal[key][mesKey] = {
-      orders: rec.orders,
-      gross: Math.round(rec.gross*100)/100,
-      net: Math.round(rec.net*100)/100,
-      refunds: Math.round(rec.refunds*100)/100,
-      taxes: Math.round(rec.taxes*100)/100
-    };
-  });
-  saveLS(LS_CANAL_MENSAL, canalMensal);
-  if(canalAtivo) renderCanal();
-  showToast(`${mesLblCurto_(mesKey)} atualizado: ${keys.map(labelDe).join(', ')}` + (APPS_SCRIPT_URL ? ' — sincronizando...' : ' (salvo neste navegador)'));
-
-  if(APPS_SCRIPT_URL){
-    // mes vai com "_" (não "-") pro Sheets não confundir "2026-07" com uma data e autoconverter a célula
-    const batch = keys.map(key => Object.assign({canal: key, mes: mesKey.replace('-','_')}, canalMensal[key][mesKey]));
-    const res = await apiPost('importCanalMensalBatch', batch);
-    if(res && res.ok){ syncStatus='ok'; showToast(`Sincronizado: ${res.processed} registro(s) no Google Sheets ✓`); }
-    else { syncStatus='erro'; showToast('Salvo localmente, mas não sincronizou com o Sheets ainda'); }
-    renderSyncBadge();
-  }
 }
 const MES_ABBR_ = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
 // Import de autoatendimento pro dashboard "Salesbound Financial Performance" (aba 📊 Dashboard) — ela
@@ -632,165 +374,6 @@ function acharColuna_(rows, colA, colB){
     if(idx !== -1 && row[idx+1] === colB) return {linha: i, coluna: idx};
   }
   return null;
-}
-async function processSalesboundImport(wb, filename){
-  const dashName = wb.SheetNames.find(n => /dashboard/i.test(n)) || wb.SheetNames[0];
-  const detName = wb.SheetNames.find(n => /detalhamento/i.test(n));
-  const dash = wb.Sheets[dashName];
-  if(!dash){ alert('Não encontrei a aba "Dashboard" nesse arquivo — confira se é o Salesbound Financial Performance certo.'); return; }
-  const rows = XLSX.utils.sheet_to_json(dash, {header:1, raw:true, defval:null});
-
-  const tituloBruto = rows.slice(0,3).map(r => (r||[]).map(c=>c==null?'':String(c)).join(' ')).join(' ');
-  const anoMatch = tituloBruto.match(/(\d{4})/);
-  const ano = anoMatch ? anoMatch[1] : String(new Date().getFullYear());
-
-  const achado = acharColuna_(rows, 'Mês', 'Gross Sales');
-  if(!achado){ alert('Não encontrei o cabeçalho esperado (Mês, Gross Sales...) — confira se é o Salesbound Financial Performance certo.'); return; }
-  const {linha: hpos, coluna: c0} = achado; // c0 = coluna de "Mês"; Gross=c0+1, Refunds=c0+2, ..., Tiger(55%)=c0+7
-
-  const porMes = {};
-  for(let i=hpos+1; i<rows.length; i++){
-    const row = rows[i];
-    if(!row || !row[c0]) continue;
-    const label = String(row[c0]).trim();
-    const m = label.match(/^([A-Za-z]{3})/);
-    if(!m) break; // linha de nota/total — acabaram os meses
-    const mesNum = MES_ABBR_[m[1].toLowerCase()];
-    if(!mesNum) break;
-    const mesKey = `${ano}-${String(mesNum).padStart(2,'0')}`;
-    const gross = Number(row[c0+1])||0, refunds = Number(row[c0+2])||0, tiger55 = Number(row[c0+7])||0;
-    porMes[mesKey] = {gross: Math.round(gross*100)/100, refunds: Math.round(Math.abs(refunds)*100)/100, net: Math.round(tiger55*100)/100, taxes: 0, orders: 0};
-  }
-
-  if(detName && wb.Sheets[detName]){
-    const detRows = XLSX.utils.sheet_to_json(wb.Sheets[detName], {header:1, raw:true, defval:null});
-    const achadoDet = acharColuna_(detRows, 'Mês', 'Agente');
-    if(achadoDet){
-      const dc0 = achadoDet.coluna; // Mês=dc0, Agente=dc0+1, Calls=dc0+2, Closed=dc0+3
-      detRows.forEach(row => {
-        if(!row || !row[dc0] || !row[dc0+1]) return; // precisa de Mês E Agente preenchidos (pula cabeçalho de grupo "▶ MES")
-        const m = String(row[dc0]).trim().match(/^([A-Za-z]{3})/);
-        if(!m) return;
-        const mesNum = MES_ABBR_[m[1].toLowerCase()];
-        if(!mesNum) return;
-        const mesKey = `${ano}-${String(mesNum).padStart(2,'0')}`;
-        if(!porMes[mesKey]) return;
-        porMes[mesKey].orders += Number(row[dc0+3])||0; // coluna "Closed"
-      });
-    }
-  }
-
-  const keys = Object.keys(porMes);
-  if(!keys.length){ alert('Não encontrei nenhum mês nesse arquivo.'); return; }
-  if(!confirm(`Encontrei ${keys.length} mês(es) de Salesbound nesse arquivo (${keys.map(mesLblCurto_).join(', ')}). Isso atualiza esses meses (os outros ficam como estão). Confirmar?`)) return;
-
-  if(!canalMensal['welcome_salesbound']) canalMensal['welcome_salesbound'] = {};
-  keys.forEach(mesKey => { canalMensal['welcome_salesbound'][mesKey] = porMes[mesKey]; });
-  saveLS(LS_CANAL_MENSAL, canalMensal);
-  if(canalAtivo === 'welcome_salesbound') renderCanal();
-  showToast(`Salesbound atualizado: ${keys.map(mesLblCurto_).join(', ')}` + (APPS_SCRIPT_URL ? ' — sincronizando...' : ' (salvo neste navegador)'));
-
-  if(APPS_SCRIPT_URL){
-    const batch = keys.map(mesKey => Object.assign({canal:'welcome_salesbound', mes: mesKey.replace('-','_')}, porMes[mesKey]));
-    const res = await apiPost('importCanalMensalBatch', batch);
-    if(res && res.ok){ syncStatus='ok'; showToast(`Sincronizado: ${res.processed} mês(es) no Google Sheets ✓`); }
-    else { syncStatus='erro'; showToast('Salvo localmente, mas não sincronizou com o Sheets ainda'); }
-    renderSyncBadge();
-  }
-}
-document.getElementById('salesboundImportFile').addEventListener('change', (ev) => {
-  const file = ev.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const wb = XLSX.read(e.target.result, {type:'binary', cellDates:false});
-      processSalesboundImport(wb, file.name);
-    } catch(err){
-      console.error(err);
-      alert('Não consegui ler esse arquivo. Confira se é o Salesbound Financial Performance (.xlsx) certo.');
-    }
-  };
-  reader.readAsBinaryString(file);
-  ev.target.value = '';
-});
-document.getElementById('masterMensalImportFile').addEventListener('change', (ev) => {
-  const file = ev.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const wb = XLSX.read(e.target.result, {type:'binary', cellDates:false});
-      processCanalMensalImport(wb, file.name);
-    } catch(err){
-      console.error(err);
-      alert('Não consegui ler esse arquivo. Confira se é o Master Affiliates (.xls) do mês.');
-    }
-  };
-  reader.readAsBinaryString(file);
-  ev.target.value = '';
-});
-function fmtMoneyShort_(v){
-  if(Math.abs(v) >= 1000) return '$' + Math.round(v/1000) + 'k';
-  return fmtMoney(v);
-}
-function renderCanalChart_(key){
-  const ehSB = key === 'welcome_salesbound';
-  const lblLiq = ehSB ? 'Líquido nosso (55%)' : 'Líquido (−10% COGS −7% BuyGoods)';
-  const el = document.getElementById('canalMensalChart');
-  if(!el) return;
-  const meses = canalMensal[key] || {};
-  const mesKeys = Object.keys(meses).sort();
-  if(!mesKeys.length){
-    el.innerHTML = '<div class="chart-empty">Sem histórico mensal ainda — importe o arquivo acima pra ver a evolução mês a mês.</div>';
-    return;
-  }
-  const totals = mesKeys.reduce((acc,m) => {
-    const v = meses[m];
-    acc.orders += v.orders||0; acc.gross += v.gross||0; acc.net += liqMensal_(key, v); acc.refunds += v.refunds||0;
-    return acc;
-  }, {orders:0, gross:0, net:0, refunds:0});
-  const margem = totals.gross ? (totals.net/totals.gross*100) : 0;
-
-  const max = Math.max(...mesKeys.map(m => meses[m].gross||0), 1);
-  const liq = m => liqMensal_(key, meses[m]);
-  const W = 640, H = 220, padL = 44, padB = 26, padT = 10, padR = 10;
-  const chartW = W - padL - padR, chartH = H - padT - padB;
-  const groupW = chartW / mesKeys.length;
-  const barW = Math.min(26, groupW*0.32);
-
-  const gridLines = [0.25,0.5,0.75,1].map(f => {
-    const y = padT + chartH*(1-f);
-    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="2,3"/>
-      <text x="${padL-6}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${escapeHtml(fmtMoneyShort_(max*f))}</text>`;
-  }).join('');
-
-  const bars = mesKeys.map((m,i) => {
-    const v = meses[m];
-    const gx = padL + i*groupW + groupW/2;
-    const grossH = Math.max((v.gross||0)/max*chartH, v.gross ? 1 : 0);
-    const netH = Math.max(liq(m)/max*chartH, liq(m) ? 1 : 0);
-    const grossY = padT + chartH - grossH;
-    const netY = padT + chartH - netH;
-    const label = mesLblCurto_(m);
-    return `
-      <rect x="${(gx-barW-2).toFixed(1)}" y="${grossY.toFixed(1)}" width="${barW.toFixed(1)}" height="${grossH.toFixed(1)}" fill="var(--line)" rx="2"><title>${escapeHtml(label)}: ${escapeHtml(fmtMoney(v.gross||0))} bruto</title></rect>
-      <rect x="${(gx+2).toFixed(1)}" y="${netY.toFixed(1)}" width="${barW.toFixed(1)}" height="${netH.toFixed(1)}" fill="var(--orange)" rx="2"><title>${escapeHtml(label)}: ${escapeHtml(fmtMoney(liq(m)))} ${ehSB ? 'líquido (55% nosso)' : 'líquido (−10% COGS −7% BuyGoods)'}</title></rect>
-      <text x="${gx.toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${escapeHtml(label)}</text>`;
-  }).join('');
-
-  const semResumo = MODO_MENSAL_.includes(key);
-  el.innerHTML = `
-    ${semResumo ? '' : `<div class="kpi-row" style="margin-bottom:14px;">
-      <div class="mini-kpi"><div class="lab">Bruto no período</div><div class="val">${fmtMoney(totals.gross)}</div><div class="note">${mesKeys.length} ${mesKeys.length===1?'mês':'meses'} (${mesLblCurto_(mesKeys[0])} a ${mesLblCurto_(mesKeys[mesKeys.length-1])})</div></div>
-      <div class="mini-kpi"><div class="lab">${lblLiq}</div><div class="val">${fmtMoney(totals.net)}</div><div class="note">margem ${margem.toFixed(1)}%</div></div>
-      <div class="mini-kpi"><div class="lab">${ehSB ? 'Pedidos fechados' : 'Pedidos'}</div><div class="val">${totals.orders}</div><div class="note">${ehSB ? 'soma de "Closed" no período' : 'soma dos meses no período'}</div></div>
-    </div>`}
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%; max-width:640px; height:auto; display:block;">${gridLines}${bars}</svg>
-    <div style="display:flex; gap:16px; margin-top:6px; font-size:11px; color:var(--muted);">
-      <span><span style="display:inline-block;width:10px;height:10px;background:var(--line);border-radius:2px;margin-right:5px;vertical-align:-1px;"></span>Bruto</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:var(--orange);border-radius:2px;margin-right:5px;vertical-align:-1px;"></span>${escapeHtml(ehSB ? 'Líquido (55% nosso)' : 'Líquido (−10% COGS −7% BuyGoods)')}</span>
-    </div>`;
 }
 // ---------- Aba "Vendas por dia" ----------
 // Total de vendas da operação inteira (todos os produtos, todos os afiliados incl. internos) por dia —
@@ -815,9 +398,6 @@ function mesAnterior_(monthKey){
   const d = new Date(y, m-2, 1);
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
 }
-// ---------- Visão de canal interno (Helpgrid / Welcome · Sales Bound / iSellForU / Gestor 5 / Gestor 3) ----------
-let canalAtivo = null;
-let canalPeriodo = 'dia';
 function canalAllDays_(key){
   return Object.keys(canaisPorDia[key] || {}).sort();
 }
@@ -832,206 +412,445 @@ function somaCanalPeriodo_(key, filtro){
   });
   return acc;
 }
-function renderCanalKPIs_(key){
-  const el = document.getElementById('canalKpis');
-  if(!el) return;
-  const ehSalesbound = key === 'welcome_salesbound';
-  const ehMensal = ehSalesbound || MODO_MENSAL_.includes(key);
-
-  if(ehMensal){
-    // Sales Bound é atualizada manualmente por semana/mês, não dia a dia — "ontem"/"esta semana"
-    // não fazem sentido aqui. Troca por uma visão de acumulado + mês atual + mês anterior.
-    const hojeKey = new Date().toISOString().slice(0,10);
-    const mesAtual = hojeKey.slice(0,7);
-    const mesAnterior = mesAnterior_(mesAtual);
-    const mensal = canalMensal[key] || {};
-    const acumulado = Object.keys(mensal).reduce((acc,m) => {
-      acc.gross += mensal[m].gross||0; acc.net += liqMensal_(key, mensal[m]); acc.orders += mensal[m].orders||0; return acc;
-    }, {gross:0, net:0, orders:0});
-    const mesDiario = somaCanalPeriodo_(key, d => d.slice(0,7)===mesAtual);
-    const temDadoMesAtual = ehSalesbound && mesDiario.gross !== 0;
-    const bfMesAtual = mensal[mesAtual];
-    const bfMesAnterior = mensal[mesAnterior];
-    const mostraPedidos = MODO_MENSAL_.includes(key);
-    const cardHtml = (lab, gross, net, note, pedidos) => `
-      <div class="mini-kpi">
-        <div class="lab">${lab}</div>
-        <div class="val">${fmtMoney(gross)}</div>
-        ${mostraPedidos ? `<div class="note"><b>${pedidos||0}</b> pedidos</div>` : ''}
-        <div class="note">${note}</div>
-        <div class="note">${fmtMoney(net)} ${ehSalesbound ? 'líquido nosso (55%)' : 'líquido (−17%)'}</div>
-      </div>`;
-    el.innerHTML =
-      cardHtml('Acumulado', acumulado.gross, acumulado.net, Object.keys(mensal).length ? `${Object.keys(mensal).length} ${Object.keys(mensal).length===1?'mês':'meses'}` : 'sem dado ainda', acumulado.orders) +
-      cardHtml('Mês atual',
-        temDadoMesAtual ? mesDiario.gross : (bfMesAtual ? bfMesAtual.gross||0 : 0),
-        temDadoMesAtual ? netCanal_(key, mesDiario) : liqMensal_(key, bfMesAtual),
-        mesLblCurto_(mesAtual), temDadoMesAtual ? mesDiario.vendas : (bfMesAtual ? bfMesAtual.orders : 0)) +
-      cardHtml('Mês anterior', bfMesAnterior ? bfMesAnterior.gross||0 : 0, liqMensal_(key, bfMesAnterior), mesLblCurto_(mesAnterior), bfMesAnterior ? bfMesAnterior.orders : 0);
-    return;
-  }
-
-  const hojeKey = new Date().toISOString().slice(0,10);
-  const ontemKey = new Date(Date.now()-86400000).toISOString().slice(0,10);
-  const mesAtual = hojeKey.slice(0,7);
-  const semanaAtualMonday = isoWeekMonday_(hojeKey);
-
-  const ontem = somaCanalPeriodo_(key, d => d===ontemKey);
-  const semana = somaCanalPeriodo_(key, d => isoWeekMonday_(d)===semanaAtualMonday);
-  const mesDiario = somaCanalPeriodo_(key, d => d.slice(0,7)===mesAtual);
-  const bfMesAtual = (canalMensal[key]||{})[mesAtual];
-  // o Master Affiliates mensal é a fonte oficial: se o diário (que pode subcontar) ficou abaixo dele, vale o mensal
-  const temDadoMesAtual = (mesDiario.vendas > 0 || mesDiario.gross !== 0) && !(bfMesAtual && (bfMesAtual.gross||0) > mesDiario.gross);
-  const allDays = canalAllDays_(key);
-  const ultimoDia = allDays.length ? allDays[allDays.length-1] : null;
-  const semDadoOntem = ontem.vendas === 0 && ultimoDia && ultimoDia < ontemKey;
-
-  const cardHtml = (lab, vendas, gross, net, note) => `
-    <div class="mini-kpi">
-      <div class="lab">${lab}</div>
-      <div class="val">${vendas}</div>
-      <div class="note">${note}</div>
-      <div class="note">${fmtMoney(gross)} bruto · ${fmtMoney(net)} líquido</div>
-    </div>`;
-  el.innerHTML =
-    cardHtml(`Ontem (${diaLbl_(ontemKey)})`, ontem.vendas, ontem.gross, netOf_(ontem), semDadoOntem ? 'sem dado ainda — último dado: '+diaLbl_(ultimoDia) : 'vendas (order items)') +
-    cardHtml('Esta semana', semana.vendas, semana.gross, netOf_(semana), 'desde '+diaLbl_(semanaAtualMonday)) +
-    cardHtml('Este mês',
-      temDadoMesAtual ? mesDiario.vendas : (bfMesAtual ? bfMesAtual.orders||0 : 0),
-      temDadoMesAtual ? mesDiario.gross : (bfMesAtual ? bfMesAtual.gross||0 : 0),
-      temDadoMesAtual ? netOf_(mesDiario) : (bfMesAtual ? bfMesAtual.net||0 : 0),
-      mesLblCurto_(mesAtual));
-}
-function renderCanalTable_(key){
-  const head = document.getElementById('canalHead');
-  const body = document.getElementById('canalBody');
-  if(!head || !body) return;
-  const ehSalesbound = key === 'welcome_salesbound';
-  const soMensal = MODO_MENSAL_.includes(key);
-  const allDays = soMensal ? [] : canalAllDays_(key);
-  const mensalDoCanal = canalMensal[key] || {};
-  const temMensal = Object.keys(mensalDoCanal).length > 0;
-  if(!allDays.length && !temMensal){
-    head.innerHTML = (ehSalesbound || soMensal)
-      ? '<th>Período</th><th class="r num">Bruto</th>'
-      : '<th>Período</th><th class="r num">Vendas</th><th class="r num">Bruto</th><th class="r num">Líquido</th>';
-    body.innerHTML = `<tr><td colspan="${(ehSalesbound||soMensal)?2:4}" class="row-sub">${soMensal ? 'Sem mês importado ainda — suba o Master Affiliates acima.' : 'Sem venda registrada ainda pra essa conta — some assim que aparecer num relatório BuyGoods importado.'}</td></tr>`;
-    return;
-  }
-  let colKeys, colLabels, agrupador;
-  if(soMensal || canalPeriodo === 'mes'){
-    const mesesComDado = new Set(allDays.map(d=>d.slice(0,7)));
-    Object.keys(mensalDoCanal).forEach(m => mesesComDado.add(m));
-    colKeys = Array.from(mesesComDado).sort();
-    colLabels = colKeys.map(mesLblCurto_);
-    agrupador = d => d.slice(0,7);
-  } else if(canalPeriodo === 'semana'){
-    colKeys = Array.from(new Set(allDays.map(isoWeekMonday_))).sort();
-    colLabels = colKeys.map(w => 'Sem '+diaLbl_(w));
-    agrupador = d => isoWeekMonday_(d);
-  } else {
-    colKeys = allDays.slice(-14);
-    colLabels = colKeys.map(diaLbl_);
-    agrupador = d => d;
-  }
-  // "Por mês" combina o que vier de import diário real (BuyGoods) com o backfill do Master
-  // Affiliates separado por mês (canalMensal) — os dois somam sem duplicar porque cobrem períodos
-  // diferentes na prática (backfill cobre meses já fechados, diário cobre dias novos daqui pra frente)
-  // se já tem dado diário real pra esse mês, ele manda sozinho (mais preciso) — o backfill mensal
-  // só entra pra completar um mês que ainda não tem NENHUM dado diário, pra não contar duas vezes
-  const valoresPorCol = colKeys.map(c => {
-    const diaria = somaCanalPeriodo_(key, d => agrupador(d)===c);
-    const bf = (soMensal || canalPeriodo === 'mes') ? mensalDoCanal[c] : null;
-    const temDadoDiario = (diaria.vendas > 0 || diaria.gross !== 0) && !(bf && (bf.gross||0) > diaria.gross);
-    if(bf && !temDadoDiario) return {vendas: bf.orders||0, gross: bf.gross||0, net: bf.net||0};
-    return {vendas: diaria.vendas, gross: diaria.gross, net: netCanal_(key, diaria)};
-  });
-
-  if(ehSalesbound || soMensal){
-    head.innerHTML = '<th style="width:30%">Período</th><th class="r num">Bruto</th>';
-    const rows = colLabels.map((lbl,i) => `<tr><td class="row-name">${escapeHtml(lbl)}</td><td class="r num">${fmtMoney(valoresPorCol[i].gross)}</td></tr>`).join('');
-    const total = valoresPorCol.reduce((acc,v) => acc + (v.gross||0), 0);
-    body.innerHTML = rows + `<tr style="background:var(--row-even); font-weight:700"><td>TOTAL</td><td class="r num">${fmtMoney(total)}</td></tr>`;
-    return;
-  }
-  head.innerHTML = '<th style="width:20%">Período</th><th class="r num">Vendas</th><th class="r num">Bruto</th><th class="r num">Líquido</th>';
-  const rows = colLabels.map((lbl,i) => {
-    const v = valoresPorCol[i];
-    return `<tr><td class="row-name">${escapeHtml(lbl)}</td><td class="r num">${v.vendas || '<span style="color:var(--line)">·</span>'}</td><td class="r num">${fmtMoney(v.gross)}</td><td class="r num">${fmtMoney(v.net)}</td></tr>`;
-  }).join('');
-  const total = valoresPorCol.reduce((acc,v) => { acc.vendas+=v.vendas; acc.gross+=v.gross; acc.net+=v.net; return acc; }, {vendas:0,gross:0,net:0});
-  body.innerHTML = rows + `<tr style="background:var(--row-even); font-weight:700"><td>TOTAL</td><td class="r num">${total.vendas}</td><td class="r num">${fmtMoney(total.gross)}</td><td class="r num">${fmtMoney(total.net)}</td></tr>`;
-}
-function renderCanal(){
-  if(!canalAtivo) return;
-  const def = CANAL_DEFS.find(c => c.key === canalAtivo);
-  document.getElementById('canalTitulo').textContent = def ? def.label : '';
-  const notaEl = document.getElementById('canalNota');
-  if(notaEl){
-    if(def && def.nota){ notaEl.textContent = def.nota; notaEl.style.display = ''; }
-    else { notaEl.style.display = 'none'; }
-  }
-  const ehSalesbound = canalAtivo === 'welcome_salesbound';
-  const ehGestor = MODO_MENSAL_.includes(canalAtivo);
-  const importEl = document.getElementById('canalSalesboundImport');
-  const masterEl = document.getElementById('canalMasterImport');
-  const chartEl = document.getElementById('canalMensalChart');
-  const tabsEl = document.getElementById('canalTabs');
-  if(importEl) importEl.style.display = ehSalesbound ? '' : 'none';
-  if(masterEl) masterEl.style.display = ehGestor ? '' : 'none';
-  if(chartEl) chartEl.style.display = (ehSalesbound || ehGestor) ? '' : 'none';
-  if(tabsEl) tabsEl.style.display = ehGestor ? 'none' : '';
-  if(ehSalesbound || ehGestor) renderCanalChart_(canalAtivo);
-  const bannerEl = document.getElementById('canalInfoBanner');
-  if(bannerEl){
-    bannerEl.innerHTML = ehGestor
-      ? 'Painel mensal: o número vem do export <b>Master Affiliates</b> (dia 1 do mês até hoje). Suba o arquivo ao longo da semana e o mês atual é atualizado. <span id="canalInfo"></span>'
-      : ehSalesbound
-      ? 'A Sales Bound tem CRM próprio (CheckoutChamp), separado do relatório BuyGoods — não dá pra puxar automático. O mensal vem da planilha "Financial Performance" (botão acima); o dia a dia é o que você for trazendo do dashboard deles. Não existe pedido frontal/upsell aqui, é venda fechada mesmo. <span id="canalInfo"></span>'
-      : 'Alimentada pelo relatório diário da BuyGoods que você importa no painel de afiliados (affiliates-tiger) — não precisa importar de novo aqui. Esta visão soma as vendas atribuídas a essa conta interna, dia a dia — conta só o <b>pedido frontal</b> (upsell, downsell e frete não entram na contagem, só somam no bruto/líquido). <span id="canalInfo"></span>';
-  }
-  renderCanalKPIs_(canalAtivo);
-  renderCanalTable_(canalAtivo);
-  const info = document.getElementById('canalInfo');
-  if(info){
-    const dias = ehGestor ? [] : canalAllDays_(canalAtivo);
-    const meses = Object.keys(canalMensal[canalAtivo] || {}).sort();
-    if(ehGestor) info.textContent = meses.length ? `Meses importados: ${mesLblCurto_(meses[0])} a ${mesLblCurto_(meses[meses.length-1])}.` : 'Nenhum mês importado ainda.';
-    else if(dias.length) info.textContent = `Dados diários de ${diaLbl_(dias[0])} a ${diaLbl_(dias[dias.length-1])}.`;
-    else if(meses.length) info.textContent = `Sem import diário ainda — histórico mensal de ${mesLblCurto_(meses[0])} a ${mesLblCurto_(meses[meses.length-1])}.`;
-    else info.textContent = 'Ainda sem venda registrada pra essa conta.';
-  }
-  const life = canalLifetime[canalAtivo];
-  const lifeEl = document.getElementById('canalLifetime');
-  if(lifeEl){
-    lifeEl.innerHTML = life
-      ? `<label>Histórico geral (${escapeHtml(life.periodo||'')})</label><div class="row-sub">${life.orders} pedido${life.orders===1?'':'s'} · ${fmtMoney(life.gross)} bruto · ${fmtMoney(life.net)} líquido · ${fmtMoney(life.refunds)} em reembolso/chargeback</div>`
-      : '';
-  }
-}
-document.querySelectorAll('#canalTabs button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#canalTabs button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    canalPeriodo = btn.dataset.periodo;
-    renderCanalTable_(canalAtivo);
-  });
-});
-document.querySelectorAll('.nav-item-canal').forEach(item => {
-  item.addEventListener('click', () => {
-    canalAtivo = item.dataset.canal;
-    showView_('canal');
-    renderCanal();
-  });
-});
-
 function normName(s){
   if(!s) return '';
   return s.toString().trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
     .replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
 }
-function showView_(){
-  document.querySelectorAll('.nav-item-canal').forEach(n => n.classList.toggle('active', n.dataset.canal === canalAtivo));
+
+// ================= Painel de parceiros (layout Attio) =================
+const PMETA = {
+  welcome_salesbound: {nome:'Sales Bound', cor:'#E4572E', tipo:'Welcome · call center', fonte:'Planilha Financial Performance', repasse:'55% nosso',
+    formula:[['Bruto',''],['− Reembolso',''],['− COGS','10%'],['× nossa parte','55%']]},
+  helpgrid: {nome:'Helpgrid', cor:'#2E86AB', tipo:'Suporte / recuperação', fonte:'Relatório BuyGoods diário', repasse:'52% nosso',
+    formula:[['Bruto',''],['− Reembolso/chargeback',''],['− Frete',''],['− Imposto','']],
+    aviso:'O acordo é 52% do Net Líquido pra gente, mas esse split ainda não está aplicado aqui: o líquido mostrado é o bruto menos reembolso/chargeback, frete e imposto.'},
+  gestor5: {nome:'Email', cor:'#7B61FF', tipo:'Gestor 5', fonte:'Master Affiliates', repasse:'83% do bruto',
+    formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]},
+  gestor3: {nome:'SMS', cor:'#1F9D55', tipo:'Gestor 3', fonte:'Master Affiliates', repasse:'83% do bruto',
+    formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]},
+  welcome_isellforu: {nome:'iSellForU', cor:'#D97706', tipo:'Welcome · call center', fonte:'Relatório BuyGoods diário', repasse:'a definir',
+    formula:[['Bruto',''],['− Reembolso/chargeback',''],['− Frete',''],['− Imposto','']]},
+  nuyu: {nome:'NuYu', cor:'#C2185B', tipo:'Parceiro novo', fonte:'Master Affiliates', repasse:'83% do bruto',
+    formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]}
+};
+const PKEYS = ['welcome_salesbound','helpgrid','gestor5','gestor3','welcome_isellforu','nuyu'];
+let canalAtualizado = {}; // canal -> ISO da última gravação (mensal ou diário)
+let importLog = loadLS('tiger_import_log_v1', []);
+
+const $ = s => document.querySelector(s);
+const hojeKey_ = () => new Date().toISOString().slice(0,10);
+const mesAtual_ = () => hojeKey_().slice(0,7);
+const fmtK_ = v => Math.abs(v) >= 1000 ? '$' + (v/1000).toFixed(Math.abs(v) >= 100000 ? 0 : 1).replace('.0','') + 'k' : fmtMoney(v);
+const temDiario_ = key => !MODO_MENSAL_.includes(key) && key !== 'welcome_salesbound';
+
+// mesma precedência que o painel antigo usava: dado diário vale, a não ser que o mensal oficial seja maior
+function valorMes_(key, mk){
+  const bf = (canalMensal[key] || {})[mk];
+  if(MODO_MENSAL_.includes(key)) return bf ? {gross: bf.gross||0, net: liqMensal_(key, bf), orders: bf.orders||0} : null;
+  const d = somaCanalPeriodo_(key, x => x.slice(0,7) === mk);
+  const temD = (d.vendas > 0 || d.gross !== 0) && !(bf && (bf.gross||0) > d.gross);
+  if(temD) return {gross: d.gross, net: netCanal_(key, d), orders: d.vendas};
+  if(bf) return {gross: bf.gross||0, net: bf.net||0, orders: bf.orders||0};
+  return null;
+}
+function mesesDo_(key){
+  const s = new Set(Object.keys(canalMensal[key] || {}));
+  if(!MODO_MENSAL_.includes(key)) canalAllDays_(key).forEach(d => s.add(d.slice(0,7)));
+  return Array.from(s).filter(m => valorMes_(key, m)).sort();
+}
+function diasDesde_(iso){
+  if(!iso) return null;
+  return Math.max(0, Math.floor((new Date(hojeKey_()) - new Date(String(iso).slice(0,10))) / 86400000));
+}
+function ultimaAtualizacao_(key){
+  let best = canalAtualizado[key] || '';
+  importLog.forEach(i => { if((i.parceiros||'').split(',').includes(key) && (i.quando||'') > best) best = i.quando; });
+  return best || null;
+}
+function statusPill_(key){
+  const d = diasDesde_(ultimaAtualizacao_(key));
+  if(d === null) return '<span class="pill bad"><i></i>Sem import</span>';
+  const txt = d === 0 ? 'Atualizado hoje' : d === 1 ? 'Atualizado ontem' : `Atualizado há ${d} dias`;
+  const cls = d <= 7 ? 'ok' : d <= 14 ? 'warn' : 'bad';
+  return `<span class="pill ${cls}"><i></i>${txt}</span>`;
+}
+function atrasado_(key){ const d = diasDesde_(ultimaAtualizacao_(key)); return d === null || d > 7; }
+function deltaHtml_(a, b){
+  if(!b) return '<span class="muted">—</span>';
+  const d = Math.round((a-b)/Math.abs(b)*100);
+  return `<span class="${d>=0?'up':'down'}">${d>=0?'▲':'▼'} ${Math.abs(d)}%</span>`;
+}
+function plogo_(key, size){
+  const m = PMETA[key]; const s = size || 18;
+  return `<span class="plogo" style="background:${m.cor};width:${s}px;height:${s}px;font-size:${Math.round(s*0.45)}px">${m.nome[0]}</span>`;
+}
+
+function barChart_(series, keys, h){
+  const W=720, H=h||210, pl=48, pb=24, pt=8, pr=8, cw=W-pl-pr, ch=H-pt-pb;
+  const max = Math.max(1, ...series.flatMap(s => keys.map(k => s.vals[k]||0)));
+  const gw = cw/Math.max(keys.length,1), bw = Math.min(22, (gw*0.72)/Math.max(series.length,1));
+  let g = [0.25,0.5,0.75,1].map(f => { const y=pt+ch*(1-f); return `<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-dasharray="2,3"/><text x="${pl-6}" y="${y+3}" text-anchor="end" font-size="10" fill="var(--text-3)">${fmtK_(max*f)}</text>`; }).join('');
+  keys.forEach((k,i) => {
+    const gx = pl + i*gw + gw/2 - (bw*series.length)/2;
+    series.forEach((s,j) => {
+      const v = Math.max(0, s.vals[k]||0), bh = v/max*ch;
+      g += `<rect x="${(gx+j*bw+1).toFixed(1)}" y="${(pt+ch-bh).toFixed(1)}" width="${Math.max(bw-2,1).toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${s.color}"><title>${escapeHtml(s.label)} · ${mesLblCurto_(k)}: ${fmtMoney(s.vals[k]||0)}</title></rect>`;
+    });
+    g += `<text x="${pl+i*gw+gw/2}" y="${H-7}" text-anchor="middle" font-size="11" fill="var(--text-3)">${mesLblCurto_(k)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-height:260px">${g}</svg>`;
+}
+
+let route = {page:'overview'}, ptab = 'visao', metric = 'gross', periodo = 'mes';
+function go(page, key){ route = {page, key}; ptab = 'visao'; periodo = 'mes'; render(); $('#page').scrollTo({top:0}); }
+
+function renderNav_(){
+  const mk = mesAtual_();
+  $('#navPartners').innerHTML = PKEYS.map(k => {
+    const v = valorMes_(k, mk);
+    return `<button class="nav ${route.page==='partner'&&route.key===k?'on':''}" data-go="${k}">${plogo_(k)}${PMETA[k].nome}<span class="ct">${v ? fmtK_(v.gross) : '—'}</span></button>`;
+  }).join('');
+  $('#navPartners').querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => go('partner', b.dataset.go)));
+  $('#nav-overview').classList.toggle('on', route.page==='overview');
+  $('#nav-imports').classList.toggle('on', route.page==='imports');
+  $('#ct-imp').textContent = importLog.length || '';
+}
+
+function overview_(){
+  const mk = mesAtual_(), ant = mesAnterior_(mk);
+  const tot = m => PKEYS.reduce((a,k) => { const v = valorMes_(k, m); if(v){ a.g += v.gross; a.n += v.net; a.o += v.orders; } return a; }, {g:0,n:0,o:0});
+  const A = tot(mk), B = tot(ant);
+  const ordem = PKEYS.slice().sort((a,b) => ((valorMes_(b,mk)||{}).gross||0) - ((valorMes_(a,mk)||{}).gross||0));
+  const lider = ordem[0], vl = valorMes_(lider, mk);
+  const atrasados = PKEYS.filter(atrasado_);
+  const todosMeses = Array.from(new Set(PKEYS.flatMap(mesesDo_))).sort().slice(-6);
+  const series = PKEYS.filter(k => mesesDo_(k).length).map(k => ({label: PMETA[k].nome, color: PMETA[k].cor,
+    vals: Object.fromEntries(todosMeses.map(m => { const v = valorMes_(k,m); return [m, v ? (metric==='gross' ? v.gross : v.net) : 0]; }))}));
+  const rows = ordem.map(k => {
+    const v = valorMes_(k, mk), va = valorMes_(k, ant), share = v && A.g ? v.gross/A.g*100 : 0;
+    return `<tr class="click" data-go="${k}">
+      <td><div class="who">${plogo_(k,26)}<div><b>${PMETA[k].nome}</b><small>${PMETA[k].tipo}</small></div></div></td>
+      <td class="hide-sm"><span class="tag">${PMETA[k].repasse}</span></td>
+      <td class="r money num">${v ? `<b>${fmtMoney(v.gross)}</b><small>${deltaHtml_(v.gross, va && va.gross)}</small>` : '<span class="muted">—</span>'}</td>
+      <td class="r num">${v ? fmtMoney(v.net) : '<span class="muted">—</span>'}</td>
+      <td class="r num">${v ? v.orders : '<span class="muted">—</span>'}</td>
+      <td class="r hide-sm"><div class="share"><span class="num">${share.toFixed(0)}%</span><span class="bar"><i style="width:${Math.max(0,share)}%"></i></span></div></td>
+      <td>${statusPill_(k)}</td>
+    </tr>`;
+  }).join('');
+  return `
+  <div class="pad">
+    <h1 class="h1">Visão geral dos parceiros</h1>
+    <p class="sub">Quanto cada parceiro trouxe no mês, quanto fica pra gente e quem está com dado atrasado.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="l">Bruto do mês · ${mesLblCurto_(mk)}</div><div class="v">${fmtMoney(A.g)}</div><div class="d">${deltaHtml_(A.g,B.g)}<span>vs ${mesLblCurto_(ant)}</span></div></div>
+      <div class="kpi"><div class="l">Líquido nosso</div><div class="v">${fmtMoney(A.n)}</div><div class="d">${deltaHtml_(A.n,B.n)}<span>${A.g ? 'margem '+(A.n/A.g*100).toFixed(0)+'%' : ''}</span></div></div>
+      <div class="kpi"><div class="l">Pedidos</div><div class="v">${A.o}</div><div class="d">${deltaHtml_(A.o,B.o)}<span>vs ${mesLblCurto_(ant)}</span></div></div>
+      <div class="kpi"><div class="l">Maior parceiro do mês</div>${vl ? `<div class="v" style="font-size:18px;display:flex;align-items:center;gap:8px">${plogo_(lider,22)}${PMETA[lider].nome}</div><div class="d"><span>${A.g ? (vl.gross/A.g*100).toFixed(0) : 0}% do bruto</span></div>` : '<div class="v muted">—</div>'}</div>
+    </div>
+  </div>
+  ${atrasados.length ? `<div class="banner"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>${atrasados.length} ${atrasados.length===1?'parceiro':'parceiros'} sem import há mais de 7 dias:</b> ${atrasados.map(k=>PMETA[k].nome).join(', ')}.</span><span class="sp"></span><button class="btn" data-act="import">Importar</button></div>` : ''}
+  <div class="card">
+    <div class="card-h"><b>Evolução mensal por parceiro</b><div class="seg"><button class="${metric==='gross'?'on':''}" data-metric="gross">Bruto</button><button class="${metric==='net'?'on':''}" data-metric="net">Líquido nosso</button></div></div>
+    ${todosMeses.length ? barChart_(series, todosMeses) : '<div class="empty">Sem dado mensal ainda.</div>'}
+    <div class="legend" style="margin-top:8px">${series.map(s=>`<span><i style="background:${s.color}"></i>${escapeHtml(s.label)}</span>`).join('')}</div>
+  </div>
+  <table>
+    <thead><tr><th>Parceiro</th><th class="hide-sm">Repasse</th><th class="r">Bruto ${mesLblCurto_(mk)}</th><th class="r">Líquido nosso</th><th class="r">Pedidos</th><th class="r hide-sm">Participação</th><th>Dados</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td>Total</td><td class="hide-sm"></td><td class="r num">${fmtMoney(A.g)}</td><td class="r num">${fmtMoney(A.n)}</td><td class="r num">${A.o}</td><td class="hide-sm"></td><td></td></tr></tfoot>
+  </table>
+  <div style="height:40px"></div>`;
+}
+
+function formulaCard_(key){
+  const m = PMETA[key], def = CANAL_DEFS.find(c => c.key === key) || {};
+  return `<div class="card"><div class="card-h"><b>Como o líquido é calculado</b><span class="tag">${m.repasse}</span></div>
+    <div class="formula">${m.formula.map(([a,b]) => `<span class="t">${a}${b?' <b>'+b+'</b>':''}</span>`).join('<span>→</span>')}</div>
+    <p class="muted" style="margin:10px 0 0;font-size:12.5px">${escapeHtml(m.aviso || def.nota || 'Outros custos (comissão, reembolso manual etc.) ficam de fora e são subtraídos à mão.')}</p></div>`;
+}
+function importsDe_(key){ return importLog.filter(i => (i.parceiros||'').split(',').includes(key)); }
+function timelineImports_(lista){
+  if(!lista.length) return '<p class="muted" style="padding:4px 0">Nenhuma importação registrada ainda. Os próximos imports feitos por aqui aparecem nesta lista.</p>';
+  return '<div class="tl">' + lista.map(i => `<div class="ev"><div class="h"><b>${escapeHtml(i.tipoLbl || i.tipo || 'Import')}</b><span>${escapeHtml(fmtQuando_(i.quando))}</span>${i.arquivo ? `<span class="tag">${escapeHtml(i.arquivo)}</span>` : ''}</div>${i.resumo ? `<p>${escapeHtml(i.resumo)}</p>` : ''}</div>`).join('') + '</div>';
+}
+function fmtQuando_(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'}) + ' · ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function partner_(key){
+  const m = PMETA[key];
+  const meses = mesesDo_(key);
+  const head = `<h1 class="h1">${plogo_(key,28)}${m.nome} ${statusPill_(key)}</h1><p class="sub">${m.tipo} · fonte: ${m.fonte} · repasse ${m.repasse}</p>`;
+  const btnImport = `<button class="btn pri" data-act="import"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importar ${key==='welcome_salesbound' ? 'Financial Performance' : 'Master Affiliates'}</button>`;
+  if(!meses.length){
+    return `<div class="pad">${head}</div>
+      <div class="card"><div class="empty"><b>Nenhum dado importado ainda</b>Suba o ${key==='welcome_salesbound'?'Financial Performance':'Master Affiliates do mês'} com as linhas da ${m.nome} pra começar o histórico.<div style="margin-top:14px">${btnImport}</div></div></div>
+      ${formulaCard_(key)}`;
+  }
+  const mk = mesAtual_(), ant = mesAnterior_(mk);
+  const acc = meses.reduce((a,x) => { const v = valorMes_(key,x); a.g += v.gross; a.n += v.net; a.o += v.orders; return a; }, {g:0,n:0,o:0});
+  const cur = valorMes_(key, mk) || {gross:0,net:0,orders:0}, pv = valorMes_(key, ant) || {gross:0,net:0,orders:0};
+  const kp = `<div class="kpis k3">
+      <div class="kpi"><div class="l">Acumulado · ${meses.length} ${meses.length===1?'mês':'meses'}</div><div class="v">${fmtMoney(acc.g)}</div><div class="d2"><b>${acc.o}</b> pedidos</div><div class="d"><span>${fmtMoney(acc.n)} líquido nosso</span></div></div>
+      <div class="kpi"><div class="l">Mês atual · ${mesLblCurto_(mk)}</div><div class="v">${fmtMoney(cur.gross)}</div><div class="d2"><b>${cur.orders}</b> pedidos</div><div class="d"><span>${fmtMoney(cur.net)} líquido</span>${deltaHtml_(cur.gross, pv.gross)}</div></div>
+      <div class="kpi"><div class="l">Mês anterior · ${mesLblCurto_(ant)}</div><div class="v">${fmtMoney(pv.gross)}</div><div class="d2"><b>${pv.orders}</b> pedidos</div><div class="d"><span>${fmtMoney(pv.net)} líquido</span></div></div>
+    </div>`;
+  const nImp = importsDe_(key).length;
+  const tabs = `<div class="views">${[['visao','Visão geral'],['periodo','Por período'],['imp','Importações']].map(([k,l]) => `<button class="view ${ptab===k?'on':''}" data-ptab="${k}">${l}${k==='imp' && nImp ? `<span class="ct">${nImp}</span>` : ''}</button>`).join('')}</div>`;
+  let body = '';
+  if(ptab === 'visao'){
+    const life = canalLifetime[key];
+    body = `<div style="height:16px"></div>
+      <div class="card"><div class="card-h"><b>Bruto × líquido por mês</b><div class="legend"><span><i style="background:var(--bar-gross)"></i>Bruto</span><span><i style="background:${m.cor}"></i>Líquido nosso</span></div></div>
+      ${barChart_([{label:'Bruto', color:'var(--bar-gross)', vals:Object.fromEntries(meses.map(x=>[x, valorMes_(key,x).gross]))}, {label:'Líquido nosso', color:m.cor, vals:Object.fromEntries(meses.map(x=>[x, valorMes_(key,x).net]))}], meses.slice(-8))}</div>
+      ${formulaCard_(key)}
+      ${life ? `<div class="card"><div class="card-h"><b>Histórico geral</b><span class="muted" style="font-size:12px">${escapeHtml(life.periodo||'')}</span></div><div class="formula"><span class="t"><b>${life.orders}</b> pedidos</span><span class="t"><b>${fmtMoney(life.gross)}</b> bruto</span><span class="t"><b>${fmtMoney(life.net)}</b> líquido</span><span class="t"><b>${fmtMoney(life.refunds)}</b> reembolso/chargeback</span></div></div>` : ''}`;
+  } else if(ptab === 'periodo'){
+    const diario = temDiario_(key) && canalAllDays_(key).length;
+    const seg = diario ? `<div class="pad" style="padding-top:12px;padding-bottom:4px"><div class="seg">${[['mes','Por mês'],['semana','Por semana'],['dia','Por dia']].map(([k,l]) => `<button class="${periodo===k?'on':''}" data-per="${k}">${l}</button>`).join('')}</div></div>` : '';
+    let linhas = [];
+    if(periodo === 'mes' || !diario){
+      linhas = meses.slice().reverse().map((x,i,arr) => ({lbl: mesLblCurto_(x) + (x===mk ? ' <span class="pill neu" style="margin-left:6px">em andamento</span>' : ''), v: valorMes_(key,x), prev: arr[i+1] ? valorMes_(key, arr[i+1]) : null}));
+    } else {
+      const dias = canalAllDays_(key);
+      const grupos = periodo === 'semana' ? Array.from(new Set(dias.map(isoWeekMonday_))).sort().reverse().slice(0,12) : dias.slice().reverse().slice(0,21);
+      linhas = grupos.map((g,i,arr) => {
+        const f = periodo === 'semana' ? (d => isoWeekMonday_(d) === g) : (d => d === g);
+        const s = somaCanalPeriodo_(key, f);
+        const pf = arr[i+1] ? (periodo === 'semana' ? (d => isoWeekMonday_(d) === arr[i+1]) : (d => d === arr[i+1])) : null;
+        const ps = pf ? somaCanalPeriodo_(key, pf) : null;
+        return {lbl: periodo === 'semana' ? 'Semana de ' + diaLbl_(g) : diaLbl_(g), v: {gross: s.gross, net: netCanal_(key, s), orders: s.vendas}, prev: ps ? {gross: ps.gross} : null};
+      });
+    }
+    const tot = linhas.reduce((a,l) => { a.g += l.v.gross; a.n += l.v.net; a.o += l.v.orders; return a; }, {g:0,n:0,o:0});
+    body = seg + `<table><thead><tr><th>${periodo==='dia'&&diario?'Dia':periodo==='semana'&&diario?'Semana':'Mês'}</th><th class="r">Bruto</th><th class="r">Variação</th><th class="r">Líquido nosso</th><th class="r">Pedidos</th><th class="r hide-sm">Ticket médio</th></tr></thead><tbody>
+      ${linhas.map(l => `<tr><td><b style="font-weight:550">${l.lbl}</b></td><td class="r num">${fmtMoney(l.v.gross)}</td><td class="r">${l.prev ? deltaHtml_(l.v.gross, l.prev.gross) : '<span class="muted">—</span>'}</td><td class="r num">${fmtMoney(l.v.net)}</td><td class="r num">${l.v.orders}</td><td class="r num hide-sm">${l.v.orders ? fmtMoney(l.v.gross/l.v.orders) : '—'}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td>Total</td><td class="r num">${fmtMoney(tot.g)}</td><td></td><td class="r num">${fmtMoney(tot.n)}</td><td class="r num">${tot.o}</td><td class="r num hide-sm">${tot.o ? fmtMoney(tot.g/tot.o) : '—'}</td></tr></tfoot></table>`;
+  } else {
+    body = `<div class="pad" style="padding-top:16px">${timelineImports_(importsDe_(key))}</div>`;
+  }
+  return `<div class="pad"><div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1;min-width:0">${head}</div>${btnImport}</div>${kp}</div>${tabs}${body}<div style="height:40px"></div>`;
+}
+
+function imports_(){
+  const rows = importLog.map(i => `<tr><td class="num">${escapeHtml(fmtQuando_(i.quando))}</td><td><span class="tag">${escapeHtml(i.arquivo||'—')}</span></td><td>${(i.parceiros||'').split(',').filter(k=>PMETA[k]).map(k => `<span title="${PMETA[k].nome}" style="margin-right:4px;display:inline-grid">${plogo_(k)}</span>`).join('')}</td><td style="white-space:normal;color:var(--text-2)">${escapeHtml(i.resumo||'')}</td></tr>`).join('');
+  return `<div class="pad"><h1 class="h1">Importações</h1><p class="sub">Tudo que foi subido por este painel, do mais recente pro mais antigo.</p></div>
+    ${importLog.length ? `<table><thead><tr><th>Quando</th><th>Arquivo</th><th>Parceiros</th><th>O que mudou</th></tr></thead><tbody>${rows}</tbody></table>` : `<div class="card"><div class="empty"><b>Nenhuma importação registrada ainda</b>A partir de agora, cada arquivo importado aqui fica registrado nesta lista.<div style="margin-top:14px"><button class="btn pri" data-act="import">Importar arquivo</button></div></div></div>`}`;
+}
+
+function render(){
+  renderNav_();
+  const k = route.page === 'partner' ? route.key : null;
+  $('#crumb').innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><a data-go-over>Parceiros</a><span>/</span><b>${k ? PMETA[k].nome : route.page==='imports' ? 'Importações' : 'Visão geral'}</b>`;
+  $('#page').innerHTML = k ? partner_(k) : route.page === 'imports' ? imports_() : overview_();
+  const pg = $('#page');
+  pg.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => go('partner', el.dataset.go)));
+  pg.querySelectorAll('[data-metric]').forEach(el => el.addEventListener('click', () => { metric = el.dataset.metric; render(); }));
+  pg.querySelectorAll('[data-ptab]').forEach(el => el.addEventListener('click', () => { ptab = el.dataset.ptab; render(); }));
+  pg.querySelectorAll('[data-per]').forEach(el => el.addEventListener('click', () => { periodo = el.dataset.per; render(); }));
+  pg.querySelectorAll('[data-act="import"]').forEach(el => el.addEventListener('click', openImport));
+  const over = $('#crumb [data-go-over]'); if(over) over.addEventListener('click', () => go('overview'));
+}
+
+// ---------- Import: reconhece o arquivo, mostra prévia, confirma ----------
+let impPending = null;
+function openImport(){
+  impPending = null;
+  renderImport_();
+  $('#importModal').classList.add('on'); $('#scrim').classList.add('on');
+}
+function closeAll(){ $('#importModal').classList.remove('on'); $('#cmdk').classList.remove('on'); $('#scrim').classList.remove('on'); }
+function renderImport_(erro){
+  const p = impPending;
+  let corpo;
+  if(!p){
+    corpo = `<label class="drop" id="dropZone"><input type="file" id="impFile" accept=".xls,.xlsx" hidden>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        <b>Arraste o arquivo aqui</b>ou clique pra escolher — o tipo é reconhecido sozinho</label>
+      ${erro ? `<div class="alert-err">${escapeHtml(erro)}</div>` : ''}
+      <div class="opt-list">
+        <div class="opt"><b>Master Affiliates (.xls)</b><small>Email, SMS, NuYu, Helpgrid, iSellForU — total do mês por parceiro (exporte do dia 1 até hoje)</small></div>
+        <div class="opt"><b>Salesbound Financial Performance (.xlsx)</b><small>Sales Bound — meses completos com o split 55/45</small></div>
+        <div class="opt muted-opt"><b>Relatório BuyGoods diário</b><small>Helpgrid e iSellForU dia a dia — esse continua sendo importado no painel de afiliados</small></div>
+      </div>`;
+  } else {
+    corpo = `<div class="det"><span class="pill ok"><i></i>${escapeHtml(p.tipoLbl)}</span><span class="tag">${escapeHtml(p.arquivo)}</span></div>
+      ${p.aviso ? `<div class="alert-warn">${escapeHtml(p.aviso)}</div>` : ''}
+      <div class="preview"><table><thead><tr><th>Parceiro · mês</th><th class="r">Antes</th><th class="r">Depois</th><th class="r">Mudança</th></tr></thead><tbody>
+      ${p.linhas.map(l => { const dif = l.depois - (l.antes||0); return `<tr><td><div class="who">${plogo_(l.key)}<span>${PMETA[l.key].nome} · ${mesLblCurto_(l.mes)}</span></div></td><td class="r num">${l.antes===null?'<span class="muted">novo</span>':fmtMoney(l.antes)}</td><td class="r num"><b style="font-weight:600">${fmtMoney(l.depois)}</b></td><td class="r">${Math.round(dif)===0?'<span class="pill neu"><i></i>igual</span>':`<span class="pill ${dif>0?'ok':'bad'}"><i></i>${dif>0?'+':'−'}${fmtMoney(Math.abs(dif))}</span>`}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Nada muda até você confirmar. Outros meses e parceiros ficam como estão.</p>`;
+  }
+  $('#importModal').innerHTML = `<div class="mh"><b>Importar arquivo</b><span class="sp"></span><button class="icon-x" data-close aria-label="Fechar">✕</button></div>
+    <div class="mb">${corpo}</div>
+    <div class="mf">${p ? '<button class="btn" data-back>Escolher outro arquivo</button><span class="sp"></span>' : ''}<button class="btn" data-close>Cancelar</button>${p ? '<button class="btn pri" data-confirm>Confirmar import</button>' : ''}</div>`;
+  const m = $('#importModal');
+  m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeAll));
+  const back = m.querySelector('[data-back]'); if(back) back.addEventListener('click', () => { impPending = null; renderImport_(); });
+  const conf = m.querySelector('[data-confirm]'); if(conf) conf.addEventListener('click', confirmarImport_);
+  const inp = m.querySelector('#impFile');
+  if(inp){
+    inp.addEventListener('change', ev => { if(ev.target.files[0]) lerArquivo_(ev.target.files[0]); });
+    const dz = m.querySelector('#dropZone');
+    dz.addEventListener('dragover', ev => { ev.preventDefault(); dz.classList.add('over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+    dz.addEventListener('drop', ev => { ev.preventDefault(); dz.classList.remove('over'); if(ev.dataTransfer.files[0]) lerArquivo_(ev.dataTransfer.files[0]); });
+  }
+}
+function lerArquivo_(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    let wb;
+    try { wb = XLSX.read(e.target.result, {type:'binary', cellDates:false}); }
+    catch(err){ console.error(err); renderImport_('Não consegui ler esse arquivo. Ele precisa ser .xls ou .xlsx.'); return; }
+    const r = detectarEParsear_(wb, file.name);
+    if(r.erro){ renderImport_(r.erro); return; }
+    impPending = r; renderImport_();
+  };
+  reader.readAsBinaryString(file);
+}
+function detectarEParsear_(wb, nome){
+  // Salesbound Financial Performance: aba Dashboard com cabeçalho "Mês | Gross Sales"
+  for(const sn of wb.SheetNames){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, raw:true, defval:null});
+    if(acharColuna_(rows, 'Mês', 'Gross Sales')) return parseSalesbound_(wb, nome);
+  }
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:null});
+  if(rows.some(r => r && r[0] === 'Account' && r[1] === 'Affiliate')) return parseMaster_(rows, nome);
+  return {erro: 'Não reconheci esse arquivo. Ele precisa ser o Master Affiliates (export da BuyGoods) ou o Salesbound Financial Performance.'};
+}
+function parseMaster_(rows, nome){
+  const hpos = rows.findIndex(r => r && r[0] === 'Account' && r[1] === 'Affiliate');
+  const hidx = {}; rows[hpos].forEach((h,i) => hidx[h] = i);
+  const need = ['Account','Affiliate','Orders (FE+BE)','Gross Sales','Net Sales','Total CBs & Refunds','Taxes'];
+  if(!need.every(h => h in hidx)) return {erro: 'Esse Master Affiliates está sem alguma coluna esperada (Orders, Gross Sales, Net Sales, Refunds, Taxes).'};
+  const titulo = rows[0] && rows[0][0] ? String(rows[0][0]) : '';
+  const mes = parseMesInicioTitulo_(titulo);
+  if(!mes) return {erro: `Não identifiquei o mês pelo título do arquivo ("${titulo}").`};
+  const datas = titulo.match(/([A-Za-z]+)\s+\d{1,2},?\s+\d{4}/g) || [];
+  const aviso = datas.length >= 2 && parseMesInicioTitulo_(datas[0]) !== parseMesInicioTitulo_(datas[1])
+    ? `O arquivo cobre mais de um mês (${titulo.replace(/^Master Affiliates\s*/i,'')}). Tudo vai ser salvo em ${mesLblCurto_(mes)} — pra separar certo, exporte um mês por vez.` : '';
+  const byCanal = {};
+  for(let i=hpos+1; i<rows.length; i++){
+    const row = rows[i]; if(!row) continue;
+    const nomeAf = row[hidx['Affiliate']], account = row[hidx['Account']];
+    if(!nomeAf || account === 'Total') continue;
+    const key = canalDoNome_(normName(nomeAf)); if(!key) continue;
+    if(!byCanal[key]) byCanal[key] = {orders:0, gross:0, net:0, refunds:0, taxes:0};
+    const r = byCanal[key];
+    r.orders += Number(row[hidx['Orders (FE+BE)']])||0; r.gross += Number(row[hidx['Gross Sales']])||0;
+    r.net += Number(row[hidx['Net Sales']])||0; r.refunds += Number(row[hidx['Total CBs & Refunds']])||0; r.taxes += Number(row[hidx['Taxes']])||0;
+  }
+  const keys = Object.keys(byCanal);
+  if(!keys.length) return {erro: 'O arquivo é um Master Affiliates, mas não tem nenhuma linha de parceiro (Helpgrid, Sales Bound, iSellForU, Gestor 5/3, NuYu).'};
+  const registros = {};
+  keys.forEach(k => { const r = byCanal[k]; registros[k] = {[mes]: {orders: r.orders, gross: Math.round(r.gross*100)/100, net: Math.round(r.net*100)/100, refunds: Math.round(r.refunds*100)/100, taxes: Math.round(r.taxes*100)/100}}; });
+  return {tipo:'master', tipoLbl:'Master Affiliates', arquivo: nome, aviso, registros,
+    linhas: keys.map(k => ({key: k, mes, antes: ((canalMensal[k]||{})[mes]||{}).gross ?? null, depois: registros[k][mes].gross}))};
+}
+function parseSalesbound_(wb, nome){
+  const dashName = wb.SheetNames.find(n => /dashboard/i.test(n)) || wb.SheetNames[0];
+  const detName = wb.SheetNames.find(n => /detalhamento/i.test(n));
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[dashName], {header:1, raw:true, defval:null});
+  const tituloBruto = rows.slice(0,3).map(r => (r||[]).map(c => c==null?'':String(c)).join(' ')).join(' ');
+  const ano = (tituloBruto.match(/(\d{4})/) || [])[1] || String(new Date().getFullYear());
+  const achado = acharColuna_(rows, 'Mês', 'Gross Sales');
+  if(!achado) return {erro: 'Não achei o cabeçalho "Mês | Gross Sales" na aba Dashboard.'};
+  const {linha: hpos, coluna: c0} = achado;
+  const porMes = {};
+  for(let i=hpos+1; i<rows.length; i++){
+    const row = rows[i]; if(!row || !row[c0]) continue;
+    const m = String(row[c0]).trim().match(/^([A-Za-z]{3})/); if(!m) break;
+    const mesNum = MES_ABBR_[m[1].toLowerCase()]; if(!mesNum) break;
+    const mk = `${ano}-${String(mesNum).padStart(2,'0')}`;
+    porMes[mk] = {gross: Math.round((Number(row[c0+1])||0)*100)/100, refunds: Math.round(Math.abs(Number(row[c0+2])||0)*100)/100, net: Math.round((Number(row[c0+7])||0)*100)/100, taxes: 0, orders: 0};
+  }
+  if(detName && wb.Sheets[detName]){
+    const det = XLSX.utils.sheet_to_json(wb.Sheets[detName], {header:1, raw:true, defval:null});
+    const a = acharColuna_(det, 'Mês', 'Agente');
+    if(a){ const dc0 = a.coluna; det.forEach(row => {
+      if(!row || !row[dc0] || !row[dc0+1]) return;
+      const m = String(row[dc0]).trim().match(/^([A-Za-z]{3})/); if(!m) return;
+      const mesNum = MES_ABBR_[m[1].toLowerCase()]; if(!mesNum) return;
+      const mk = `${ano}-${String(mesNum).padStart(2,'0')}`;
+      if(porMes[mk]) porMes[mk].orders += Number(row[dc0+3])||0;
+    }); }
+  }
+  const meses = Object.keys(porMes).sort();
+  if(!meses.length) return {erro: 'Não encontrei nenhum mês na aba Dashboard.'};
+  return {tipo:'financial_performance', tipoLbl:'Salesbound Financial Performance', arquivo: nome, aviso: '', registros: {welcome_salesbound: porMes},
+    linhas: meses.map(mk => ({key:'welcome_salesbound', mes: mk, antes: ((canalMensal.welcome_salesbound||{})[mk]||{}).gross ?? null, depois: porMes[mk].gross}))};
+}
+async function confirmarImport_(){
+  const p = impPending; if(!p) return;
+  const batch = [];
+  Object.keys(p.registros).forEach(key => {
+    if(!canalMensal[key]) canalMensal[key] = {};
+    Object.keys(p.registros[key]).forEach(mk => {
+      canalMensal[key][mk] = p.registros[key][mk];
+      batch.push(Object.assign({canal: key, mes: mk.replace('-','_')}, p.registros[key][mk]));
+    });
+  });
+  saveLS(LS_CANAL_MENSAL, canalMensal);
+  const parceiros = Object.keys(p.registros);
+  const mudou = p.linhas.filter(l => Math.round(l.depois - (l.antes||0)) !== 0);
+  const resumo = (mudou.length ? mudou : p.linhas).map(l => `${PMETA[l.key].nome} ${mesLblCurto_(l.mes)}: ${fmtMoney(l.depois)}`).join(' · ') + (mudou.length ? '' : ' (sem mudança)');
+  const reg = {id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), quando: new Date().toISOString(), arquivo: p.arquivo, tipo: p.tipo, tipoLbl: p.tipoLbl, parceiros: parceiros.join(','), resumo};
+  importLog.unshift(reg); saveLS('tiger_import_log_v1', importLog);
+  parceiros.forEach(k => { canalAtualizado[k] = reg.quando; });
+  closeAll(); render();
+  showToast(`Importado: ${parceiros.map(k => PMETA[k].nome).join(', ')}` + (APPS_SCRIPT_URL ? ' — sincronizando...' : ''));
+  if(APPS_SCRIPT_URL){
+    const [r1] = await Promise.all([apiPost('importCanalMensalBatch', batch), apiPost('logImport', {id: reg.id, arquivo: reg.arquivo, tipo: reg.tipoLbl, parceiros: reg.parceiros, resumo: reg.resumo})]);
+    if(r1 && r1.ok){ syncStatus='ok'; showToast('Sincronizado com Google Sheets ✓'); }
+    else { syncStatus='erro'; showToast('Salvo neste navegador, mas não sincronizou com o Sheets ainda'); }
+    renderSyncBadge();
+  }
+}
+
+// ---------- Busca rápida ----------
+function openCmd(){ $('#cmdk').classList.add('on'); $('#scrim').classList.add('on'); $('#cmdq').value=''; renderCmd_(); setTimeout(() => $('#cmdq').focus(), 20); }
+function renderCmd_(){
+  const q = $('#cmdq').value.toLowerCase(), mk = mesAtual_();
+  const ps = PKEYS.filter(k => !q || PMETA[k].nome.toLowerCase().includes(q));
+  const acts = [['Visão geral', () => go('overview')], ['Importar arquivo', openImport], ['Ver importações', () => go('imports')]].filter(a => !q || a[0].toLowerCase().includes(q));
+  $('#cmdres').innerHTML = (ps.length ? '<div class="grp">Parceiros</div>' + ps.map((k,i) => { const v = valorMes_(k, mk); return `<div class="it ${i===0?'hl':''}" data-k="${k}">${plogo_(k)}${PMETA[k].nome}<span>${v ? fmtMoney(v.gross)+' em '+mesLblCurto_(mk) : 'sem dado'}</span></div>`; }).join('') : '')
+    + (acts.length ? '<div class="grp">Ações</div>' + acts.map((a,i) => `<div class="it" data-a="${i}">${a[0]}<span></span></div>`).join('') : '');
+  $('#cmdres').querySelectorAll('[data-k]').forEach(el => el.addEventListener('click', () => { closeAll(); go('partner', el.dataset.k); }));
+  $('#cmdres').querySelectorAll('[data-a]').forEach(el => el.addEventListener('click', () => { closeAll(); acts[+el.dataset.a][1](); }));
+}
+$('#cmdq').addEventListener('input', renderCmd_);
+$('#cmdq').addEventListener('keydown', e => { if(e.key === 'Enter'){ const f = document.querySelector('#cmdres .it'); if(f) f.click(); } });
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); openCmd(); }
+  if(e.key === 'Escape') closeAll();
+});
+$('#scrim').addEventListener('click', closeAll);
+$('#sideSearch').addEventListener('click', openCmd);
+$('#topImport').addEventListener('click', openImport);
+$('#nav-overview').addEventListener('click', () => go('overview'));
+$('#nav-imports').addEventListener('click', () => go('imports'));
+
+// ---------- Tema + sincronização ----------
+function applyThemeUI_(){
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  $('#themeLbl').textContent = dark ? 'Modo claro' : 'Modo escuro';
+}
+$('#themeToggle').addEventListener('click', () => {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if(dark) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme','dark');
+  try { localStorage.setItem('tiger_theme_v1', dark ? 'light' : 'dark'); } catch(e){}
+  applyThemeUI_();
+});
+function renderSyncBadge(){
+  const el = $('#syncBadge'); if(!el) return;
+  const map = {desativado:['Sem sincronização','var(--text-3)'], pendente:['Sincronizando...','var(--amber)'], ok:['Sincronizado com Google Sheets','var(--green)'], erro:['Sem conexão — dados salvos neste navegador','var(--red)']};
+  const [txt, cor] = map[syncStatus] || map.desativado;
+  el.innerHTML = `<i style="background:${cor}"></i>${escapeHtml(txt)}`;
 }
 async function syncFromServer(){
   const j = await apiGet();
@@ -1039,21 +858,23 @@ async function syncFromServer(){
   canaisPorDia = serverCanaisToLocal(j.canaisInterno || {});
   canalLifetime = serverCanalLifetimeToLocal(j.canalLifetime || {});
   canalMensal = serverCanalMensalToLocal(j.canalMensal || {});
-  saveLS(LS_CANAIS, canaisPorDia);
-  saveLS(LS_CANAL_LIFETIME, canalLifetime);
-  saveLS(LS_CANAL_MENSAL, canalMensal);
+  canalAtualizado = {};
+  const marca = (k, iso) => { if(k && iso && String(iso) > (canalAtualizado[k]||'')) canalAtualizado[k] = String(iso); };
+  Object.values(j.canalMensal || {}).forEach(r => marca(r.canal, r.atualizado_em));
+  Object.values(j.canaisInterno || {}).forEach(r => marca(r.canal, r.atualizado_em));
+  importLog = Object.values(j.importLog || {}).map(r => ({id: r.id, quando: r.quando, arquivo: r.arquivo, tipo: r.tipo, tipoLbl: r.tipo, parceiros: r.parceiros, resumo: r.resumo}))
+    .sort((a,b) => String(b.quando).localeCompare(String(a.quando)));
+  saveLS(LS_CANAIS, canaisPorDia); saveLS(LS_CANAL_LIFETIME, canalLifetime); saveLS(LS_CANAL_MENSAL, canalMensal); saveLS('tiger_import_log_v1', importLog);
   renderSyncBadge();
   return true;
 }
-canalAtivo = 'welcome_salesbound';
-showView_();
+applyThemeUI_();
 renderSyncBadge();
-renderCanal();
+render();
 (async () => {
   if(!APPS_SCRIPT_URL) return;
   syncStatus = 'pendente'; renderSyncBadge();
-  const ok = await syncFromServer();
-  if(ok) renderCanal();
+  if(await syncFromServer()) render();
 })();
 
 </script>
