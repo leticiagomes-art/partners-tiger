@@ -342,11 +342,14 @@ const MODO_MENSAL_ = ['gestor5','gestor3','nuyu']; // canais sem dado diário co
 // ficam de fora de propósito — ela subtrai à mão.
 function liqMensal_(key, v){
   if(!v) return 0;
+  // Helpgrid: Net Sales do Master (já sem comissão, reembolso/chargeback e imposto) − COGS 10% do bruto; 52% é nosso
+  if(key === 'helpgrid') return 0.52 * ((v.net||0) - 0.10*(v.gross||0));
   return MODO_MENSAL_.includes(key) ? (v.gross||0) * (1 - 0.10 - 0.07) : (v.net||0);
 }
 function netCanal_(key, v){
   if(!v) return null;
   if(key === 'welcome_salesbound') return 0.55 * (0.9*(v.gross||0) - (v.refund||0));
+  if(key === 'helpgrid') return null; // relatório diário não traz comissão — sem como chegar no Net Líquido
   return netOf_(v);
 }
 const MESES_EN_ = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
@@ -422,9 +425,9 @@ function normName(s){
 const PMETA = {
   welcome_salesbound: {nome:'Sales Bound', cor:'#E4572E', tipo:'Welcome · call center', fonte:'Planilha Financial Performance', repasse:'55% nosso',
     formula:[['Bruto',''],['− Reembolso',''],['− COGS','10%'],['× nossa parte','55%']]},
-  helpgrid: {nome:'Helpgrid', cor:'#2E86AB', tipo:'Suporte / recuperação', fonte:'Relatório BuyGoods diário', repasse:'52% nosso',
-    formula:[['Bruto',''],['− Reembolso/chargeback',''],['− Frete',''],['− Imposto','']],
-    aviso:'O acordo é 52% do Net Líquido pra gente, mas esse split ainda não está aplicado aqui: o líquido mostrado é o bruto menos reembolso/chargeback, frete e imposto.'},
+  helpgrid: {nome:'Helpgrid', cor:'#2E86AB', tipo:'Suporte / recuperação', fonte:'Master Affiliates + relatório BuyGoods diário', repasse:'52% nosso',
+    formula:[['Net Sales (Master)',''],['− COGS','10% do bruto'],['× nossa parte','52%']],
+    aviso:'O Net Sales do Master já desconta comissão, reembolso/chargeback e imposto. O relatório diário da BuyGoods não traz comissão, então por dia e por semana só aparece o bruto — o líquido fica no mensal.'},
   gestor5: {nome:'Email', cor:'#7B61FF', tipo:'Gestor 5', fonte:'Master Affiliates', repasse:'83% do bruto',
     formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]},
   gestor3: {nome:'SMS', cor:'#1F9D55', tipo:'Gestor 3', fonte:'Master Affiliates', repasse:'83% do bruto',
@@ -441,6 +444,7 @@ let importLog = loadLS('tiger_import_log_v1', []);
 const $ = s => document.querySelector(s);
 const hojeKey_ = () => new Date().toISOString().slice(0,10);
 const mesAtual_ = () => hojeKey_().slice(0,7);
+const fmtNet_ = v => (v === null || v === undefined) ? '<span class="muted">—</span>' : fmtMoney(v);
 const fmtK_ = v => Math.abs(v) >= 1000 ? '$' + (v/1000).toFixed(Math.abs(v) >= 100000 ? 0 : 1).replace('.0','') + 'k' : fmtMoney(v);
 const temDiario_ = key => !MODO_MENSAL_.includes(key) && key !== 'welcome_salesbound';
 
@@ -448,6 +452,12 @@ const temDiario_ = key => !MODO_MENSAL_.includes(key) && key !== 'welcome_salesb
 function valorMes_(key, mk){
   const bf = (canalMensal[key] || {})[mk];
   if(MODO_MENSAL_.includes(key)) return bf ? {gross: bf.gross||0, net: liqMensal_(key, bf), orders: bf.orders||0} : null;
+  if(key === 'helpgrid'){
+    const dh = somaCanalPeriodo_(key, x => x.slice(0,7) === mk);
+    if(bf) return {gross: bf.gross||0, net: liqMensal_(key, bf), orders: bf.orders || dh.vendas};
+    if(dh.vendas > 0 || dh.gross !== 0) return {gross: dh.gross, net: null, orders: dh.vendas};
+    return null;
+  }
   const d = somaCanalPeriodo_(key, x => x.slice(0,7) === mk);
   const temD = (d.vendas > 0 || d.gross !== 0) && !(bf && (bf.gross||0) > d.gross);
   if(temD) return {gross: d.gross, net: netCanal_(key, d), orders: d.vendas};
@@ -519,7 +529,7 @@ function renderNav_(){
 
 function overview_(){
   const mk = mesAtual_(), ant = mesAnterior_(mk);
-  const tot = m => PKEYS.reduce((a,k) => { const v = valorMes_(k, m); if(v){ a.g += v.gross; a.n += v.net; a.o += v.orders; } return a; }, {g:0,n:0,o:0});
+  const tot = m => PKEYS.reduce((a,k) => { const v = valorMes_(k, m); if(v){ a.g += v.gross; a.n += v.net || 0; a.o += v.orders; } return a; }, {g:0,n:0,o:0});
   const A = tot(mk), B = tot(ant);
   const ordem = PKEYS.slice().sort((a,b) => ((valorMes_(b,mk)||{}).gross||0) - ((valorMes_(a,mk)||{}).gross||0));
   const lider = ordem[0], vl = valorMes_(lider, mk);
@@ -533,7 +543,7 @@ function overview_(){
       <td><div class="who">${plogo_(k,26)}<div><b>${PMETA[k].nome}</b><small>${PMETA[k].tipo}</small></div></div></td>
       <td class="hide-sm"><span class="tag">${PMETA[k].repasse}</span></td>
       <td class="r money num">${v ? `<b>${fmtMoney(v.gross)}</b><small>${deltaHtml_(v.gross, va && va.gross)}</small>` : '<span class="muted">—</span>'}</td>
-      <td class="r num">${v ? fmtMoney(v.net) : '<span class="muted">—</span>'}</td>
+      <td class="r num">${v ? fmtNet_(v.net) : '<span class="muted">—</span>'}</td>
       <td class="r num">${v ? v.orders : '<span class="muted">—</span>'}</td>
       <td class="r hide-sm"><div class="share"><span class="num">${share.toFixed(0)}%</span><span class="bar"><i style="width:${Math.max(0,share)}%"></i></span></div></td>
       <td>${statusPill_(k)}</td>
@@ -592,12 +602,12 @@ function partner_(key){
       ${formulaCard_(key)}`;
   }
   const mk = mesAtual_(), ant = mesAnterior_(mk);
-  const acc = meses.reduce((a,x) => { const v = valorMes_(key,x); a.g += v.gross; a.n += v.net; a.o += v.orders; return a; }, {g:0,n:0,o:0});
+  const acc = meses.reduce((a,x) => { const v = valorMes_(key,x); a.g += v.gross; a.n += v.net || 0; a.o += v.orders; return a; }, {g:0,n:0,o:0});
   const cur = valorMes_(key, mk) || {gross:0,net:0,orders:0}, pv = valorMes_(key, ant) || {gross:0,net:0,orders:0};
   const kp = `<div class="kpis k3">
       <div class="kpi"><div class="l">Acumulado · ${meses.length} ${meses.length===1?'mês':'meses'}</div><div class="v">${fmtMoney(acc.g)}</div><div class="d2"><b>${acc.o}</b> pedidos</div><div class="d"><span>${fmtMoney(acc.n)} líquido nosso</span></div></div>
-      <div class="kpi"><div class="l">Mês atual · ${mesLblCurto_(mk)}</div><div class="v">${fmtMoney(cur.gross)}</div><div class="d2"><b>${cur.orders}</b> pedidos</div><div class="d"><span>${fmtMoney(cur.net)} líquido</span>${deltaHtml_(cur.gross, pv.gross)}</div></div>
-      <div class="kpi"><div class="l">Mês anterior · ${mesLblCurto_(ant)}</div><div class="v">${fmtMoney(pv.gross)}</div><div class="d2"><b>${pv.orders}</b> pedidos</div><div class="d"><span>${fmtMoney(pv.net)} líquido</span></div></div>
+      <div class="kpi"><div class="l">Mês atual · ${mesLblCurto_(mk)}</div><div class="v">${fmtMoney(cur.gross)}</div><div class="d2"><b>${cur.orders}</b> pedidos</div><div class="d"><span>${fmtNet_(cur.net)} líquido</span>${deltaHtml_(cur.gross, pv.gross)}</div></div>
+      <div class="kpi"><div class="l">Mês anterior · ${mesLblCurto_(ant)}</div><div class="v">${fmtMoney(pv.gross)}</div><div class="d2"><b>${pv.orders}</b> pedidos</div><div class="d"><span>${fmtNet_(pv.net)} líquido</span></div></div>
     </div>`;
   const nImp = importsDe_(key).length;
   const tabs = `<div class="views">${[['visao','Visão geral'],['periodo','Por período'],['imp','Importações']].map(([k,l]) => `<button class="view ${ptab===k?'on':''}" data-ptab="${k}">${l}${k==='imp' && nImp ? `<span class="ct">${nImp}</span>` : ''}</button>`).join('')}</div>`;
@@ -626,10 +636,10 @@ function partner_(key){
         return {lbl: periodo === 'semana' ? 'Semana de ' + diaLbl_(g) : diaLbl_(g), v: {gross: s.gross, net: netCanal_(key, s), orders: s.vendas}, prev: ps ? {gross: ps.gross} : null};
       });
     }
-    const tot = linhas.reduce((a,l) => { a.g += l.v.gross; a.n += l.v.net; a.o += l.v.orders; return a; }, {g:0,n:0,o:0});
+    const tot = linhas.reduce((a,l) => { a.g += l.v.gross; a.n += l.v.net || 0; a.o += l.v.orders; return a; }, {g:0,n:0,o:0});
     body = seg + `<table><thead><tr><th>${periodo==='dia'&&diario?'Dia':periodo==='semana'&&diario?'Semana':'Mês'}</th><th class="r">Bruto</th><th class="r">Variação</th><th class="r">Líquido nosso</th><th class="r">Pedidos</th><th class="r hide-sm">Ticket médio</th></tr></thead><tbody>
-      ${linhas.map(l => `<tr><td><b style="font-weight:550">${l.lbl}</b></td><td class="r num">${fmtMoney(l.v.gross)}</td><td class="r">${l.prev ? deltaHtml_(l.v.gross, l.prev.gross) : '<span class="muted">—</span>'}</td><td class="r num">${fmtMoney(l.v.net)}</td><td class="r num">${l.v.orders}</td><td class="r num hide-sm">${l.v.orders ? fmtMoney(l.v.gross/l.v.orders) : '—'}</td></tr>`).join('')}
-      </tbody><tfoot><tr><td>Total</td><td class="r num">${fmtMoney(tot.g)}</td><td></td><td class="r num">${fmtMoney(tot.n)}</td><td class="r num">${tot.o}</td><td class="r num hide-sm">${tot.o ? fmtMoney(tot.g/tot.o) : '—'}</td></tr></tfoot></table>`;
+      ${linhas.map(l => `<tr><td><b style="font-weight:550">${l.lbl}</b></td><td class="r num">${fmtMoney(l.v.gross)}</td><td class="r">${l.prev ? deltaHtml_(l.v.gross, l.prev.gross) : '<span class="muted">—</span>'}</td><td class="r num">${fmtNet_(l.v.net)}</td><td class="r num">${l.v.orders}</td><td class="r num hide-sm">${l.v.orders ? fmtMoney(l.v.gross/l.v.orders) : '—'}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td>Total</td><td class="r num">${fmtMoney(tot.g)}</td><td></td><td class="r num">${linhas.every(l => l.v.net === null || l.v.net === undefined) ? '<span class="muted">—</span>' : fmtMoney(tot.n)}</td><td class="r num">${tot.o}</td><td class="r num hide-sm">${tot.o ? fmtMoney(tot.g/tot.o) : '—'}</td></tr></tfoot></table>`;
   } else {
     body = `<div class="pad" style="padding-top:16px">${timelineImports_(importsDe_(key))}</div>`;
   }
