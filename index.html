@@ -187,6 +187,27 @@ tfoot td{font-weight:600;border-bottom:0;background:var(--bg-sub)}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:500;box-shadow:var(--shadow);opacity:0;transition:.2s;pointer-events:none;z-index:40}
 .toast.show{opacity:1}
 .sync{cursor:default}
+
+.vd-wrap{overflow-x:auto}
+table.vd thead th{position:static}
+table.vd th:first-child, table.vd td:first-child{position:sticky;left:0;background:var(--bg);z-index:1;min-width:150px}
+table.vd td{height:auto;padding-top:8px;padding-bottom:8px}
+.vd-c{white-space:nowrap;line-height:1.25}
+.vd-n{display:block;font-weight:600;font-variant-numeric:tabular-nums}
+.vd-g{display:block;font-size:12px;color:var(--text-2);font-variant-numeric:tabular-nums}
+.vd-r{display:block;font-size:11.5px;color:var(--red);font-variant-numeric:tabular-nums}
+.vd-tot{background:var(--bg-sub)}
+.vd-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 24px 0}
+table.mini th{position:static;padding:7px 8px}
+table.mini td{height:38px;padding:0 8px}
+table.mini td:first-child, table.mini th:first-child{padding-left:0}
+table.mini td:last-child, table.mini th:last-child{padding-right:0}
+.views .view .plogo{width:16px;height:16px;font-size:8.5px}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.mgrid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-3);font-weight:500}
+.mgrid input,.mgrid select{height:34px;border:1px solid var(--line-strong);border-radius:8px;padding:0 10px;font:inherit;font-size:13px;background:var(--bg);color:var(--text)}
+.mgrid input:focus,.mgrid select:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+@media (max-width:900px){.vd-grid{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}}
 </style>
 <script>
   (function(){
@@ -204,6 +225,7 @@ tfoot td{font-weight:600;border-bottom:0;background:var(--bg-sub)}
     <div class="ws"><div class="logo">T</div><div><b>Tiger Offers</b><small>Parceiros</small></div></div>
     <div class="side-search" id="sideSearch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar<kbd>Ctrl K</kbd></div>
     <button class="nav" id="nav-overview"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Visão geral</button>
+    <button class="nav" id="nav-vendas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></svg>Vendas por dia</button>
     <button class="nav" id="nav-imports"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importações<span class="ct" id="ct-imp"></span></button>
     <div class="sec">Parceiros</div>
     <div id="navPartners"></div>
@@ -402,10 +424,10 @@ function mesAnterior_(monthKey){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
 }
 function canalAllDays_(key){
-  return Object.keys(canaisPorDia[key] || {}).sort();
+  return Object.keys(diasFonte_(key)).sort();
 }
 function somaCanalPeriodo_(key, filtro){
-  const dados = canaisPorDia[key] || {};
+  const dados = diasFonte_(key);
   const acc = {vendas:0, gross:0, refund:0, chargeback:0, shipping:0, taxes:0};
   Object.keys(dados).forEach(dayKey => {
     if(!filtro(dayKey)) return;
@@ -421,20 +443,362 @@ function normName(s){
     .replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
 }
 
+// ================= Vendas por dia (relatório diário por parceiro/conta/produto) =================
+// parceirosDia[canal][dia] = {c: {conta: {v, i, g, r, cb, p: {produto: [vendas, bruto]}}}}
+//   v = vendas (pedido frontal), i = itens (todo neworder), g = bruto, r = reembolso, cb = chargeback
+// "dia" é o dia do relatório BuyGoods (o arquivo diário traz as vendas do dia + os reembolsos
+// processados naquele dia), então reimportar um arquivo só substitui aquele dia — nunca mistura.
+let parceirosDia = loadLS('tiger_parceiros_dia_v1', {});
+let diasRelatorio = loadLS('tiger_dias_relatorio_v1', []); // dias com relatório BuyGoods importado
+const CANAIS_BUYGOODS_ = ['helpgrid','gestor5','gestor3']; // sempre aparecem no relatório quando vendem
+const LEGADO_OK_ = ['welcome_salesbound']; // dado diário antigo confiável (lançado à mão do CRM)
+
+function totConta_(x){ return {v: x.v||0, i: x.i||0, g: x.g||0, r: x.r||0, cb: x.cb||0}; }
+function totDia_(canal, dia, conta){
+  const d = ((parceirosDia[canal] || {})[dia] || {}).c || {};
+  const acc = {v:0, i:0, g:0, r:0, cb:0};
+  Object.keys(d).forEach(ct => {
+    if(conta && ct !== conta) return;
+    const t = totConta_(d[ct]); acc.v += t.v; acc.i += t.i; acc.g += t.g; acc.r += t.r; acc.cb += t.cb;
+  });
+  return acc;
+}
+function temNovo_(canal){ return Object.keys(parceirosDia[canal] || {}).length > 0; }
+// fonte diária de um parceiro, no formato antigo {vendas, gross, refund, chargeback, shipping, taxes}
+function diasFonte_(canal){
+  const out = {};
+  if(temNovo_(canal)){
+    Object.keys(parceirosDia[canal]).forEach(dia => { const t = totDia_(canal, dia); out[dia] = {vendas:t.v, gross:t.g, refund:t.r, chargeback:t.cb, shipping:0, taxes:0}; });
+    if(LEGADO_OK_.includes(canal)) Object.keys(canaisPorDia[canal] || {}).forEach(dia => { if(!out[dia]) out[dia] = canaisPorDia[canal][dia]; });
+    return out;
+  }
+  return canaisPorDia[canal] || {};
+}
+function contasDo_(canal, filtroDia){
+  const set = new Set();
+  Object.keys(parceirosDia[canal] || {}).forEach(dia => { if(!filtroDia || filtroDia(dia)) Object.keys(parceirosDia[canal][dia].c || {}).forEach(c => set.add(c)); });
+  return Array.from(set).sort();
+}
+
+let vdParceiro = '', vdPeriodo = 'dia';
+function grupoDe_(dia){ return vdPeriodo === 'semana' ? isoWeekMonday_(dia) : vdPeriodo === 'mes' ? dia.slice(0,7) : dia; }
+function grupoLbl_(g){ return vdPeriodo === 'semana' ? 'Semana de ' + diaLbl_(g) : vdPeriodo === 'mes' ? mesLblCurto_(g) : diaLbl_(g) + ' · ' + ['dom','seg','ter','qua','qui','sex','sáb'][new Date(g+'T12:00:00').getDay()]; }
+function somaGrupo_(canal, g, conta){
+  const acc = {v:0, i:0, g:0, r:0, cb:0};
+  const fonte = conta ? null : diasFonte_(canal);
+  if(conta){
+    Object.keys(parceirosDia[canal] || {}).forEach(dia => { if(grupoDe_(dia) !== g) return; const t = totDia_(canal, dia, conta); acc.v += t.v; acc.g += t.g; acc.r += t.r; acc.cb += t.cb; });
+  } else {
+    Object.keys(fonte).forEach(dia => { if(grupoDe_(dia) !== g) return; const t = fonte[dia]; acc.v += t.vendas||0; acc.g += t.gross||0; acc.r += t.refund||0; acc.cb += t.chargeback||0; });
+  }
+  return acc;
+}
+function vendasDia_(){
+  const canais = vdParceiro ? [vdParceiro] : PKEYS.filter(k => Object.keys(diasFonte_(k)).length);
+  // colunas: parceiros (visão geral) ou contas do parceiro escolhido
+  const cols = vdParceiro
+    ? (contasDo_(vdParceiro).length ? contasDo_(vdParceiro).map(c => ({key: vdParceiro, conta: c, lbl: c})) : [{key: vdParceiro, conta: null, lbl: PMETA[vdParceiro].nome}])
+    : canais.map(k => ({key: k, conta: null, lbl: PMETA[k].nome}));
+  const todosDias = new Set(diasRelatorio);
+  canais.forEach(k => Object.keys(diasFonte_(k)).forEach(d => todosDias.add(d)));
+  const hoje = hojeKey_();
+  let grupos = Array.from(new Set(Array.from(todosDias).filter(d => d <= hoje).map(grupoDe_))).sort().reverse();
+  grupos = grupos.slice(0, vdPeriodo === 'dia' ? 21 : vdPeriodo === 'semana' ? 10 : 12);
+
+  const coberto = g => vdPeriodo !== 'dia' || diasRelatorio.includes(g);
+  const cell = (s, g, col) => {
+    if(!s.v && !s.g && !s.r && !s.cb) return coberto(g) && (col.conta || CANAIS_BUYGOODS_.includes(col.key)) ? '<span class="muted">0</span>' : '<span class="muted">—</span>';
+    return `<b class="vd-n">${s.v || (s.g ? '<span class="muted" title="Sem contagem de vendas nesse lançamento">–</span>' : 0)}</b><span class="vd-g">${fmtMoney(s.g)}</span>${s.r||s.cb ? `<span class="vd-r">−${fmtMoney(s.r+s.cb)}</span>` : ''}`;
+  };
+  const linhas = grupos.map(g => {
+    const vals = cols.map(col => somaGrupo_(col.key, g, col.conta));
+    const tot = vals.reduce((a,s) => ({v:a.v+s.v, g:a.g+s.g, r:a.r+s.r, cb:a.cb+s.cb}), {v:0,g:0,r:0,cb:0});
+    return `<tr><td><b style="font-weight:550">${grupoLbl_(g)}</b>${vdPeriodo==='dia' && !diasRelatorio.includes(g) ? ' <span class="pill neu" title="Sem relatório BuyGoods importado pra esse dia">sem relatório</span>' : ''}</td>${vals.map((s,i) => `<td class="r vd-c">${cell(s, g, cols[i])}</td>`).join('')}<td class="r vd-c vd-tot">${cell(tot, g, {key:'', conta:'x'})}</td></tr>`;
+  }).join('');
+
+  // KPIs: último dia com relatório, esta semana, este mês
+  const mk = mesAtual_(), semana = isoWeekMonday_(hoje);
+  const ultimoDia = Array.from(todosDias).filter(d => d <= hoje).sort().pop();
+  const somaFiltro = f => canais.reduce((a,k) => { const fonte = diasFonte_(k); Object.keys(fonte).forEach(d => { if(f(d)){ a.v += fonte[d].vendas||0; a.g += fonte[d].gross||0; a.r += (fonte[d].refund||0) + (fonte[d].chargeback||0); } }); return a; }, {v:0,g:0,r:0});
+  const kUlt = ultimoDia ? somaFiltro(d => d === ultimoDia) : {v:0,g:0,r:0};
+  const kSem = somaFiltro(d => isoWeekMonday_(d) === semana), kMes = somaFiltro(d => d.slice(0,7) === mk);
+  const kpi = (lab, k, nota) => `<div class="kpi"><div class="l">${lab}</div><div class="v">${k.v} <span style="font-size:13px;font-weight:500;color:var(--text-3)">vendas</span></div><div class="d2"><b>${fmtMoney(k.g)}</b> bruto</div><div class="d"><span>${k.r ? '−'+fmtMoney(k.r)+' reembolso/CB' : nota}</span></div></div>`;
+
+  // ranking por conta e por produto no mês atual
+  const porConta = {}, porProd = {};
+  canais.forEach(k => Object.keys(parceirosDia[k] || {}).forEach(dia => {
+    if(dia.slice(0,7) !== mk) return;
+    const c = parceirosDia[k][dia].c || {};
+    Object.keys(c).forEach(ct => {
+      const id = k + '|' + ct; if(!porConta[id]) porConta[id] = {k, ct, v:0, g:0, r:0};
+      porConta[id].v += c[ct].v||0; porConta[id].g += c[ct].g||0; porConta[id].r += (c[ct].r||0) + (c[ct].cb||0);
+      Object.keys(c[ct].p || {}).forEach(pr => { if(!porProd[pr]) porProd[pr] = {v:0, g:0}; porProd[pr].v += c[ct].p[pr][0]||0; porProd[pr].g += c[ct].p[pr][1]||0; });
+    });
+  }));
+  const contasArr = Object.values(porConta).sort((a,b) => b.g - a.g);
+  const totG = contasArr.reduce((a,x) => a + x.g, 0) || 1;
+  const prodArr = Object.keys(porProd).map(n => Object.assign({n}, porProd[n])).sort((a,b) => b.g - a.g).slice(0, 12);
+  const totP = prodArr.reduce((a,x) => a + x.g, 0) || 1;
+
+  // dias do mês sem relatório (até ontem)
+  const faltando = [];
+  for(let d = new Date(mk + '-01T12:00:00'); d.toISOString().slice(0,10) < hoje; d.setDate(d.getDate()+1)){
+    const dk = d.toISOString().slice(0,10); if(!diasRelatorio.includes(dk)) faltando.push(dk);
+  }
+
+  const chips = [['', 'Todos']].concat(PKEYS.map(k => [k, PMETA[k].nome]));
+  return `<div class="pad">
+    <div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1;min-width:0">
+      <h1 class="h1">Vendas por dia</h1>
+      <p class="sub">Quantidade de vendas e faturamento de cada parceiro — e de cada conta dele — dia a dia. Alimente todo dia com o relatório BuyGoods.</p>
+    </div>
+    <button class="btn" data-act="manual">Lançar dia manual</button>
+    <button class="btn" data-act="resumo">Copiar resumo da semana</button>
+    <button class="btn pri" data-act="import">Importar relatórios</button></div>
+    <div class="kpis k3">
+      ${kpi('Último dia com relatório' + (ultimoDia ? ' · ' + diaLbl_(ultimoDia) : ''), kUlt, 'sem reembolso')}
+      ${kpi('Esta semana · desde ' + diaLbl_(semana), kSem, 'sem reembolso')}
+      ${kpi('Este mês · ' + mesLblCurto_(mk), kMes, 'sem reembolso')}
+    </div>
+    ${faltando.length ? `<div class="banner" style="margin:0 0 14px"><span><b>${faltando.length} ${faltando.length===1?'dia':'dias'} de ${mesLblCurto_(mk)} sem relatório BuyGoods:</b> ${faltando.map(diaLbl_).join(', ')}</span></div>` : ''}
+  </div>
+  <div class="views">${chips.map(([k,l]) => `<button class="view ${vdParceiro===k?'on':''}" data-vdp="${k}">${k ? plogo_(k) : ''}${l}</button>`).join('')}
+    <span style="flex:1"></span>
+    <div class="seg" style="align-self:center">${[['dia','Por dia'],['semana','Por semana'],['mes','Por mês']].map(([k,l]) => `<button class="${vdPeriodo===k?'on':''}" data-vdper="${k}">${l}</button>`).join('')}</div>
+  </div>
+  ${grupos.length ? `<div class="vd-wrap"><table class="vd">
+    <thead><tr><th>${vdPeriodo==='dia'?'Dia':vdPeriodo==='semana'?'Semana':'Mês'}</th>${cols.map(c => `<th class="r">${c.conta ? escapeHtml(c.lbl) : `<span style="display:inline-flex;gap:6px;align-items:center">${plogo_(c.key)}${escapeHtml(c.lbl)}</span>`}</th>`).join('')}<th class="r">Total</th></tr></thead>
+    <tbody>${linhas}</tbody></table></div>
+    <p class="muted" style="font-size:12px;margin:8px 24px 0">Em cada célula: vendas (pedido frontal), bruto e, quando houver, reembolso/chargeback do dia. "0" = teve relatório e não vendeu; "—" = sem dado.</p>`
+  : `<div class="card" style="margin-top:16px"><div class="empty"><b>Nenhum relatório diário importado ainda</b>Selecione todos os relatórios BuyGoods do mês de uma vez — o painel separa por parceiro, conta e produto.<div style="margin-top:14px"><button class="btn pri" data-act="import">Importar relatórios</button></div></div></div>`}
+  <div class="vd-grid">
+    <div class="card" style="margin:0"><div class="card-h"><b>Por conta · ${mesLblCurto_(mk)}</b><span class="muted" style="font-size:12px">de onde vem</span></div>
+      ${contasArr.length ? `<table class="mini"><thead><tr><th>Conta</th><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">%</th></tr></thead><tbody>${contasArr.map(x => `<tr><td><div class="who">${plogo_(x.k)}<span>${escapeHtml(x.ct)}</span></div></td><td class="r num">${x.v}</td><td class="r num">${fmtMoney(x.g)}${x.r ? `<small class="down" style="display:block">−${fmtMoney(x.r)}</small>` : ''}</td><td class="r num">${(x.g/totG*100).toFixed(0)}%</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Sem relatório importado neste mês.</p>'}
+    </div>
+    <div class="card" style="margin:0"><div class="card-h"><b>Por produto · ${mesLblCurto_(mk)}</b><span class="muted" style="font-size:12px">o que está vendendo</span></div>
+      ${prodArr.length ? `<table class="mini"><thead><tr><th>Produto</th><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">%</th></tr></thead><tbody>${prodArr.map(x => `<tr><td>${escapeHtml(x.n)}</td><td class="r num">${x.v}</td><td class="r num">${fmtMoney(x.g)}</td><td class="r num">${(x.g/totP*100).toFixed(0)}%</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Sem relatório importado neste mês.</p>'}
+    </div>
+  </div>
+  <div style="height:40px"></div>`;
+}
+
+// ---------- Resumo da semana (pra mandar na segunda) ----------
+function resumoSemana_(){
+  const hoje = hojeKey_();
+  // semana fechada anterior (segunda a domingo)
+  const segAtual = isoWeekMonday_(hoje);
+  const ini = new Date(segAtual + 'T12:00:00'); ini.setDate(ini.getDate() - 7);
+  const iniK = ini.toISOString().slice(0,10);
+  const fim = new Date(ini); fim.setDate(fim.getDate() + 6); const fimK = fim.toISOString().slice(0,10);
+  const dentro = d => d >= iniK && d <= fimK;
+  const RESP = {helpgrid:'call recovery', gestor5:'Sava', gestor3:'Nicollas', welcome_salesbound:'call center', welcome_isellforu:'welcome', nuyu:'welcome'};
+  let tot = {v:0,g:0,r:0};
+  const blocos = PKEYS.map(k => {
+    const fonte = diasFonte_(k); const s = {v:0,g:0,r:0};
+    Object.keys(fonte).forEach(d => { if(dentro(d)){ s.v += fonte[d].vendas||0; s.g += fonte[d].gross||0; s.r += (fonte[d].refund||0)+(fonte[d].chargeback||0); } });
+    if(!s.v && !s.g && !s.r) return null;
+    tot.v += s.v; tot.g += s.g; tot.r += s.r;
+    const contas = contasDo_(k, dentro).map(ct => { const a = {v:0,g:0}; Object.keys(parceirosDia[k]||{}).forEach(d => { if(dentro(d)){ const t = totDia_(k, d, ct); a.v += t.v; a.g += t.g; } }); return {ct, ...a}; }).filter(x => x.v || x.g).sort((a,b) => b.g - a.g);
+    return `• ${PMETA[k].nome} (${RESP[k]}): ${s.v ? s.v + ' vendas · ' : ''}${fmtMoney(s.g)} bruto${s.r ? ' · −' + fmtMoney(s.r) + ' reembolso/CB' : ''}` +
+      (contas.length > 1 ? '\n' + contas.map(c => `   – ${c.ct}: ${c.v} vendas · ${fmtMoney(c.g)}`).join('\n') : '');
+  }).filter(Boolean);
+  const prods = {};
+  PKEYS.forEach(k => Object.keys(parceirosDia[k]||{}).forEach(d => { if(!dentro(d)) return; const c = parceirosDia[k][d].c || {}; Object.values(c).forEach(x => Object.keys(x.p||{}).forEach(p => { prods[p] = (prods[p]||0) + (x.p[p][1]||0); })); }));
+  const top = Object.keys(prods).sort((a,b) => prods[b]-prods[a]).slice(0,5).map(p => `${p} ${fmtMoney(prods[p])}`).join(' · ');
+  const faltam = []; for(let d = new Date(iniK+'T12:00:00'); d <= fim; d.setDate(d.getDate()+1)){ const dk = d.toISOString().slice(0,10); if(!diasRelatorio.includes(dk)) faltam.push(diaLbl_(dk)); }
+  return `Resumo semanal parceiros — ${diaLbl_(iniK)} a ${diaLbl_(fimK)}\n` +
+    `Total: ${tot.v} vendas · ${fmtMoney(tot.g)} bruto${tot.r ? ' · −' + fmtMoney(tot.r) + ' reembolso/CB' : ''}\n\n` +
+    (blocos.length ? blocos.join('\n') : 'Sem vendas registradas na semana.') +
+    (top ? `\n\nProdutos que mais venderam: ${top}` : '') +
+    (faltam.length ? `\n\nObs: sem relatório BuyGoods em ${faltam.join(', ')}.` : '');
+}
+function copiarResumo_(){
+  const t = resumoSemana_();
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => showToast('Resumo da semana copiado ✓')).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); showToast('Resumo da semana copiado ✓');
+  });
+}
+
+// ---------- Lançamento manual (parceiros fora da BuyGoods: Sales Bound, iSellForU, NuYu) ----------
+function openManual_(){
+  const m = $('#importModal');
+  m.innerHTML = `<div class="mh"><b>Lançar dia manual</b><span class="sp"></span><button class="icon-x" data-close aria-label="Fechar">✕</button></div>
+    <div class="mb">
+      <p class="muted" style="margin:0 0 10px;font-size:12.5px">Pra parceiros que não aparecem no relatório BuyGoods (Sales Bound, iSellForU, NuYu). Lançar de novo o mesmo dia e conta substitui o valor.</p>
+      <div class="mgrid">
+        <label>Parceiro<select id="mnCanal">${PKEYS.map(k => `<option value="${k}" ${k===(vdParceiro||'welcome_salesbound')?'selected':''}>${PMETA[k].nome}</option>`).join('')}</select></label>
+        <label>Dia<input type="date" id="mnDia" value="${new Date(Date.now()-86400000).toISOString().slice(0,10)}"></label>
+        <label>Conta / origem<input type="text" id="mnConta" value="CRM" placeholder="Ex: CRM"></label>
+        <label>Vendas<input type="number" id="mnV" min="0" step="1" value="0"></label>
+        <label>Bruto (US$)<input type="number" id="mnG" min="0" step="0.01" value="0"></label>
+        <label>Reembolso (US$)<input type="number" id="mnR" min="0" step="0.01" value="0"></label>
+      </div>
+      <div id="mnErr"></div>
+    </div>
+    <div class="mf"><button class="btn" data-close>Cancelar</button><button class="btn pri" id="mnSalvar">Salvar dia</button></div>`;
+  m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeAll));
+  m.querySelector('#mnSalvar').addEventListener('click', salvarManual_);
+  m.classList.add('on'); $('#scrim').classList.add('on');
+}
+async function salvarManual_(){
+  const canal = $('#mnCanal').value, dia = $('#mnDia').value, conta = ($('#mnConta').value || 'CRM').trim();
+  const v = Math.max(0, parseInt($('#mnV').value, 10) || 0), g = Math.max(0, parseFloat($('#mnG').value) || 0), r = Math.max(0, parseFloat($('#mnR').value) || 0);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dia)){ $('#mnErr').innerHTML = '<div class="alert-err">Escolha o dia.</div>'; return; }
+  if(!parceirosDia[canal]) parceirosDia[canal] = {};
+  // primeira vez que a Sales Bound entra no formato novo: traz junto os dias antigos lançados do CRM
+  if(LEGADO_OK_.includes(canal) && !temNovo_(canal)){
+    Object.keys(canaisPorDia[canal] || {}).forEach(d => { const x = canaisPorDia[canal][d]; parceirosDia[canal][d] = {c: {CRM: {v: x.vendas||0, i: x.vendas||0, g: x.gross||0, r: x.refund||0, cb: x.chargeback||0, p: {}}}}; });
+  }
+  if(!parceirosDia[canal][dia]) parceirosDia[canal][dia] = {c: {}};
+  parceirosDia[canal][dia].c[conta] = {v, i: v, g: Math.round(g*100)/100, r: Math.round(r*100)/100, cb: 0, p: {}};
+  const meses = new Set(Object.keys(parceirosDia[canal]).map(d => d.slice(0,7)));
+  await salvarParceirosDia_([canal], Array.from(meses), {arquivo: 'Lançamento manual', tipo: 'Lançamento manual', parceiros: [canal],
+    resumo: `${PMETA[canal].nome} ${diaLbl_(dia)} (${conta}): ${v} vendas · ${fmtMoney(g)}${r ? ' · −' + fmtMoney(r) : ''}`});
+}
+
+// ---------- Import de relatórios BuyGoods diários (vários arquivos de uma vez) ----------
+function ehRelatorioBuyGoods_(wb){
+  return wb.SheetNames.some(sn => {
+    const h = (XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, raw:true, defval:null})[0]) || [];
+    return h.includes('Affiliate Name') && h.includes('Action Type') && h.includes('Gross') && h.includes('Create Date');
+  });
+}
+function parseRelatorioBuyGoods_(wb, nome){
+  let diaArquivo = (nome.match(/(\d{4}-\d{2}-\d{2})/) || [])[1] || null;
+  const linhas = [];
+  const vistos = new Set();
+  wb.SheetNames.forEach(sn => {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, raw:true, defval:null});
+    if(!rows.length) return;
+    const hidx = {}; (rows[0] || []).forEach((h,i) => hidx[h] = i);
+    if(!('Affiliate Name' in hidx) || !('Action Type' in hidx) || !('Gross' in hidx) || !('Create Date' in hidx)) return;
+    for(let i=1; i<rows.length; i++){
+      const row = rows[i]; if(!row) continue;
+      const canc = row[hidx['Was Canceled']]; if(canc == 1 || canc === true) continue;
+      const tipo = row[hidx['Action Type']];
+      const idItem = 'Order Item Id' in hidx ? row[hidx['Order Item Id']] : null;
+      if(idItem){ const kId = idItem + '|' + tipo; if(vistos.has(kId)) continue; vistos.add(kId); }
+      linhas.push({row, hidx, sn, tipo});
+    }
+  });
+  if(!diaArquivo){
+    const cont = {};
+    linhas.forEach(l => { if(l.tipo !== 'neworder') return; const dt = new Date(l.row[l.hidx['Create Date']]); if(!isNaN(dt)) { const k = dt.toISOString().slice(0,10); cont[k] = (cont[k]||0) + 1; } });
+    diaArquivo = Object.keys(cont).sort((a,b) => cont[b]-cont[a])[0] || null;
+  }
+  if(!diaArquivo) return {erro: `Não consegui descobrir o dia do relatório "${nome}".`};
+  const out = {};
+  linhas.forEach(({row, hidx, sn, tipo}) => {
+    const nomeAf = row[hidx['Affiliate Name']]; if(!nomeAf) return;
+    const canal = canalDoNome_(normName(nomeAf)); if(!canal) return;
+    const conta = String(nomeAf).trim().replace(/\s+/g, ' ');
+    if(!out[canal]) out[canal] = {};
+    if(!out[canal][conta]) out[canal][conta] = {v:0, i:0, g:0, r:0, cb:0, p:{}};
+    const x = out[canal][conta];
+    if(tipo === 'neworder'){
+      const g = parseFloat(row[hidx['Gross']]) || 0;
+      x.i++; x.g += g;
+      const prod = sn;
+      if(!x.p[prod]) x.p[prod] = [0, 0];
+      x.p[prod][1] += g;
+      if(isFrontal_(row, hidx)){ x.v++; x.p[prod][0]++; }
+    } else if(tipo === 'refund'){
+      x.r += parseFloat(row[hidx['Refund Amount']]) || 0;
+    } else if(tipo === 'chargeback'){
+      x.cb += parseFloat(row[hidx['Chargeback Amount']]) || 0;
+    }
+  });
+  Object.values(out).forEach(cs => Object.values(cs).forEach(x => { x.g = Math.round(x.g*100)/100; x.r = Math.round(x.r*100)/100; x.cb = Math.round(x.cb*100)/100; Object.values(x.p).forEach(p => p[1] = Math.round(p[1]*100)/100); }));
+  return {dia: diaArquivo, canais: out, arquivo: nome};
+}
+function isFrontal_(row, hidx){
+  if(!('Product Codename' in hidx)) return true;
+  const code = String(row[hidx['Product Codename']] || '').trim().toLowerCase();
+  if(!code) return true;
+  if(/^shi/.test(code)) return false;
+  if(/up\d/.test(code)) return false;
+  if(/dw\d/.test(code)) return false;
+  return true;
+}
+function montarPendenteBuyGoods_(relatorios){
+  const porDia = {};
+  relatorios.sort((a,b) => a.arquivo.localeCompare(b.arquivo)).forEach(r => { porDia[r.dia] = r; }); // mesmo dia 2x: fica o último
+  const dias = Object.keys(porDia).sort();
+  const linhas = [];
+  dias.forEach(dia => {
+    const cs = porDia[dia].canais;
+    const canais = new Set(CANAIS_BUYGOODS_.concat(Object.keys(cs)));
+    canais.forEach(k => {
+      const novo = Object.values(cs[k] || {}).reduce((a,x) => ({v: a.v + x.v, g: a.g + x.g}), {v:0, g:0});
+      const antes = (parceirosDia[k] || {})[dia] ? totDia_(k, dia) : null;
+      linhas.push({k, dia, novo, antes});
+    });
+  });
+  return {tipo: 'buygoods', tipoLbl: 'Relatório BuyGoods diário', arquivo: dias.length === 1 ? porDia[dias[0]].arquivo : `${relatorios.length} arquivos`, porDia, dias, linhasBG: linhas};
+}
+async function confirmarBuyGoods_(p){
+  const canaisTocados = new Set(), mesesTocados = new Set();
+  p.dias.forEach(dia => {
+    const cs = p.porDia[dia].canais;
+    new Set(CANAIS_BUYGOODS_.concat(Object.keys(cs))).forEach(k => {
+      if(!parceirosDia[k]) parceirosDia[k] = {};
+      parceirosDia[k][dia] = {c: cs[k] || {}};
+      canaisTocados.add(k);
+    });
+    if(!diasRelatorio.includes(dia)) diasRelatorio.push(dia);
+    mesesTocados.add(dia.slice(0,7));
+  });
+  diasRelatorio.sort();
+  const tot = p.linhasBG.reduce((a,l) => ({v: a.v + l.novo.v, g: a.g + l.novo.g}), {v:0, g:0});
+  const faixa = p.dias.length > 1 ? `${diaLbl_(p.dias[0])} a ${diaLbl_(p.dias[p.dias.length-1])}` : diaLbl_(p.dias[0]);
+  await salvarParceirosDia_(Array.from(canaisTocados), Array.from(mesesTocados), {arquivo: p.arquivo, tipo: 'Relatório BuyGoods diário', parceiros: Array.from(canaisTocados).filter(k => p.linhasBG.some(l => l.k === k && (l.novo.v || l.novo.g))),
+    resumo: `${p.dias.length} ${p.dias.length===1?'dia':'dias'} (${faixa}): ${tot.v} vendas · ${fmtMoney(tot.g)} bruto nos parceiros`}, true);
+}
+async function salvarParceirosDia_(canais, meses, log, incluiDias){
+  saveLS('tiger_parceiros_dia_v1', parceirosDia); saveLS('tiger_dias_relatorio_v1', diasRelatorio);
+  const reg = {id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), quando: new Date().toISOString(), arquivo: log.arquivo, tipo: log.tipo, tipoLbl: log.tipo, parceiros: log.parceiros.join(','), resumo: log.resumo};
+  importLog.unshift(reg); saveLS('tiger_import_log_v1', importLog);
+  log.parceiros.forEach(k => { canalAtualizado[k] = reg.quando; });
+  closeAll(); render();
+  showToast('Salvo' + (APPS_SCRIPT_URL ? ' — sincronizando...' : ''));
+  if(!APPS_SCRIPT_URL) return;
+  const batch = [];
+  canais.forEach(k => meses.forEach(mk => {
+    const dados = {}; Object.keys(parceirosDia[k] || {}).forEach(d => { if(d.slice(0,7) === mk) dados[d] = parceirosDia[k][d]; });
+    batch.push({id: k + '__' + mk.replace('-','_'), canal: k, mes: mk.replace('-','_'), dados_json: JSON.stringify(dados)});
+  }));
+  if(incluiDias) meses.forEach(mk => batch.push({id: '__dias__' + mk.replace('-','_'), canal: '__dias', mes: mk.replace('-','_'), dados_json: JSON.stringify(diasRelatorio.filter(d => d.slice(0,7) === mk))}));
+  const [r1] = await Promise.all([apiPost('importParceirosDiaBatch', batch), apiPost('logImport', {id: reg.id, arquivo: reg.arquivo, tipo: reg.tipo, parceiros: reg.parceiros, resumo: reg.resumo})]);
+  if(r1 && r1.ok){ syncStatus = 'ok'; showToast('Sincronizado com Google Sheets ✓'); }
+  else { syncStatus = 'erro'; showToast('Salvo neste navegador, mas não sincronizou com o Sheets ainda'); }
+  renderSyncBadge();
+}
+function parceirosDiaDoServidor_(obj){
+  const pd = {}, dias = new Set();
+  Object.values(obj || {}).forEach(r => {
+    let dados; try { dados = JSON.parse(r.dados_json || '{}'); } catch(e){ return; }
+    if(r.canal === '__dias'){ (Array.isArray(dados) ? dados : []).forEach(d => dias.add(d)); return; }
+    if(!r.canal) return;
+    if(!pd[r.canal]) pd[r.canal] = {};
+    Object.assign(pd[r.canal], dados);
+  });
+  return {pd, dias: Array.from(dias).sort()};
+}
+
 // ================= Painel de parceiros (layout Attio) =================
 const PMETA = {
   welcome_salesbound: {nome:'Sales Bound', cor:'#E4572E', tipo:'Welcome · call center', fonte:'Planilha Financial Performance', repasse:'55% nosso',
     formula:[['Bruto',''],['− Reembolso',''],['− COGS','10%'],['× nossa parte','55%']]},
-  helpgrid: {nome:'Helpgrid', cor:'#2E86AB', tipo:'Suporte / recuperação', fonte:'Master Affiliates + relatório BuyGoods diário', repasse:'52% nosso',
+  helpgrid: {nome:'Helpgrid', cor:'#2E86AB', tipo:'Call recovery', fonte:'Relatório BuyGoods diário + Master Affiliates', repasse:'52% nosso',
     formula:[['Net Sales (Master)',''],['− COGS','10% do bruto'],['× nossa parte','52%']],
     aviso:'O Net Sales do Master já desconta comissão, reembolso/chargeback e imposto. O relatório diário da BuyGoods não traz comissão, então por dia e por semana só aparece o bruto — o líquido fica no mensal.'},
-  gestor5: {nome:'Email', cor:'#7B61FF', tipo:'Gestor 5', fonte:'Master Affiliates', repasse:'83% do bruto',
+  gestor5: {nome:'Email', cor:'#7B61FF', tipo:'Email · Sava (Gestor 5)', fonte:'Master Affiliates', repasse:'83% do bruto',
     formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]},
-  gestor3: {nome:'SMS', cor:'#1F9D55', tipo:'Gestor 3', fonte:'Master Affiliates', repasse:'83% do bruto',
+  gestor3: {nome:'SMS', cor:'#1F9D55', tipo:'SMS · Nicollas (Gestor 3)', fonte:'Master Affiliates', repasse:'83% do bruto',
     formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]},
-  welcome_isellforu: {nome:'iSellForU', cor:'#D97706', tipo:'Welcome · call center', fonte:'Relatório BuyGoods diário', repasse:'a definir',
+  welcome_isellforu: {nome:'iSellForU', cor:'#D97706', tipo:'Welcome', fonte:'Lançamento manual', repasse:'a definir',
     formula:[['Bruto',''],['− Reembolso/chargeback',''],['− Frete',''],['− Imposto','']]},
-  nuyu: {nome:'NuYu', cor:'#C2185B', tipo:'Parceiro novo', fonte:'Master Affiliates', repasse:'83% do bruto',
+  nuyu: {nome:'NuYu', cor:'#C2185B', tipo:'Welcome', fonte:'Master Affiliates / lançamento manual', repasse:'83% do bruto',
     formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]}
 };
 const PKEYS = ['welcome_salesbound','helpgrid','gestor5','gestor3','welcome_isellforu','nuyu'];
@@ -524,6 +888,7 @@ function renderNav_(){
   $('#navPartners').querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => go('partner', b.dataset.go)));
   $('#nav-overview').classList.toggle('on', route.page==='overview');
   $('#nav-imports').classList.toggle('on', route.page==='imports');
+  $('#nav-vendas').classList.toggle('on', route.page==='vendas');
   $('#ct-imp').textContent = importLog.length || '';
 }
 
@@ -655,14 +1020,18 @@ function imports_(){
 function render(){
   renderNav_();
   const k = route.page === 'partner' ? route.key : null;
-  $('#crumb').innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><a data-go-over>Parceiros</a><span>/</span><b>${k ? PMETA[k].nome : route.page==='imports' ? 'Importações' : 'Visão geral'}</b>`;
-  $('#page').innerHTML = k ? partner_(k) : route.page === 'imports' ? imports_() : overview_();
+  $('#crumb').innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><a data-go-over>Parceiros</a><span>/</span><b>${k ? PMETA[k].nome : route.page==='imports' ? 'Importações' : route.page==='vendas' ? 'Vendas por dia' : 'Visão geral'}</b>`;
+  $('#page').innerHTML = k ? partner_(k) : route.page === 'imports' ? imports_() : route.page === 'vendas' ? vendasDia_() : overview_();
   const pg = $('#page');
   pg.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => go('partner', el.dataset.go)));
   pg.querySelectorAll('[data-metric]').forEach(el => el.addEventListener('click', () => { metric = el.dataset.metric; render(); }));
   pg.querySelectorAll('[data-ptab]').forEach(el => el.addEventListener('click', () => { ptab = el.dataset.ptab; render(); }));
   pg.querySelectorAll('[data-per]').forEach(el => el.addEventListener('click', () => { periodo = el.dataset.per; render(); }));
   pg.querySelectorAll('[data-act="import"]').forEach(el => el.addEventListener('click', openImport));
+  pg.querySelectorAll('[data-act="manual"]').forEach(el => el.addEventListener('click', openManual_));
+  pg.querySelectorAll('[data-act="resumo"]').forEach(el => el.addEventListener('click', copiarResumo_));
+  pg.querySelectorAll('[data-vdp]').forEach(el => el.addEventListener('click', () => { vdParceiro = el.dataset.vdp; render(); }));
+  pg.querySelectorAll('[data-vdper]').forEach(el => el.addEventListener('click', () => { vdPeriodo = el.dataset.vdper; render(); }));
   const over = $('#crumb [data-go-over]'); if(over) over.addEventListener('click', () => go('overview'));
 }
 
@@ -674,18 +1043,31 @@ function openImport(){
   $('#importModal').classList.add('on'); $('#scrim').classList.add('on');
 }
 function closeAll(){ $('#importModal').classList.remove('on'); $('#cmdk').classList.remove('on'); $('#scrim').classList.remove('on'); }
-function renderImport_(erro){
+function renderImport_(erro, lendo){
   const p = impPending;
   let corpo;
-  if(!p){
-    corpo = `<label class="drop" id="dropZone"><input type="file" id="impFile" accept=".xls,.xlsx" hidden>
+  if(lendo){
+    corpo = `<div class="empty" style="padding:30px">${escapeHtml(lendo)}</div>`;
+  } else if(p && p.tipo === 'buygoods'){
+    const porParceiro = {};
+    p.linhasBG.forEach(l => { if(!porParceiro[l.k]) porParceiro[l.k] = {v:0, g:0, dias:0}; porParceiro[l.k].v += l.novo.v; porParceiro[l.k].g += l.novo.g; if(l.antes) porParceiro[l.k].dias++; });
+    const faixa = p.dias.length > 1 ? `${diaLbl_(p.dias[0])} a ${diaLbl_(p.dias[p.dias.length-1])}` : diaLbl_(p.dias[0]);
+    const jaTinha = p.dias.filter(d => diasRelatorio.includes(d));
+    corpo = `<div class="det"><span class="pill ok"><i></i>${escapeHtml(p.tipoLbl)}</span><span class="tag">${p.dias.length} ${p.dias.length===1?'dia':'dias'} · ${faixa}</span></div>
+      ${jaTinha.length ? `<div class="alert-warn">${jaTinha.length} desses dias já tinham relatório (${jaTinha.map(diaLbl_).join(', ')}) — vão ser substituídos por estes arquivos.</div>` : ''}
+      <div class="preview"><table><thead><tr><th>Parceiro</th><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">Contas</th></tr></thead><tbody>
+      ${Object.keys(porParceiro).map(k => { const contas = new Set(); p.dias.forEach(d => Object.keys((p.porDia[d].canais[k]) || {}).forEach(c => contas.add(c))); return `<tr><td><div class="who">${plogo_(k)}<span>${PMETA[k].nome}</span></div></td><td class="r num">${porParceiro[k].v}</td><td class="r num"><b style="font-weight:600">${fmtMoney(porParceiro[k].g)}</b></td><td class="r" style="white-space:normal;font-size:12px;color:var(--text-2)">${contas.size ? Array.from(contas).map(escapeHtml).join(', ') : '<span class="muted">sem venda</span>'}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Cada arquivo vira um dia (o dia do relatório). Nada muda até você confirmar.</p>`;
+  } else if(!p){
+    corpo = `<label class="drop" id="dropZone"><input type="file" id="impFile" accept=".xls,.xlsx" multiple hidden>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-        <b>Arraste o arquivo aqui</b>ou clique pra escolher — o tipo é reconhecido sozinho</label>
+        <b>Arraste os arquivos aqui</b>ou clique pra escolher — o tipo é reconhecido sozinho, e dá pra mandar vários relatórios diários de uma vez</label>
       ${erro ? `<div class="alert-err">${escapeHtml(erro)}</div>` : ''}
       <div class="opt-list">
         <div class="opt"><b>Master Affiliates (.xls)</b><small>Email, SMS, NuYu, Helpgrid, iSellForU — total do mês por parceiro (exporte do dia 1 até hoje)</small></div>
         <div class="opt"><b>Salesbound Financial Performance (.xlsx)</b><small>Sales Bound — meses completos com o split 55/45</small></div>
-        <div class="opt muted-opt"><b>Relatório BuyGoods diário</b><small>Helpgrid e iSellForU dia a dia — esse continua sendo importado no painel de afiliados</small></div>
+        <div class="opt"><b>Relatório BuyGoods diário (.xlsx)</b><small>Helpgrid, Email e SMS dia a dia, por conta e produto — selecione todos os dias do mês de uma vez</small></div>
       </div>`;
   } else {
     corpo = `<div class="det"><span class="pill ok"><i></i>${escapeHtml(p.tipoLbl)}</span><span class="tag">${escapeHtml(p.arquivo)}</span></div>
@@ -701,15 +1083,37 @@ function renderImport_(erro){
   const m = $('#importModal');
   m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeAll));
   const back = m.querySelector('[data-back]'); if(back) back.addEventListener('click', () => { impPending = null; renderImport_(); });
-  const conf = m.querySelector('[data-confirm]'); if(conf) conf.addEventListener('click', confirmarImport_);
+  const conf = m.querySelector('[data-confirm]'); if(conf) conf.addEventListener('click', () => { if(impPending && impPending.tipo === 'buygoods') confirmarBuyGoods_(impPending); else confirmarImport_(); });
   const inp = m.querySelector('#impFile');
   if(inp){
-    inp.addEventListener('change', ev => { if(ev.target.files[0]) lerArquivo_(ev.target.files[0]); });
+    inp.addEventListener('change', ev => { if(ev.target.files.length) lerArquivos_(Array.from(ev.target.files)); });
     const dz = m.querySelector('#dropZone');
     dz.addEventListener('dragover', ev => { ev.preventDefault(); dz.classList.add('over'); });
     dz.addEventListener('dragleave', () => dz.classList.remove('over'));
-    dz.addEventListener('drop', ev => { ev.preventDefault(); dz.classList.remove('over'); if(ev.dataTransfer.files[0]) lerArquivo_(ev.dataTransfer.files[0]); });
+    dz.addEventListener('drop', ev => { ev.preventDefault(); dz.classList.remove('over'); if(ev.dataTransfer.files.length) lerArquivos_(Array.from(ev.dataTransfer.files)); });
   }
+}
+function lerArquivos_(files){
+  impPending = null;
+  renderImport_(null, `Lendo ${files.length} ${files.length===1?'arquivo':'arquivos'}…`);
+  Promise.all(files.map(f => new Promise(res => {
+    const reader = new FileReader();
+    reader.onload = e => { try { res({f, wb: XLSX.read(e.target.result, {type:'binary', cellDates:false})}); } catch(err){ res({f, erro: true}); } };
+    reader.readAsBinaryString(f);
+  }))).then(lidos => {
+    const ruins = lidos.filter(x => x.erro);
+    if(ruins.length){ renderImport_(`Não consegui ler: ${ruins.map(x => x.f.name).join(', ')}. Precisa ser .xls ou .xlsx.`); return; }
+    const bg = lidos.filter(x => ehRelatorioBuyGoods_(x.wb));
+    if(bg.length && bg.length === lidos.length){
+      const rel = bg.map(x => parseRelatorioBuyGoods_(x.wb, x.f.name));
+      const erro = rel.find(r => r.erro); if(erro){ renderImport_(erro.erro); return; }
+      impPending = montarPendenteBuyGoods_(rel); renderImport_(); return;
+    }
+    if(lidos.length > 1){ renderImport_('Vários arquivos de uma vez só funciona pra relatórios BuyGoods diários. Master Affiliates e Financial Performance vão um por vez.'); return; }
+    const r = detectarEParsear_(lidos[0].wb, lidos[0].f.name);
+    if(r.erro){ renderImport_(r.erro); return; }
+    impPending = r; renderImport_();
+  });
 }
 function lerArquivo_(file){
   const reader = new FileReader();
@@ -844,6 +1248,7 @@ $('#sideSearch').addEventListener('click', openCmd);
 $('#topImport').addEventListener('click', openImport);
 $('#nav-overview').addEventListener('click', () => go('overview'));
 $('#nav-imports').addEventListener('click', () => go('imports'));
+$('#nav-vendas').addEventListener('click', () => go('vendas'));
 
 // ---------- Tema + sincronização ----------
 function applyThemeUI_(){
@@ -872,6 +1277,10 @@ async function syncFromServer(){
   const marca = (k, iso) => { if(k && iso && String(iso) > (canalAtualizado[k]||'')) canalAtualizado[k] = String(iso); };
   Object.values(j.canalMensal || {}).forEach(r => marca(r.canal, r.atualizado_em));
   Object.values(j.canaisInterno || {}).forEach(r => marca(r.canal, r.atualizado_em));
+  const pdi = parceirosDiaDoServidor_(j.parceirosDia);
+  if(Object.keys(pdi.pd).length || pdi.dias.length){ parceirosDia = pdi.pd; diasRelatorio = pdi.dias; }
+  Object.values(j.parceirosDia || {}).forEach(r => { if(r.canal !== '__dias') marca(r.canal, r.atualizado_em); });
+  saveLS('tiger_parceiros_dia_v1', parceirosDia); saveLS('tiger_dias_relatorio_v1', diasRelatorio);
   importLog = Object.values(j.importLog || {}).map(r => ({id: r.id, quando: r.quando, arquivo: r.arquivo, tipo: r.tipo, tipoLbl: r.tipo, parceiros: r.parceiros, resumo: r.resumo}))
     .sort((a,b) => String(b.quando).localeCompare(String(a.quando)));
   saveLS(LS_CANAIS, canaisPorDia); saveLS(LS_CANAL_LIFETIME, canalLifetime); saveLS(LS_CANAL_MENSAL, canalMensal); saveLS('tiger_import_log_v1', importLog);
