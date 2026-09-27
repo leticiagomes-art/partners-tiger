@@ -210,6 +210,11 @@ table.mini td:last-child, table.mini th:last-child{padding-right:0}
 @media (max-width:900px){.vd-grid{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}}
 .custo-in{width:110px;height:30px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font:inherit;font-size:13px;text-align:right;background:var(--bg);color:var(--text)}
 .custo-in:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.dre td{height:34px}
+.dre td:first-child{color:var(--text-2)}
+.dre tr.dre-sub td{font-weight:600;color:var(--text);border-top:1px solid var(--line-strong)}
+.dre tr.dre-final td{font-weight:700;color:var(--text);background:var(--bg-sub);border-top:1px solid var(--line-strong)}
+.dre tr.dre-final td.down, .dre tr.dre-sub td.down{color:var(--red)}
 </style>
 <script>
   (function(){
@@ -364,11 +369,31 @@ function netOf_(v){
 const MODO_MENSAL_ = ['gestor5','gestor3','nuyu']; // canais sem dado diário confiável: painel só mensal, alimentado pelo Master Affiliates
 // Email/SMS: líquido = bruto − 10% COGS − 7% BuyGoods. Outros custos (comissão, reembolso etc.)
 // ficam de fora de propósito — ela subtrai à mão.
-const CUSTO_CANAIS_ = ['gestor3']; // parceiros com custo do mês lançado à mão (ex: disparo de SMS)
+const CUSTO_CANAIS_ = ['gestor3','gestor5']; // parceiros com custo do mês lançado à mão
+const CUSTO_LABEL_ = {gestor3: 'Custo do disparo', gestor5: 'AWeber'};
+const SAVA_FIXO_ = 6800, SAVA_VARIAVEL_ = 0.07;
+// demonstrativo linha a linha — a mesma conta que o líquido usa
+function dre_(key, v){
+  const g = (v && v.gross) || 0, refunds = (v && v.refunds) || 0, custo = (v && v.custo) || 0;
+  const L = [['Faturamento', g, 'gross']];
+  L.push(['(−) COGS 10%', -g*0.10]); L.push(['(−) Taxa BG 7%', -g*0.07]);
+  if(key === 'gestor5'){
+    L.push(['(−) ' + CUSTO_LABEL_[key], -custo, 'custo']); L.push(['(−) Refunds', -refunds]);
+    const sub = g*0.83 - custo - refunds; L.push(['= Subtotal', sub, 'sub']);
+    L.push(['(−) Sava fixo', -SAVA_FIXO_]);
+    const pre = sub - SAVA_FIXO_; L.push(['= Líquido pré-variável', pre, 'sub']);
+    const varv = pre > 0 ? pre * SAVA_VARIAVEL_ : 0; L.push(['(−) Sava variável 7%', -varv]);
+    L.push(['= Lucro líquido final', pre - varv, 'final']);
+  } else {
+    L.push(['(−) Refunds', -refunds]); L.push(['(−) ' + CUSTO_LABEL_[key], -custo, 'custo']);
+    L.push(['= Líquido de fato', g*0.83 - refunds - custo, 'final']);
+  }
+  return L;
+}
 function liqMensal_(key, v){
   if(!v) return 0;
   // SMS: bruto − COGS 10% − BuyGoods 7% − reembolso/chargeback − custo do mês
-  if(key === 'gestor3') return (v.gross||0) * (1 - 0.10 - 0.07) - (v.refunds||0) - (v.custo||0);
+  if(key === 'gestor3' || key === 'gestor5'){ const L = dre_(key, v); return L[L.length-1][1]; }
   // Helpgrid: Net Sales do Master (já sem comissão, reembolso/chargeback e imposto) − COGS 10% do bruto; 52% é nosso
   if(key === 'helpgrid') return 0.52 * ((v.net||0) - 0.10*(v.gross||0));
   return MODO_MENSAL_.includes(key) ? (v.gross||0) * (1 - 0.10 - 0.07) : (v.net||0);
@@ -807,11 +832,12 @@ const PMETA = {
   helpgrid: {nome:'Helpgrid', cor:'#2E86AB', tipo:'Call recovery', fonte:'Relatório BuyGoods diário + Master Affiliates', repasse:'52% nosso',
     formula:[['Net Sales (Master)',''],['− COGS','10% do bruto'],['× nossa parte','52%']],
     aviso:'O Net Sales do Master já desconta comissão, reembolso/chargeback e imposto. O relatório diário da BuyGoods não traz comissão, então por dia e por semana só aparece o bruto — o líquido fica no mensal.'},
-  gestor5: {nome:'Email', cor:'#7B61FF', tipo:'Email · Sava (Gestor 5)', fonte:'Master Affiliates', repasse:'83% do bruto',
-    formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]},
+  gestor5: {nome:'Email', cor:'#7B61FF', tipo:'Email · Sava (Gestor 5)', fonte:'Master Affiliates', repasse:'lucro líquido final',
+    formula:[['Bruto',''],['− COGS','10%'],['− Taxa BG','7%'],['− AWeber',''],['− Refunds',''],['− Sava fixo','$6.800'],['− Sava variável','7% do pré-variável']],
+    aviso:'Refunds (reembolso + chargeback) vêm do Master Affiliates. AWeber é lançado à mão no demonstrativo abaixo. O Sava variável é 7% do líquido pré-variável e fica zerado se ele for negativo.'},
   gestor3: {nome:'SMS', cor:'#1F9D55', tipo:'SMS · Nicollas (Gestor 3)', fonte:'Master Affiliates', repasse:'líquido de fato',
     formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%'],['− Reembolso/chargeback',''],['− Custo do mês','']],
-    aviso:'Reembolso/chargeback vem do Master Affiliates. O custo do mês (gasto com o disparo) é lançado à mão logo abaixo.'},
+    aviso:'Reembolso/chargeback vem do Master Affiliates. O custo do disparo é lançado à mão no demonstrativo abaixo.'},
   welcome_isellforu: {nome:'iSellForU', cor:'#D97706', tipo:'Welcome', fonte:'Lançamento manual', repasse:'a definir',
     formula:[['Bruto',''],['− Reembolso/chargeback',''],['− Frete',''],['− Imposto','']]},
   nuyu: {nome:'NuYu', cor:'#C2185B', tipo:'Welcome', fonte:'Master Affiliates / lançamento manual', repasse:'83% do bruto',
@@ -974,15 +1000,21 @@ function fmtQuando_(iso){
 
 function custoCard_(key){
   const mk = mesAtual_();
-  const meses = Array.from(new Set(mesesDo_(key).concat([mk]))).sort().reverse().slice(0, 6);
-  return `<div class="card"><div class="card-h"><b>Custo do mês</b><span class="muted" style="font-size:12px">entra no líquido de cada mês</span></div>
-    <table class="mini"><thead><tr><th>Mês</th><th class="r">Bruto</th><th class="r">Reembolso/CB</th><th class="r">Custo</th><th class="r">Líquido</th></tr></thead><tbody>
-    ${meses.map(m => { const bf = (canalMensal[key]||{})[m] || {}; const v = valorMes_(key, m);
-      return `<tr><td><b style="font-weight:550">${mesLblCurto_(m)}</b></td><td class="r num">${fmtMoney(bf.gross||0)}</td><td class="r num">${bf.refunds ? '−'+fmtMoney(bf.refunds) : '<span class="muted">—</span>'}</td>
-      <td class="r"><input class="custo-in" type="number" min="0" step="0.01" data-custo-mes="${m}" value="${bf.custo ? bf.custo : ''}" placeholder="0,00"></td>
-      <td class="r num"><b style="font-weight:600">${v ? fmtNet_(v.net) : '<span class="muted">—</span>'}</b></td></tr>`; }).join('')}
-    </tbody></table>
-    <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn pri" data-act="salvar-custo" data-canal="${key}">Salvar custos</button></div></div>`;
+  const meses = Array.from(new Set(mesesDo_(key).concat([mk]))).sort().slice(-3);
+  const linhas = meses.map(m => dre_(key, (canalMensal[key]||{})[m] || {}));
+  const fmtL = (val, tipo) => tipo === 'gross' ? fmtMoney(val) : val < 0 ? '−' + fmtMoney(Math.abs(val)) : fmtMoney(val);
+  const corpo = linhas[0].map((row, r) => {
+    const tipo = row[2] || '';
+    const cls = tipo === 'final' ? 'dre-final' : tipo === 'sub' ? 'dre-sub' : '';
+    return `<tr class="${cls}"><td>${row[0]}</td>${meses.map((m, c) => {
+      const val = linhas[c][r][1];
+      if(tipo === 'custo'){ const bf = (canalMensal[key]||{})[m] || {}; return `<td class="r"><input class="custo-in" type="number" min="0" step="0.01" data-custo-mes="${m}" value="${bf.custo ? bf.custo : ''}" placeholder="0,00"></td>`; }
+      return `<td class="r num ${val < 0 && tipo !== 'final' && tipo !== 'sub' ? 'muted' : ''} ${(tipo === 'final' || tipo === 'sub') && val < 0 ? 'down' : ''}">${fmtL(val, tipo)}</td>`;
+    }).join('')}</tr>`;
+  }).join('');
+  return `<div class="card"><div class="card-h"><b>Demonstrativo do mês</b><span class="muted" style="font-size:12px">${CUSTO_LABEL_[key]} é lançado à mão</span></div>
+    <div style="overflow-x:auto"><table class="mini dre"><thead><tr><th></th>${meses.map(m => `<th class="r">${mesLblCurto_(m)}${m === mk ? ' <span class="muted" style="font-weight:400">(até agora)</span>' : ''}</th>`).join('')}</tr></thead><tbody>${corpo}</tbody></table></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn pri" data-act="salvar-custo" data-canal="${key}">Salvar ${CUSTO_LABEL_[key]}</button></div></div>`;
 }
 async function salvarCustos_(key){
   const batch = [], mudou = [];
@@ -998,10 +1030,10 @@ async function salvarCustos_(key){
   if(!batch.length){ showToast('Nenhum custo mudou'); return; }
   saveLS(LS_CANAL_MENSAL, canalMensal);
   render();
-  showToast('Custo salvo' + (APPS_SCRIPT_URL ? ' — sincronizando...' : ''));
+  showToast(CUSTO_LABEL_[key] + ' salvo' + (APPS_SCRIPT_URL ? ' — sincronizando...' : ''));
   if(!APPS_SCRIPT_URL) return;
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-  const reg = {id, quando: new Date().toISOString(), arquivo: 'Custo do mês', tipo: 'Custo do mês', tipoLbl: 'Custo do mês', parceiros: key, resumo: `${PMETA[key].nome} — custo ${mudou.join(' · ')}`};
+  const reg = {id, quando: new Date().toISOString(), arquivo: CUSTO_LABEL_[key], tipo: 'Custo do mês', tipoLbl: 'Custo do mês', parceiros: key, resumo: `${PMETA[key].nome} — ${CUSTO_LABEL_[key]} ${mudou.join(' · ')}`};
   importLog.unshift(reg); saveLS('tiger_import_log_v1', importLog);
   const [r1] = await Promise.all([apiPost('importCanalMensalBatch', batch), apiPost('logImport', {id, arquivo: reg.arquivo, tipo: reg.tipo, parceiros: key, resumo: reg.resumo})]);
   if(r1 && r1.ok){ syncStatus = 'ok'; showToast('Sincronizado com Google Sheets ✓'); }
