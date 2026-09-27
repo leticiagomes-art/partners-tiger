@@ -261,7 +261,7 @@ table.mini td:last-child, table.mini th:last-child{padding-right:0}
 <div class="toast" id="toast"></div>
 <script>
 const CANAL_DEFS = [
-  {key:'helpgrid', label:'Helpgrid', match:n => n.includes('helpgrid') || n === 'welcome calls',
+  {key:'helpgrid', label:'Helpgrid', match:n => n.includes('helpgrid'),
    nota:'Líquido aqui = nossa parte de verdade: 52% do Net Líquido (depois de COGS 10%, reembolso/chargeback, comissão e imposto). Os outros 48% ficam com a Helpgrid, não entram nesse número.'},
   {key:'welcome_salesbound', label:'Welcome · Sales Bound', match:n => n.replace(/\s+/g,'').includes('salesbound'),
    nota:'Líquido aqui = nossa parte de verdade: (Bruto − Reembolso − COGS 10%) × 55%. Os outros 45% ficam com a Sales Bound, não entram nesse número.'},
@@ -381,7 +381,7 @@ const SETORES_HG_ = [
   {k:'ordertaking', nome:'HelpGrid Order Taking', desc:'O cliente liga numa das linhas de venda pra fazer o pedido.', en:'When customers call one of our sales lines to place an order'},
   {k:'incredibles', nome:'HelpGrid Incredibles', desc:'Vendas por fatura (invoice) enviada por email e SMS.', en:'Invoices sales (email and text message)'},
   {k:'champions', nome:'HelpGrid Champions', desc:'Pedidos que entram quando o cliente liga no número de atendimento (CS).', en:'Inbound Order Taking revenue from customer calls to the CS number'},
-  {k:'welcome', nome:'Welcome Calls', desc:'Ligações de pós-venda. Na BuyGoods aparece como "Helpgrid Welcome Ultimate" / "Welcome Calls".', en:'After-sales calls'}
+  {k:'welcomeultimate', nome:'Helpgrid Welcome Ultimate', desc:'Descrição a definir com a Helpgrid.', en:''}
 ];
 function setorHelpgrid_(nome){
   const n = String(nome || '').toLowerCase().replace(/\s+/g, ' ');
@@ -389,7 +389,8 @@ function setorHelpgrid_(nome){
   if(n.includes('incredibles')) return 'incredibles';
   if(n.includes('order taking')) return 'ordertaking';
   if(n.includes('inbound')) return 'inbound';
-  if(n.includes('welcome')) return 'welcome';
+  if(n.includes('welcome ultimate')) return 'welcomeultimate';
+  if(n.includes('welcome')) return null; // Welcome Calls não é da Helpgrid
   if(n.includes('calls')) return 'calls';
   return null;
 }
