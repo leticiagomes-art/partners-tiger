@@ -412,7 +412,7 @@ function setoresCard_(){
   const tot = linhas.reduce((a,l) => ({orders:a.orders+l.orders, gross:a.gross+l.gross, refunds:a.refunds+l.refunds, net:a.net+l.net, nosso:a.nosso+l.nosso}), {orders:0, gross:0, refunds:0, net:0, nosso:0});
   const max = Math.max(1, ...linhas.map(l => l.gross));
   return `<div class="card"><div class="card-h"><b>Vendas por setor · ${mesLblCurto_(hgMes)}</b>
-      <div class="seg">${meses.slice(-4).map(m => `<button class="${m===hgMes?'on':''}" data-hgmes="${m}">${mesLblCurto_(m)}</button>`).join('')}</div></div>
+      <div class="seg">${meses.slice(-6).map(m => `<button class="${m===hgMes?'on':''}" data-hgmes="${m}">${mesLblCurto_(m)}</button>`).join('')}</div></div>
     <div style="overflow-x:auto"><table class="mini setores"><thead><tr><th>Setor</th><th class="r">Pedidos</th><th class="r">Bruto</th><th class="r hide-sm">Refund/CB</th><th class="r hide-sm">Net Sales</th><th class="r">Nosso (52%)</th></tr></thead><tbody>
     ${linhas.map(l => `<tr><td><div class="st-nome">${escapeHtml(l.st.nome)}</div><div class="st-desc">${escapeHtml(l.st.desc)}</div><div class="st-bar"><i style="width:${(l.gross/max*100).toFixed(1)}%"></i></div></td>
       <td class="r num">${l.orders || '<span class="muted">0</span>'}</td>
