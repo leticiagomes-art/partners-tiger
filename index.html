@@ -208,6 +208,8 @@ table.mini td:last-child, table.mini th:last-child{padding-right:0}
 .mgrid input,.mgrid select{height:34px;border:1px solid var(--line-strong);border-radius:8px;padding:0 10px;font:inherit;font-size:13px;background:var(--bg);color:var(--text)}
 .mgrid input:focus,.mgrid select:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 @media (max-width:900px){.vd-grid{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}}
+.custo-in{width:110px;height:30px;border:1px solid var(--line-strong);border-radius:7px;padding:0 8px;font:inherit;font-size:13px;text-align:right;background:var(--bg);color:var(--text)}
+.custo-in:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 </style>
 <script>
   (function(){
@@ -340,7 +342,7 @@ function serverCanalMensalToLocal(obj){
     if(!out[r.canal]) out[r.canal] = {};
     out[r.canal][mesKey] = {
       orders: Number(r.orders)||0, gross: Number(r.gross)||0, net: Number(r.net)||0,
-      refunds: Number(r.refunds)||0, taxes: Number(r.taxes)||0
+      refunds: Number(r.refunds)||0, taxes: Number(r.taxes)||0, custo: Number(r.custo)||0
     };
   });
   return out;
@@ -362,8 +364,11 @@ function netOf_(v){
 const MODO_MENSAL_ = ['gestor5','gestor3','nuyu']; // canais sem dado diário confiável: painel só mensal, alimentado pelo Master Affiliates
 // Email/SMS: líquido = bruto − 10% COGS − 7% BuyGoods. Outros custos (comissão, reembolso etc.)
 // ficam de fora de propósito — ela subtrai à mão.
+const CUSTO_CANAIS_ = ['gestor3']; // parceiros com custo do mês lançado à mão (ex: disparo de SMS)
 function liqMensal_(key, v){
   if(!v) return 0;
+  // SMS: bruto − COGS 10% − BuyGoods 7% − reembolso/chargeback − custo do mês
+  if(key === 'gestor3') return (v.gross||0) * (1 - 0.10 - 0.07) - (v.refunds||0) - (v.custo||0);
   // Helpgrid: Net Sales do Master (já sem comissão, reembolso/chargeback e imposto) − COGS 10% do bruto; 52% é nosso
   if(key === 'helpgrid') return 0.52 * ((v.net||0) - 0.10*(v.gross||0));
   return MODO_MENSAL_.includes(key) ? (v.gross||0) * (1 - 0.10 - 0.07) : (v.net||0);
@@ -560,6 +565,7 @@ function vendasDia_(){
       ${kpi('Esta semana · desde ' + diaLbl_(semana), kSem, 'sem reembolso')}
       ${kpi('Este mês · ' + mesLblCurto_(mk), kMes, 'sem reembolso')}
     </div>
+    ${pdPendente_() ? `<div class="banner" style="margin:0 0 14px"><span><b>Salvo só neste navegador por enquanto.</b> O Sheets ainda não aceita esse dado novo; ele sobe sozinho assim que o backend for atualizado. Não limpe o navegador até lá.</span></div>` : ''}
     ${faltando.length ? `<div class="banner" style="margin:0 0 14px"><span><b>${faltando.length} ${faltando.length===1?'dia':'dias'} de ${mesLblCurto_(mk)} sem relatório BuyGoods:</b> ${faltando.map(diaLbl_).join(', ')}</span></div>` : ''}
   </div>
   <div class="views">${chips.map(([k,l]) => `<button class="view ${vdParceiro===k?'on':''}" data-vdp="${k}">${k ? plogo_(k) : ''}${l}</button>`).join('')}
@@ -769,9 +775,18 @@ async function salvarParceirosDia_(canais, meses, log, incluiDias){
   }));
   if(incluiDias) meses.forEach(mk => batch.push({id: '__dias__' + mk.replace('-','_'), canal: '__dias', mes: mk.replace('-','_'), dados_json: JSON.stringify(diasRelatorio.filter(d => d.slice(0,7) === mk))}));
   const [r1] = await Promise.all([apiPost('importParceirosDiaBatch', batch), apiPost('logImport', {id: reg.id, arquivo: reg.arquivo, tipo: reg.tipo, parceiros: reg.parceiros, resumo: reg.resumo})]);
-  if(r1 && r1.ok){ syncStatus = 'ok'; showToast('Sincronizado com Google Sheets ✓'); }
-  else { syncStatus = 'erro'; showToast('Salvo neste navegador, mas não sincronizou com o Sheets ainda'); }
-  renderSyncBadge();
+  if(r1 && r1.ok){ syncStatus = 'ok'; try { localStorage.removeItem('tiger_pd_pendente'); } catch(e){} showToast('Sincronizado com Google Sheets ✓'); }
+  else { try { localStorage.setItem('tiger_pd_pendente', '1'); } catch(e){} showToast('Salvo neste navegador — sobe pro Sheets sozinho assim que o backend aceitar'); }
+  renderSyncBadge(); render();
+}
+function pdPendente_(){ try { return localStorage.getItem('tiger_pd_pendente') === '1'; } catch(e){ return false; } }
+async function reenviarParceirosDia_(){
+  const batch = [];
+  Object.keys(parceirosDia).forEach(k => { const meses = new Set(Object.keys(parceirosDia[k]).map(d => d.slice(0,7))); meses.forEach(mk => { const dados = {}; Object.keys(parceirosDia[k]).forEach(d => { if(d.slice(0,7) === mk) dados[d] = parceirosDia[k][d]; }); batch.push({id: k + '__' + mk.replace('-','_'), canal: k, mes: mk.replace('-','_'), dados_json: JSON.stringify(dados)}); }); });
+  new Set(diasRelatorio.map(d => d.slice(0,7))).forEach(mk => batch.push({id: '__dias__' + mk.replace('-','_'), canal: '__dias', mes: mk.replace('-','_'), dados_json: JSON.stringify(diasRelatorio.filter(d => d.slice(0,7) === mk))}));
+  if(!batch.length) return;
+  const r = await apiPost('importParceirosDiaBatch', batch);
+  if(r && r.ok){ try { localStorage.removeItem('tiger_pd_pendente'); } catch(e){} showToast('Vendas por dia sincronizadas com o Sheets ✓'); render(); }
 }
 function parceirosDiaDoServidor_(obj){
   const pd = {}, dias = new Set();
@@ -794,8 +809,9 @@ const PMETA = {
     aviso:'O Net Sales do Master já desconta comissão, reembolso/chargeback e imposto. O relatório diário da BuyGoods não traz comissão, então por dia e por semana só aparece o bruto — o líquido fica no mensal.'},
   gestor5: {nome:'Email', cor:'#7B61FF', tipo:'Email · Sava (Gestor 5)', fonte:'Master Affiliates', repasse:'83% do bruto',
     formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]},
-  gestor3: {nome:'SMS', cor:'#1F9D55', tipo:'SMS · Nicollas (Gestor 3)', fonte:'Master Affiliates', repasse:'83% do bruto',
-    formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]},
+  gestor3: {nome:'SMS', cor:'#1F9D55', tipo:'SMS · Nicollas (Gestor 3)', fonte:'Master Affiliates', repasse:'líquido de fato',
+    formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%'],['− Reembolso/chargeback',''],['− Custo do mês','']],
+    aviso:'Reembolso/chargeback vem do Master Affiliates. O custo do mês (gasto com o disparo) é lançado à mão logo abaixo.'},
   welcome_isellforu: {nome:'iSellForU', cor:'#D97706', tipo:'Welcome', fonte:'Lançamento manual', repasse:'a definir',
     formula:[['Bruto',''],['− Reembolso/chargeback',''],['− Frete',''],['− Imposto','']]},
   nuyu: {nome:'NuYu', cor:'#C2185B', tipo:'Welcome', fonte:'Master Affiliates / lançamento manual', repasse:'83% do bruto',
@@ -956,6 +972,42 @@ function fmtQuando_(iso){
   return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'}) + ' · ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
 }
 
+function custoCard_(key){
+  const mk = mesAtual_();
+  const meses = Array.from(new Set(mesesDo_(key).concat([mk]))).sort().reverse().slice(0, 6);
+  return `<div class="card"><div class="card-h"><b>Custo do mês</b><span class="muted" style="font-size:12px">entra no líquido de cada mês</span></div>
+    <table class="mini"><thead><tr><th>Mês</th><th class="r">Bruto</th><th class="r">Reembolso/CB</th><th class="r">Custo</th><th class="r">Líquido</th></tr></thead><tbody>
+    ${meses.map(m => { const bf = (canalMensal[key]||{})[m] || {}; const v = valorMes_(key, m);
+      return `<tr><td><b style="font-weight:550">${mesLblCurto_(m)}</b></td><td class="r num">${fmtMoney(bf.gross||0)}</td><td class="r num">${bf.refunds ? '−'+fmtMoney(bf.refunds) : '<span class="muted">—</span>'}</td>
+      <td class="r"><input class="custo-in" type="number" min="0" step="0.01" data-custo-mes="${m}" value="${bf.custo ? bf.custo : ''}" placeholder="0,00"></td>
+      <td class="r num"><b style="font-weight:600">${v ? fmtNet_(v.net) : '<span class="muted">—</span>'}</b></td></tr>`; }).join('')}
+    </tbody></table>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn pri" data-act="salvar-custo" data-canal="${key}">Salvar custos</button></div></div>`;
+}
+async function salvarCustos_(key){
+  const batch = [], mudou = [];
+  document.querySelectorAll('[data-custo-mes]').forEach(inp => {
+    const m = inp.dataset.custoMes, novo = Math.round((parseFloat(inp.value) || 0) * 100) / 100;
+    if(!canalMensal[key]) canalMensal[key] = {};
+    const atual = canalMensal[key][m] || {orders:0, gross:0, net:0, refunds:0, taxes:0};
+    if((atual.custo || 0) === novo) return;
+    canalMensal[key][m] = Object.assign({}, atual, {custo: novo});
+    batch.push({canal: key, mes: m.replace('-','_'), custo: novo});
+    mudou.push(`${mesLblCurto_(m)}: ${fmtMoney(novo)}`);
+  });
+  if(!batch.length){ showToast('Nenhum custo mudou'); return; }
+  saveLS(LS_CANAL_MENSAL, canalMensal);
+  render();
+  showToast('Custo salvo' + (APPS_SCRIPT_URL ? ' — sincronizando...' : ''));
+  if(!APPS_SCRIPT_URL) return;
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const reg = {id, quando: new Date().toISOString(), arquivo: 'Custo do mês', tipo: 'Custo do mês', tipoLbl: 'Custo do mês', parceiros: key, resumo: `${PMETA[key].nome} — custo ${mudou.join(' · ')}`};
+  importLog.unshift(reg); saveLS('tiger_import_log_v1', importLog);
+  const [r1] = await Promise.all([apiPost('importCanalMensalBatch', batch), apiPost('logImport', {id, arquivo: reg.arquivo, tipo: reg.tipo, parceiros: key, resumo: reg.resumo})]);
+  if(r1 && r1.ok){ syncStatus = 'ok'; showToast('Sincronizado com Google Sheets ✓'); }
+  else { syncStatus = 'erro'; showToast('Salvo neste navegador, mas não sincronizou com o Sheets ainda'); }
+  renderSyncBadge();
+}
 function partner_(key){
   const m = PMETA[key];
   const meses = mesesDo_(key);
@@ -983,6 +1035,7 @@ function partner_(key){
       <div class="card"><div class="card-h"><b>Bruto × líquido por mês</b><div class="legend"><span><i style="background:var(--bar-gross)"></i>Bruto</span><span><i style="background:${m.cor}"></i>Líquido nosso</span></div></div>
       ${barChart_([{label:'Bruto', color:'var(--bar-gross)', vals:Object.fromEntries(meses.map(x=>[x, valorMes_(key,x).gross]))}, {label:'Líquido nosso', color:m.cor, vals:Object.fromEntries(meses.map(x=>[x, valorMes_(key,x).net]))}], meses.slice(-8))}</div>
       ${formulaCard_(key)}
+      ${CUSTO_CANAIS_.includes(key) ? custoCard_(key) : ''}
       ${life ? `<div class="card"><div class="card-h"><b>Histórico geral</b><span class="muted" style="font-size:12px">${escapeHtml(life.periodo||'')}</span></div><div class="formula"><span class="t"><b>${life.orders}</b> pedidos</span><span class="t"><b>${fmtMoney(life.gross)}</b> bruto</span><span class="t"><b>${fmtMoney(life.net)}</b> líquido</span><span class="t"><b>${fmtMoney(life.refunds)}</b> reembolso/chargeback</span></div></div>` : ''}`;
   } else if(ptab === 'periodo'){
     const diario = temDiario_(key) && canalAllDays_(key).length;
@@ -1029,6 +1082,7 @@ function render(){
   pg.querySelectorAll('[data-per]').forEach(el => el.addEventListener('click', () => { periodo = el.dataset.per; render(); }));
   pg.querySelectorAll('[data-act="import"]').forEach(el => el.addEventListener('click', openImport));
   pg.querySelectorAll('[data-act="manual"]').forEach(el => el.addEventListener('click', openManual_));
+  pg.querySelectorAll('[data-act="salvar-custo"]').forEach(el => el.addEventListener('click', () => salvarCustos_(el.dataset.canal)));
   pg.querySelectorAll('[data-act="resumo"]').forEach(el => el.addEventListener('click', copiarResumo_));
   pg.querySelectorAll('[data-vdp]').forEach(el => el.addEventListener('click', () => { vdParceiro = el.dataset.vdp; render(); }));
   pg.querySelectorAll('[data-vdper]').forEach(el => el.addEventListener('click', () => { vdPeriodo = el.dataset.vdper; render(); }));
@@ -1278,7 +1332,10 @@ async function syncFromServer(){
   Object.values(j.canalMensal || {}).forEach(r => marca(r.canal, r.atualizado_em));
   Object.values(j.canaisInterno || {}).forEach(r => marca(r.canal, r.atualizado_em));
   const pdi = parceirosDiaDoServidor_(j.parceirosDia);
-  if(Object.keys(pdi.pd).length || pdi.dias.length){ parceirosDia = pdi.pd; diasRelatorio = pdi.dias; }
+  if(pdPendente_()){
+    // dados importados enquanto o backend não aceitava: mantém os daqui e sobe quando der
+    if(j.parceirosDia !== undefined) setTimeout(reenviarParceirosDia_, 0);
+  } else if(Object.keys(pdi.pd).length || pdi.dias.length){ parceirosDia = pdi.pd; diasRelatorio = pdi.dias; }
   Object.values(j.parceirosDia || {}).forEach(r => { if(r.canal !== '__dias') marca(r.canal, r.atualizado_em); });
   saveLS('tiger_parceiros_dia_v1', parceirosDia); saveLS('tiger_dias_relatorio_v1', diasRelatorio);
   importLog = Object.values(j.importLog || {}).map(r => ({id: r.id, quando: r.quando, arquivo: r.arquivo, tipo: r.tipo, tipoLbl: r.tipo, parceiros: r.parceiros, resumo: r.resumo}))
