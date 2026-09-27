@@ -445,8 +445,10 @@ function dre_(key, v){
   }
   return L;
 }
+const SPLIT_WELCOME_ = {nuyu: 0.50, welcome_isellforu: 0.52}; // nossa parte: NuYu 50/50, iSellForU 48/52
 function liqMensal_(key, v){
   if(!v) return 0;
+  if(SPLIT_WELCOME_[key]) return SPLIT_WELCOME_[key] * (0.9*(v.gross||0) - (v.refunds||0));
   // SMS: bruto − COGS 10% − BuyGoods 7% − reembolso/chargeback − custo do mês
   if(key === 'gestor3' || key === 'gestor5'){ const L = dre_(key, v); return L[L.length-1][1]; }
   // Helpgrid: Net Sales do Master (já sem comissão, reembolso/chargeback e imposto) − COGS 10% do bruto; 52% é nosso
@@ -456,6 +458,7 @@ function liqMensal_(key, v){
 function netCanal_(key, v){
   if(!v) return null;
   if(key === 'welcome_salesbound') return 0.55 * (0.9*(v.gross||0) - (v.refund||0));
+  if(SPLIT_WELCOME_[key]) return SPLIT_WELCOME_[key] * (0.9*(v.gross||0) - (v.refund||0) - (v.chargeback||0));
   if(key === 'helpgrid') return null; // relatório diário não traz comissão — sem como chegar no Net Líquido
   return netOf_(v);
 }
@@ -893,10 +896,12 @@ const PMETA = {
   gestor3: {nome:'SMS', cor:'#1F9D55', tipo:'SMS · Nicollas (Gestor 3)', fonte:'Master Affiliates', repasse:'líquido de fato',
     formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%'],['− Reembolso/chargeback',''],['− Custo do mês','']],
     aviso:'Reembolso/chargeback vem do Master Affiliates. O custo do disparo é lançado à mão no demonstrativo abaixo.'},
-  welcome_isellforu: {nome:'iSellForU', cor:'#D97706', tipo:'Welcome', fonte:'Lançamento manual', repasse:'a definir',
-    formula:[['Bruto',''],['− Reembolso/chargeback',''],['− Frete',''],['− Imposto','']]},
-  nuyu: {nome:'NuYu', cor:'#C2185B', tipo:'Welcome', fonte:'Master Affiliates / lançamento manual', repasse:'83% do bruto',
-    formula:[['Bruto',''],['− COGS','10%'],['− BuyGoods','7%']]}
+  welcome_isellforu: {nome:'iSellForU', cor:'#D97706', tipo:'Welcome', fonte:'Lançamento manual', repasse:'52% nosso',
+    formula:[['Bruto',''],['− Reembolso/chargeback',''],['− COGS','10%'],['× nossa parte','52%']],
+    aviso:'Split 48/52: 52% do líquido fica com a gente e 48% com a iSellForU.'},
+  nuyu: {nome:'NuYu', cor:'#C2185B', tipo:'Welcome', fonte:'Master Affiliates / lançamento manual', repasse:'50% nosso',
+    formula:[['Bruto',''],['− Reembolso/chargeback',''],['− COGS','10%'],['× nossa parte','50%']],
+    aviso:'Split 50/50 entre a gente e a NuYu.'}
 };
 const PKEYS = ['welcome_salesbound','helpgrid','gestor5','gestor3','welcome_isellforu','nuyu'];
 let canalAtualizado = {}; // canal -> ISO da última gravação (mensal ou diário)
@@ -922,7 +927,7 @@ function valorMes_(key, mk){
   const d = somaCanalPeriodo_(key, x => x.slice(0,7) === mk);
   const temD = (d.vendas > 0 || d.gross !== 0) && !(bf && (bf.gross||0) > d.gross);
   if(temD) return {gross: d.gross, net: netCanal_(key, d), orders: d.vendas};
-  if(bf) return {gross: bf.gross||0, net: bf.net||0, orders: bf.orders||0};
+  if(bf) return {gross: bf.gross||0, net: SPLIT_WELCOME_[key] ? liqMensal_(key, bf) : (bf.net||0), orders: bf.orders||0};
   return null;
 }
 function mesesDo_(key){
@@ -1297,11 +1302,12 @@ function parseMaster_(rows, nome){
   const datas = titulo.match(/([A-Za-z]+)\s+\d{1,2},?\s+\d{4}/g) || [];
   const aviso = datas.length >= 2 && parseMesInicioTitulo_(datas[0]) !== parseMesInicioTitulo_(datas[1])
     ? `O arquivo cobre mais de um mês (${titulo.replace(/^Master Affiliates\s*/i,'')}). Tudo vai ser salvo em ${mesLblCurto_(mes)} — pra separar certo, exporte um mês por vez.` : '';
-  const byCanal = {};
+  const byCanal = {}; let welcomeCalls = 0;
   for(let i=hpos+1; i<rows.length; i++){
     const row = rows[i]; if(!row) continue;
     const nomeAf = row[hidx['Affiliate']], account = row[hidx['Account']];
     if(!nomeAf || account === 'Total') continue;
+    if(normName(nomeAf) === 'welcome calls'){ welcomeCalls += Number(row[hidx['Gross Sales']])||0; continue; }
     const key = canalDoNome_(normName(nomeAf)); if(!key) continue;
     const alvos = [key];
     if(key === 'helpgrid'){ const st = setorHelpgrid_(nomeAf); if(st) alvos.push('hgset_' + st); }
@@ -1316,7 +1322,8 @@ function parseMaster_(rows, nome){
   if(!keys.length) return {erro: 'O arquivo é um Master Affiliates, mas não tem nenhuma linha de parceiro (Helpgrid, Sales Bound, iSellForU, Gestor 5/3, NuYu).'};
   const registros = {};
   keys.forEach(k => { const r = byCanal[k]; registros[k] = {[mes]: {orders: r.orders, gross: Math.round(r.gross*100)/100, net: Math.round(r.net*100)/100, refunds: Math.round(r.refunds*100)/100, taxes: Math.round(r.taxes*100)/100}}; });
-  return {tipo:'master', tipoLbl:'Master Affiliates', arquivo: nome, aviso, registros, mes,
+  const avisoWC = welcomeCalls > 0 ? `A conta "Welcome Calls" (NuYu + iSellForU) tem ${fmtMoney(welcomeCalls)} de bruto nesse arquivo e não entrou em nenhum dos dois — ainda falta definir como dividir.` : '';
+  return {tipo:'master', tipoLbl:'Master Affiliates', arquivo: nome, aviso: [aviso, avisoWC].filter(Boolean).join(' '), registros, mes,
     linhas: keys.filter(k => PMETA[k]).map(k => ({key: k, mes, antes: ((canalMensal[k]||{})[mes]||{}).gross ?? null, depois: registros[k][mes].gross}))};
 }
 // vários Master do mesmo mês (ex: as duas contas BuyGoods da Helpgrid) viram um import só, somado
@@ -1332,7 +1339,7 @@ function somarMasters_(lista){
   }));
   const keys = Object.keys(registros).filter(k => PMETA[k]);
   return {tipo:'master', tipoLbl:`Master Affiliates · ${lista.length} arquivos somados`, arquivo: lista.map(x => x.arquivo).join(' + '), mes,
-    aviso: lista.map(x => x.aviso).filter(Boolean)[0] || '', registros,
+    aviso: Array.from(new Set(lista.map(x => x.aviso).filter(Boolean))).join(' '), registros,
     linhas: keys.map(k => ({key: k, mes, antes: ((canalMensal[k]||{})[mes]||{}).gross ?? null, depois: registros[k][mes].gross}))};
 }
 function parseSalesbound_(wb, nome){
