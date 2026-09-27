@@ -215,6 +215,11 @@ table.mini td:last-child, table.mini th:last-child{padding-right:0}
 .dre tr.dre-sub td{font-weight:600;color:var(--text);border-top:1px solid var(--line-strong)}
 .dre tr.dre-final td{font-weight:700;color:var(--text);background:var(--bg-sub);border-top:1px solid var(--line-strong)}
 .dre tr.dre-final td.down, .dre tr.dre-sub td.down{color:var(--red)}
+.setores td{height:auto;padding-top:10px;padding-bottom:10px;vertical-align:top}
+.st-nome{font-weight:600}
+.st-desc{font-size:12px;color:var(--text-3);white-space:normal;max-width:420px;line-height:1.35;margin-top:2px}
+.st-bar{height:4px;border-radius:2px;background:var(--bg-active);margin-top:6px;max-width:240px;overflow:hidden}
+.st-bar i{display:block;height:100%;background:#2E86AB}
 </style>
 <script>
   (function(){
@@ -256,7 +261,7 @@ table.mini td:last-child, table.mini th:last-child{padding-right:0}
 <div class="toast" id="toast"></div>
 <script>
 const CANAL_DEFS = [
-  {key:'helpgrid', label:'Helpgrid', match:n => n.includes('helpgrid'),
+  {key:'helpgrid', label:'Helpgrid', match:n => n.includes('helpgrid') || n === 'welcome calls',
    nota:'Líquido aqui = nossa parte de verdade: 52% do Net Líquido (depois de COGS 10%, reembolso/chargeback, comissão e imposto). Os outros 48% ficam com a Helpgrid, não entram nesse número.'},
   {key:'welcome_salesbound', label:'Welcome · Sales Bound', match:n => n.replace(/\s+/g,'').includes('salesbound'),
    nota:'Líquido aqui = nossa parte de verdade: (Bruto − Reembolso − COGS 10%) × 55%. Os outros 45% ficam com a Sales Bound, não entram nesse número.'},
@@ -369,6 +374,55 @@ function netOf_(v){
 const MODO_MENSAL_ = ['gestor5','gestor3','nuyu']; // canais sem dado diário confiável: painel só mensal, alimentado pelo Master Affiliates
 // Email/SMS: líquido = bruto − 10% COGS − 7% BuyGoods. Outros custos (comissão, reembolso etc.)
 // ficam de fora de propósito — ela subtrai à mão.
+// Setores da Helpgrid — cada conta de afiliado deles na BuyGoods é um setor/operação diferente
+const SETORES_HG_ = [
+  {k:'calls', nome:'HelpGrid Calls', desc:'Recuperação de carrinho abandonado (ACR): ligam pra quem começou a compra e não finalizou.', en:'Abandoned Cart Recovery (ACR) Calls'},
+  {k:'inbound', nome:'HelpGrid Inbound Calls', desc:'O cliente retorna a ligação pro número de ACR depois de receber um recado de voz deles.', en:'When customers call our ACR OB phone number back after we leave them a voice message'},
+  {k:'ordertaking', nome:'HelpGrid Order Taking', desc:'O cliente liga numa das linhas de venda pra fazer o pedido.', en:'When customers call one of our sales lines to place an order'},
+  {k:'incredibles', nome:'HelpGrid Incredibles', desc:'Vendas por fatura (invoice) enviada por email e SMS.', en:'Invoices sales (email and text message)'},
+  {k:'champions', nome:'HelpGrid Champions', desc:'Pedidos que entram quando o cliente liga no número de atendimento (CS).', en:'Inbound Order Taking revenue from customer calls to the CS number'},
+  {k:'welcome', nome:'Welcome Calls', desc:'Ligações de pós-venda. Na BuyGoods aparece como "Helpgrid Welcome Ultimate" / "Welcome Calls".', en:'After-sales calls'}
+];
+function setorHelpgrid_(nome){
+  const n = String(nome || '').toLowerCase().replace(/\s+/g, ' ');
+  if(n.includes('champions')) return 'champions';
+  if(n.includes('incredibles')) return 'incredibles';
+  if(n.includes('order taking')) return 'ordertaking';
+  if(n.includes('inbound')) return 'inbound';
+  if(n.includes('welcome')) return 'welcome';
+  if(n.includes('calls')) return 'calls';
+  return null;
+}
+function descConta_(canal, conta){
+  if(canal !== 'helpgrid') return '';
+  const st = SETORES_HG_.find(x => x.k === setorHelpgrid_(conta));
+  return st ? st.desc : '';
+}
+function setoresCard_(){
+  const mesesSet = new Set();
+  SETORES_HG_.forEach(st => Object.keys(canalMensal['hgset_' + st.k] || {}).forEach(m => mesesSet.add(m)));
+  const meses = Array.from(mesesSet).sort();
+  if(!meses.length) return `<div class="card"><div class="empty"><b>Ainda sem dado por setor</b>Suba os Master Affiliates do mês da Helpgrid (os dois arquivos juntos) pra separar por setor.</div></div>`;
+  if(!meses.includes(hgMes)) hgMes = meses[meses.length-1];
+  const linhas = SETORES_HG_.map(st => {
+    const v = (canalMensal['hgset_' + st.k] || {})[hgMes] || {orders:0, gross:0, net:0, refunds:0, taxes:0};
+    return Object.assign({st, nosso: 0.52 * ((v.net||0) - 0.10*(v.gross||0))}, v);
+  }).sort((a,b) => b.gross - a.gross);
+  const tot = linhas.reduce((a,l) => ({orders:a.orders+l.orders, gross:a.gross+l.gross, refunds:a.refunds+l.refunds, net:a.net+l.net, nosso:a.nosso+l.nosso}), {orders:0, gross:0, refunds:0, net:0, nosso:0});
+  const max = Math.max(1, ...linhas.map(l => l.gross));
+  return `<div class="card"><div class="card-h"><b>Vendas por setor · ${mesLblCurto_(hgMes)}</b>
+      <div class="seg">${meses.slice(-4).map(m => `<button class="${m===hgMes?'on':''}" data-hgmes="${m}">${mesLblCurto_(m)}</button>`).join('')}</div></div>
+    <div style="overflow-x:auto"><table class="mini setores"><thead><tr><th>Setor</th><th class="r">Pedidos</th><th class="r">Bruto</th><th class="r hide-sm">Refund/CB</th><th class="r hide-sm">Net Sales</th><th class="r">Nosso (52%)</th></tr></thead><tbody>
+    ${linhas.map(l => `<tr><td><div class="st-nome">${escapeHtml(l.st.nome)}</div><div class="st-desc">${escapeHtml(l.st.desc)}</div><div class="st-bar"><i style="width:${(l.gross/max*100).toFixed(1)}%"></i></div></td>
+      <td class="r num">${l.orders || '<span class="muted">0</span>'}</td>
+      <td class="r num"><b style="font-weight:600">${fmtMoney(l.gross)}</b><small class="muted" style="display:block">${tot.gross ? (l.gross/tot.gross*100).toFixed(0) : 0}% do total</small></td>
+      <td class="r num hide-sm">${l.refunds ? '−' + fmtMoney(l.refunds) : '<span class="muted">—</span>'}${l.gross && l.refunds ? `<small class="muted" style="display:block">${(l.refunds/l.gross*100).toFixed(0)}% do bruto</small>` : ''}</td>
+      <td class="r num hide-sm">${fmtMoney(l.net||0)}</td>
+      <td class="r num"><b style="font-weight:600" class="${l.nosso < 0 ? 'down' : ''}">${fmtMoney(l.nosso)}</b></td></tr>`).join('')}
+    </tbody><tfoot><tr><td>Total Helpgrid</td><td class="r num">${tot.orders}</td><td class="r num">${fmtMoney(tot.gross)}</td><td class="r num hide-sm">−${fmtMoney(tot.refunds)}</td><td class="r num hide-sm">${fmtMoney(tot.net)}</td><td class="r num">${fmtMoney(tot.nosso)}</td></tr></tfoot></table></div>
+    <p class="muted" style="font-size:12px;margin:10px 0 0">Nosso = 52% × (Net Sales − COGS 10% do bruto). Net Sales do Master já desconta comissão, refund/chargeback e imposto.</p></div>`;
+}
+let hgMes = '';
 const CUSTO_CANAIS_ = ['gestor3','gestor5']; // parceiros com custo do mês lançado à mão
 const CUSTO_LABEL_ = {gestor3: 'Custo do disparo', gestor5: 'AWeber'};
 const SAVA_FIXO_ = 6800, SAVA_VARIAVEL_ = 0.07;
@@ -598,13 +652,13 @@ function vendasDia_(){
     <div class="seg" style="align-self:center">${[['dia','Por dia'],['semana','Por semana'],['mes','Por mês']].map(([k,l]) => `<button class="${vdPeriodo===k?'on':''}" data-vdper="${k}">${l}</button>`).join('')}</div>
   </div>
   ${grupos.length ? `<div class="vd-wrap"><table class="vd">
-    <thead><tr><th>${vdPeriodo==='dia'?'Dia':vdPeriodo==='semana'?'Semana':'Mês'}</th>${cols.map(c => `<th class="r">${c.conta ? escapeHtml(c.lbl) : `<span style="display:inline-flex;gap:6px;align-items:center">${plogo_(c.key)}${escapeHtml(c.lbl)}</span>`}</th>`).join('')}<th class="r">Total</th></tr></thead>
+    <thead><tr><th>${vdPeriodo==='dia'?'Dia':vdPeriodo==='semana'?'Semana':'Mês'}</th>${cols.map(c => `<th class="r" title="${escapeHtml(descConta_(c.key, c.conta || ''))}">${c.conta ? escapeHtml(c.lbl) : `<span style="display:inline-flex;gap:6px;align-items:center">${plogo_(c.key)}${escapeHtml(c.lbl)}</span>`}</th>`).join('')}<th class="r">Total</th></tr></thead>
     <tbody>${linhas}</tbody></table></div>
     <p class="muted" style="font-size:12px;margin:8px 24px 0">Em cada célula: vendas (pedido frontal), bruto e, quando houver, reembolso/chargeback do dia. "0" = teve relatório e não vendeu; "—" = sem dado.</p>`
   : `<div class="card" style="margin-top:16px"><div class="empty"><b>Nenhum relatório diário importado ainda</b>Selecione todos os relatórios BuyGoods do mês de uma vez — o painel separa por parceiro, conta e produto.<div style="margin-top:14px"><button class="btn pri" data-act="import">Importar relatórios</button></div></div></div>`}
   <div class="vd-grid">
     <div class="card" style="margin:0"><div class="card-h"><b>Por conta · ${mesLblCurto_(mk)}</b><span class="muted" style="font-size:12px">de onde vem</span></div>
-      ${contasArr.length ? `<table class="mini"><thead><tr><th>Conta</th><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">%</th></tr></thead><tbody>${contasArr.map(x => `<tr><td><div class="who">${plogo_(x.k)}<span>${escapeHtml(x.ct)}</span></div></td><td class="r num">${x.v}</td><td class="r num">${fmtMoney(x.g)}${x.r ? `<small class="down" style="display:block">−${fmtMoney(x.r)}</small>` : ''}</td><td class="r num">${(x.g/totG*100).toFixed(0)}%</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Sem relatório importado neste mês.</p>'}
+      ${contasArr.length ? `<table class="mini"><thead><tr><th>Conta</th><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">%</th></tr></thead><tbody>${contasArr.map(x => `<tr><td><div class="who">${plogo_(x.k)}<span>${escapeHtml(x.ct)}${descConta_(x.k, x.ct) ? `<small class="st-desc" style="display:block">${escapeHtml(descConta_(x.k, x.ct))}</small>` : ''}</span></div></td><td class="r num">${x.v}</td><td class="r num">${fmtMoney(x.g)}${x.r ? `<small class="down" style="display:block">−${fmtMoney(x.r)}</small>` : ''}</td><td class="r num">${(x.g/totG*100).toFixed(0)}%</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Sem relatório importado neste mês.</p>'}
     </div>
     <div class="card" style="margin:0"><div class="card-h"><b>Por produto · ${mesLblCurto_(mk)}</b><span class="muted" style="font-size:12px">o que está vendendo</span></div>
       ${prodArr.length ? `<table class="mini"><thead><tr><th>Produto</th><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">%</th></tr></thead><tbody>${prodArr.map(x => `<tr><td>${escapeHtml(x.n)}</td><td class="r num">${x.v}</td><td class="r num">${fmtMoney(x.g)}</td><td class="r num">${(x.g/totP*100).toFixed(0)}%</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Sem relatório importado neste mês.</p>'}
@@ -919,7 +973,7 @@ function barChart_(series, keys, h){
 }
 
 let route = {page:'overview'}, ptab = 'visao', metric = 'gross', periodo = 'mes';
-function go(page, key){ route = {page, key}; ptab = 'visao'; periodo = 'mes'; render(); $('#page').scrollTo({top:0}); }
+function go(page, key){ route = {page, key}; ptab = key === 'helpgrid' ? 'setores' : 'visao'; periodo = 'mes'; render(); $('#page').scrollTo({top:0}); }
 
 function renderNav_(){
   const mk = mesAtual_();
@@ -1059,9 +1113,11 @@ function partner_(key){
       <div class="kpi"><div class="l">Mês anterior · ${mesLblCurto_(ant)}</div><div class="v">${fmtMoney(pv.gross)}</div><div class="d2"><b>${pv.orders}</b> pedidos</div><div class="d"><span>${fmtNet_(pv.net)} líquido</span></div></div>
     </div>`;
   const nImp = importsDe_(key).length;
-  const tabs = `<div class="views">${[['visao','Visão geral'],['periodo','Por período'],['imp','Importações']].map(([k,l]) => `<button class="view ${ptab===k?'on':''}" data-ptab="${k}">${l}${k==='imp' && nImp ? `<span class="ct">${nImp}</span>` : ''}</button>`).join('')}</div>`;
+  const tabs = `<div class="views">${(key === 'helpgrid' ? [['setores','Setores']] : []).concat([['visao','Visão geral'],['periodo','Por período'],['imp','Importações']]).map(([k,l]) => `<button class="view ${ptab===k?'on':''}" data-ptab="${k}">${l}${k==='imp' && nImp ? `<span class="ct">${nImp}</span>` : ''}</button>`).join('')}</div>`;
   let body = '';
-  if(ptab === 'visao'){
+  if(ptab === 'setores' && key === 'helpgrid'){
+    body = `<div style="height:16px"></div>${setoresCard_()}`;
+  } else if(ptab === 'visao'){
     const life = canalLifetime[key];
     body = `<div style="height:16px"></div>
       <div class="card"><div class="card-h"><b>Bruto × líquido por mês</b><div class="legend"><span><i style="background:var(--bar-gross)"></i>Bruto</span><span><i style="background:${m.cor}"></i>Líquido nosso</span></div></div>
@@ -1117,6 +1173,7 @@ function render(){
   pg.querySelectorAll('[data-act="salvar-custo"]').forEach(el => el.addEventListener('click', () => salvarCustos_(el.dataset.canal)));
   pg.querySelectorAll('[data-act="resumo"]').forEach(el => el.addEventListener('click', copiarResumo_));
   pg.querySelectorAll('[data-vdp]').forEach(el => el.addEventListener('click', () => { vdParceiro = el.dataset.vdp; render(); }));
+  pg.querySelectorAll('[data-hgmes]').forEach(el => el.addEventListener('click', () => { hgMes = el.dataset.hgmes; render(); }));
   pg.querySelectorAll('[data-vdper]').forEach(el => el.addEventListener('click', () => { vdPeriodo = el.dataset.vdper; render(); }));
   const over = $('#crumb [data-go-over]'); if(over) over.addEventListener('click', () => go('overview'));
 }
@@ -1195,9 +1252,14 @@ function lerArquivos_(files){
       const erro = rel.find(r => r.erro); if(erro){ renderImport_(erro.erro); return; }
       impPending = montarPendenteBuyGoods_(rel); renderImport_(); return;
     }
-    if(lidos.length > 1){ renderImport_('Vários arquivos de uma vez só funciona pra relatórios BuyGoods diários. Master Affiliates e Financial Performance vão um por vez.'); return; }
+    if(lidos.length > 1){
+      const ms = lidos.map(x => detectarEParsear_(x.wb, x.f.name));
+      if(ms.every(m => m.tipo === 'master')){ const r = somarMasters_(ms); if(r.erro){ renderImport_(r.erro); return; } impPending = r; renderImport_(); return; }
+      renderImport_('Vários arquivos de uma vez funciona pra relatórios BuyGoods diários ou pra Master Affiliates do mesmo mês. O Financial Performance vai sozinho.'); return;
+    }
     const r = detectarEParsear_(lidos[0].wb, lidos[0].f.name);
     if(r.erro){ renderImport_(r.erro); return; }
+    if(r.tipo === 'master' && r.registros.helpgrid) r.aviso = ((r.aviso ? r.aviso + ' ' : '') + 'A Helpgrid vem em dois arquivos (duas contas BuyGoods). Se tiver o outro, volte e selecione os dois juntos — senão o mês fica só com uma conta.');
     impPending = r; renderImport_();
   });
 }
@@ -1240,16 +1302,36 @@ function parseMaster_(rows, nome){
     const nomeAf = row[hidx['Affiliate']], account = row[hidx['Account']];
     if(!nomeAf || account === 'Total') continue;
     const key = canalDoNome_(normName(nomeAf)); if(!key) continue;
-    if(!byCanal[key]) byCanal[key] = {orders:0, gross:0, net:0, refunds:0, taxes:0};
-    const r = byCanal[key];
-    r.orders += Number(row[hidx['Orders (FE+BE)']])||0; r.gross += Number(row[hidx['Gross Sales']])||0;
-    r.net += Number(row[hidx['Net Sales']])||0; r.refunds += Number(row[hidx['Total CBs & Refunds']])||0; r.taxes += Number(row[hidx['Taxes']])||0;
+    const alvos = [key];
+    if(key === 'helpgrid'){ const st = setorHelpgrid_(nomeAf); if(st) alvos.push('hgset_' + st); }
+    alvos.forEach(k => {
+      if(!byCanal[k]) byCanal[k] = {orders:0, gross:0, net:0, refunds:0, taxes:0};
+      const r = byCanal[k];
+      r.orders += Number(row[hidx['Orders (FE+BE)']])||0; r.gross += Number(row[hidx['Gross Sales']])||0;
+      r.net += Number(row[hidx['Net Sales']])||0; r.refunds += Number(row[hidx['Total CBs & Refunds']])||0; r.taxes += Number(row[hidx['Taxes']])||0;
+    });
   }
   const keys = Object.keys(byCanal);
   if(!keys.length) return {erro: 'O arquivo é um Master Affiliates, mas não tem nenhuma linha de parceiro (Helpgrid, Sales Bound, iSellForU, Gestor 5/3, NuYu).'};
   const registros = {};
   keys.forEach(k => { const r = byCanal[k]; registros[k] = {[mes]: {orders: r.orders, gross: Math.round(r.gross*100)/100, net: Math.round(r.net*100)/100, refunds: Math.round(r.refunds*100)/100, taxes: Math.round(r.taxes*100)/100}}; });
-  return {tipo:'master', tipoLbl:'Master Affiliates', arquivo: nome, aviso, registros,
+  return {tipo:'master', tipoLbl:'Master Affiliates', arquivo: nome, aviso, registros, mes,
+    linhas: keys.filter(k => PMETA[k]).map(k => ({key: k, mes, antes: ((canalMensal[k]||{})[mes]||{}).gross ?? null, depois: registros[k][mes].gross}))};
+}
+// vários Master do mesmo mês (ex: as duas contas BuyGoods da Helpgrid) viram um import só, somado
+function somarMasters_(lista){
+  const mes = lista[0].mes;
+  if(lista.some(x => x.mes !== mes)) return {erro: 'Os arquivos Master Affiliates são de meses diferentes — mande juntos só os do mesmo mês.'};
+  const registros = {};
+  lista.forEach(x => Object.keys(x.registros).forEach(k => {
+    const v = x.registros[k][mes];
+    if(!registros[k]) registros[k] = {[mes]: {orders:0, gross:0, net:0, refunds:0, taxes:0}};
+    const a = registros[k][mes];
+    ['orders','gross','net','refunds','taxes'].forEach(f => a[f] = Math.round(((a[f]||0) + (v[f]||0))*100)/100);
+  }));
+  const keys = Object.keys(registros).filter(k => PMETA[k]);
+  return {tipo:'master', tipoLbl:`Master Affiliates · ${lista.length} arquivos somados`, arquivo: lista.map(x => x.arquivo).join(' + '), mes,
+    aviso: lista.map(x => x.aviso).filter(Boolean)[0] || '', registros,
     linhas: keys.map(k => ({key: k, mes, antes: ((canalMensal[k]||{})[mes]||{}).gross ?? null, depois: registros[k][mes].gross}))};
 }
 function parseSalesbound_(wb, nome){
@@ -1296,7 +1378,7 @@ async function confirmarImport_(){
     });
   });
   saveLS(LS_CANAL_MENSAL, canalMensal);
-  const parceiros = Object.keys(p.registros);
+  const parceiros = Object.keys(p.registros).filter(k => PMETA[k]);
   const mudou = p.linhas.filter(l => Math.round(l.depois - (l.antes||0)) !== 0);
   const resumo = (mudou.length ? mudou : p.linhas).map(l => `${PMETA[l.key].nome} ${mesLblCurto_(l.mes)}: ${fmtMoney(l.depois)}`).join(' · ') + (mudou.length ? '' : ' (sem mudança)');
   const reg = {id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), quando: new Date().toISOString(), arquivo: p.arquivo, tipo: p.tipo, tipoLbl: p.tipoLbl, parceiros: parceiros.join(','), resumo};
