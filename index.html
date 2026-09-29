@@ -220,6 +220,7 @@ table.mini td:last-child, table.mini th:last-child{padding-right:0}
 .st-desc{font-size:12px;color:var(--text-3);white-space:normal;max-width:420px;line-height:1.35;margin-top:2px}
 .st-bar{height:4px;border-radius:2px;background:var(--bg-active);margin-top:6px;max-width:240px;overflow:hidden}
 .st-bar i{display:block;height:100%;background:#2E86AB}
+table.vg tr.vg-tot td{font-weight:700;background:var(--bg-sub);border-top:1px solid var(--line-strong)}
 </style>
 <script>
   (function(){
@@ -238,6 +239,7 @@ table.mini td:last-child, table.mini th:last-child{padding-right:0}
     <div class="side-search" id="sideSearch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar<kbd>Ctrl K</kbd></div>
     <button class="nav" id="nav-overview"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Visão geral</button>
     <button class="nav" id="nav-vendas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></svg>Vendas por dia</button>
+    <button class="nav" id="nav-vendasgeral"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/></svg>Vendas por dia geral</button>
     <button class="nav" id="nav-imports"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importações<span class="ct" id="ct-imp"></span></button>
     <div class="sec">Parceiros</div>
     <div id="navPartners"></div>
@@ -671,6 +673,74 @@ function vendasDia_(){
   <div style="height:40px"></div>`;
 }
 
+// ---------- Vendas por dia geral: a operação inteira (todos os afiliados), por produto ----------
+// Mesma visão do affiliates-tiger, lida do mesmo backend: contagem = pedido frontal; bruto/líquido
+// somam tudo (upsell, downsell, frete). Alimentada pelo import BuyGoods feito no affiliates-tiger.
+let vendasPorProdutoDia = loadLS('tiger_vendas_produto_v1', {});      // {produto: {dia: vendas}}
+let vendasValorPorProdutoDia = loadLS('tiger_vendas_valor_v1', {});   // {produto: {dia: {gross, refund, chargeback, shipping, taxes}}}
+let vgPeriodo = 'dia';
+function vendasGeral_(){
+  const VP = vendasPorProdutoDia, VV = vendasValorPorProdutoDia;
+  const diasSet = new Set(); Object.values(VP).forEach(pd => Object.keys(pd).forEach(d => diasSet.add(d)));
+  const allDays = Array.from(diasSet).sort();
+  const somaV = obj => Object.values(obj || {}).reduce((s,v) => s + (v||0), 0);
+  const produtos = Object.keys(VP).sort((a,b) => somaV(VP[b]) - somaV(VP[a]));
+  const somaValor = (prods, f) => { const acc = {gross:0, refund:0, chargeback:0, shipping:0, taxes:0}; let tem = false;
+    prods.forEach(p => Object.keys(VV[p] || {}).forEach(d => { if(!f(d)) return; tem = true; const v = VV[p][d];
+      acc.gross += v.gross||0; acc.refund += v.refund||0; acc.chargeback += v.chargeback||0; acc.shipping += v.shipping||0; acc.taxes += v.taxes||0; }));
+    return tem ? acc : null; };
+  const nada = '<span class="muted">·</span>';
+
+  // KPIs: ontem, esta semana, este mês
+  const hoje = new Date().toISOString().slice(0,10), ontem = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const mk = hoje.slice(0,7), semana = isoWeekMonday_(hoje);
+  const cont = f => Object.values(VP).reduce((s,pd) => s + Object.keys(pd).reduce((a,d) => a + (f(d) ? pd[d]||0 : 0), 0), 0);
+  const ultimo = allDays[allDays.length-1];
+  const kpi = (lab, f, nota) => { const n = cont(f), v = somaValor(Object.keys(VV), f);
+    return `<div class="kpi"><div class="l">${lab}</div><div class="v">${n} <span style="font-size:13px;font-weight:500;color:var(--text-3)">vendas</span></div>
+      <div class="d2">${v ? `<b>${fmtMoney(v.gross)}</b> bruto · <b>${fmtMoney(netOf_(v))}</b> líquido` : 'sem dado de valor ainda'}</div><div class="d"><span>${nota}</span></div></div>`; };
+  const semOntem = !cont(d => d === ontem) && ultimo && ultimo < ontem;
+
+  // colunas por período
+  let cols, lbls, val;
+  if(vgPeriodo === 'semana'){
+    cols = Array.from(new Set(allDays.map(isoWeekMonday_))).sort().slice(-10); lbls = cols.map(w => 'Sem ' + diaLbl_(w));
+    val = (p, c) => Object.keys(VP[p]).reduce((s,d) => s + (isoWeekMonday_(d) === c ? VP[p][d]||0 : 0), 0);
+  } else if(vgPeriodo === 'mes'){
+    cols = Array.from(new Set(allDays.map(d => d.slice(0,7)))).sort().slice(-12); lbls = cols.map(mesLblCurto_);
+    val = (p, c) => Object.keys(VP[p]).reduce((s,d) => s + (d.slice(0,7) === c ? VP[p][d]||0 : 0), 0);
+  } else {
+    cols = allDays.slice(-14); lbls = cols.map(diaLbl_);
+    val = (p, c) => VP[p][c] || 0;
+  }
+  const todos = () => true;
+  const linhas = produtos.map(p => { const v = somaValor([p], todos);
+    return `<tr><td><b style="font-weight:550">${escapeHtml(p)}</b></td>${cols.map(c => { const n = val(p, c); return `<td class="r num">${n || nada}</td>`; }).join('')}
+      <td class="r num" style="font-weight:650">${somaV(VP[p])}</td><td class="r num">${v ? fmtMoney(v.gross) : nada}</td><td class="r num">${v ? fmtMoney(netOf_(v)) : nada}</td></tr>`; }).join('');
+  const vt = somaValor(produtos, todos);
+  const total = `<tr class="vg-tot"><td>Total</td>${cols.map(c => `<td class="r num">${produtos.reduce((s,p) => s + val(p, c), 0)}</td>`).join('')}
+    <td class="r num">${produtos.reduce((s,p) => s + somaV(VP[p]), 0)}</td><td class="r num">${vt ? fmtMoney(vt.gross) : '—'}</td><td class="r num">${vt ? fmtMoney(netOf_(vt)) : '—'}</td></tr>`;
+
+  return `<div class="pad">
+    <h1 class="h1">Vendas por dia geral</h1>
+    <p class="sub">A operação inteira — soma de <b>todos os afiliados</b> por produto, dia a dia. Mesma visão do affiliates-tiger, alimentada pelo relatório BuyGoods importado lá. Conta só o <b>pedido frontal</b>; upsell, downsell e frete entram no bruto/líquido.${allDays.length ? ` Dados de ${diaLbl_(allDays[0])} a ${diaLbl_(ultimo)}.` : ''}</p>
+    <div class="kpis k3">
+      ${kpi('Ontem · ' + diaLbl_(ontem), d => d === ontem, semOntem ? 'sem import ainda — último dado: ' + diaLbl_(ultimo) : 'vendas (pedido frontal)')}
+      ${kpi('Esta semana · desde ' + diaLbl_(semana), d => isoWeekMonday_(d) === semana, 'segunda até hoje')}
+      ${kpi('Este mês · ' + mesLblCurto_(mk), d => d.slice(0,7) === mk, 'mês corrente')}
+    </div>
+  </div>
+  <div class="views"><span style="flex:1"></span>
+    <div class="seg" style="align-self:center">${[['dia','Por dia (últimos 14)'],['semana','Por semana'],['mes','Por mês']].map(([k,l]) => `<button class="${vgPeriodo===k?'on':''}" data-vgper="${k}">${l}</button>`).join('')}</div>
+  </div>
+  ${produtos.length ? `<div class="vd-wrap"><table class="vd vg">
+    <thead><tr><th>Produto</th>${lbls.map(l => `<th class="r">${escapeHtml(l)}</th>`).join('')}<th class="r">Total</th><th class="r">Bruto</th><th class="r">Líquido</th></tr></thead>
+    <tbody>${linhas}${total}</tbody></table></div>
+    <p class="muted" style="font-size:12px;margin:8px 24px 0">Colunas de período = vendas (pedido frontal). Total, Bruto e Líquido = todo o histórico do produto. Líquido = bruto − reembolso − chargeback − frete − taxas.</p>`
+  : `<div class="card" style="margin-top:16px"><div class="empty"><b>Sem dado ainda</b>Importe o relatório BuyGoods no affiliates-tiger — esta visão lê o mesmo dado.</div></div>`}
+  <div style="height:40px"></div>`;
+}
+
 // ---------- Resumo da semana (pra mandar na segunda) ----------
 function resumoSemana_(){
   const hoje = hojeKey_();
@@ -991,6 +1061,7 @@ function renderNav_(){
   $('#nav-overview').classList.toggle('on', route.page==='overview');
   $('#nav-imports').classList.toggle('on', route.page==='imports');
   $('#nav-vendas').classList.toggle('on', route.page==='vendas');
+  $('#nav-vendasgeral').classList.toggle('on', route.page==='vendasgeral');
   $('#ct-imp').textContent = importLog.length || '';
 }
 
@@ -1168,8 +1239,8 @@ function imports_(){
 function render(){
   renderNav_();
   const k = route.page === 'partner' ? route.key : null;
-  $('#crumb').innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><a data-go-over>Parceiros</a><span>/</span><b>${k ? PMETA[k].nome : route.page==='imports' ? 'Importações' : route.page==='vendas' ? 'Vendas por dia' : 'Visão geral'}</b>`;
-  $('#page').innerHTML = k ? partner_(k) : route.page === 'imports' ? imports_() : route.page === 'vendas' ? vendasDia_() : overview_();
+  $('#crumb').innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><a data-go-over>Parceiros</a><span>/</span><b>${k ? PMETA[k].nome : route.page==='imports' ? 'Importações' : route.page==='vendas' ? 'Vendas por dia' : route.page==='vendasgeral' ? 'Vendas por dia geral' : 'Visão geral'}</b>`;
+  $('#page').innerHTML = k ? partner_(k) : route.page === 'imports' ? imports_() : route.page === 'vendas' ? vendasDia_() : route.page === 'vendasgeral' ? vendasGeral_() : overview_();
   const pg = $('#page');
   pg.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => go('partner', el.dataset.go)));
   pg.querySelectorAll('[data-metric]').forEach(el => el.addEventListener('click', () => { metric = el.dataset.metric; render(); }));
@@ -1182,6 +1253,7 @@ function render(){
   pg.querySelectorAll('[data-act="resumo"]').forEach(el => el.addEventListener('click', copiarResumo_));
   pg.querySelectorAll('[data-vdp]').forEach(el => el.addEventListener('click', () => { vdParceiro = el.dataset.vdp; render(); }));
   pg.querySelectorAll('[data-hgmes]').forEach(el => el.addEventListener('click', () => { hgMes = el.dataset.hgmes; render(); }));
+  pg.querySelectorAll('[data-vgper]').forEach(el => el.addEventListener('click', () => { vgPeriodo = el.dataset.vgper; render(); }));
   pg.querySelectorAll('[data-vdper]').forEach(el => el.addEventListener('click', () => { vdPeriodo = el.dataset.vdper; render(); }));
   const over = $('#crumb [data-go-over]'); if(over) over.addEventListener('click', () => go('overview'));
 }
@@ -1427,6 +1499,7 @@ $('#topImport').addEventListener('click', openImport);
 $('#nav-overview').addEventListener('click', () => go('overview'));
 $('#nav-imports').addEventListener('click', () => go('imports'));
 $('#nav-vendas').addEventListener('click', () => go('vendas'));
+$('#nav-vendasgeral').addEventListener('click', () => go('vendasgeral'));
 
 // ---------- Tema + sincronização ----------
 function applyThemeUI_(){
@@ -1462,6 +1535,9 @@ async function syncFromServer(){
   } else if(Object.keys(pdi.pd).length || pdi.dias.length){ parceirosDia = pdi.pd; diasRelatorio = pdi.dias; }
   Object.values(j.parceirosDia || {}).forEach(r => { if(r.canal !== '__dias') marca(r.canal, r.atualizado_em); });
   saveLS('tiger_parceiros_dia_v1', parceirosDia); saveLS('tiger_dias_relatorio_v1', diasRelatorio);
+  const dj_ = obj => { const out = {}; Object.keys(obj || {}).forEach(k => { try { out[k] = JSON.parse(obj[k].dados_json || '{}'); } catch(e){ out[k] = {}; } }); return out; };
+  if(j.vendasPorProduto){ vendasPorProdutoDia = dj_(j.vendasPorProduto); saveLS('tiger_vendas_produto_v1', vendasPorProdutoDia); }
+  if(j.vendasValorPorProduto){ vendasValorPorProdutoDia = dj_(j.vendasValorPorProduto); saveLS('tiger_vendas_valor_v1', vendasValorPorProdutoDia); }
   importLog = Object.values(j.importLog || {}).map(r => ({id: r.id, quando: r.quando, arquivo: r.arquivo, tipo: r.tipo, tipoLbl: r.tipo, parceiros: r.parceiros, resumo: r.resumo}))
     .sort((a,b) => String(b.quando).localeCompare(String(a.quando)));
   saveLS(LS_CANAIS, canaisPorDia); saveLS(LS_CANAL_LIFETIME, canalLifetime); saveLS(LS_CANAL_MENSAL, canalMensal); saveLS('tiger_import_log_v1', importLog);
