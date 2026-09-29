@@ -912,7 +912,7 @@ const hojeKey_ = () => new Date().toISOString().slice(0,10);
 const mesAtual_ = () => hojeKey_().slice(0,7);
 const fmtNet_ = v => (v === null || v === undefined) ? '<span class="muted">—</span>' : fmtMoney(v);
 const fmtK_ = v => Math.abs(v) >= 1000 ? '$' + (v/1000).toFixed(Math.abs(v) >= 100000 ? 0 : 1).replace('.0','') + 'k' : fmtMoney(v);
-const temDiario_ = key => !MODO_MENSAL_.includes(key) && key !== 'welcome_salesbound';
+const temDiario_ = key => !MODO_MENSAL_.includes(key);
 
 // mesma precedência que o painel antigo usava: dado diário vale, a não ser que o mensal oficial seja maior
 function valorMes_(key, mk){
@@ -1133,7 +1133,8 @@ function partner_(key){
       ${life ? `<div class="card"><div class="card-h"><b>Histórico geral</b><span class="muted" style="font-size:12px">${escapeHtml(life.periodo||'')}</span></div><div class="formula"><span class="t"><b>${life.orders}</b> pedidos</span><span class="t"><b>${fmtMoney(life.gross)}</b> bruto</span><span class="t"><b>${fmtMoney(life.net)}</b> líquido</span><span class="t"><b>${fmtMoney(life.refunds)}</b> reembolso/chargeback</span></div></div>` : ''}`;
   } else if(ptab === 'periodo'){
     const diario = temDiario_(key) && canalAllDays_(key).length;
-    const seg = diario ? `<div class="pad" style="padding-top:12px;padding-bottom:4px"><div class="seg">${[['mes','Por mês'],['semana','Por semana'],['dia','Por dia']].map(([k,l]) => `<button class="${periodo===k?'on':''}" data-per="${k}">${l}</button>`).join('')}</div></div>` : '';
+    const lancar = key === 'welcome_salesbound' ? `<span style="flex:1"></span><button class="btn" data-act="manual-sb">Lançar dia</button>` : '';
+    const seg = (diario || lancar) ? `<div class="pad" style="padding-top:12px;padding-bottom:4px;display:flex;align-items:center;gap:8px">${diario ? `<div class="seg">${[['mes','Por mês'],['semana','Por semana'],['dia','Por dia']].map(([k,l]) => `<button class="${periodo===k?'on':''}" data-per="${k}">${l}</button>`).join('')}</div>` : ''}${lancar}</div>` : '';
     let linhas = [];
     if(periodo === 'mes' || !diario){
       linhas = meses.slice().reverse().map((x,i,arr) => ({lbl: mesLblCurto_(x) + (x===mk ? ' <span class="pill neu" style="margin-left:6px">em andamento</span>' : ''), v: valorMes_(key,x), prev: arr[i+1] ? valorMes_(key, arr[i+1]) : null}));
@@ -1176,6 +1177,7 @@ function render(){
   pg.querySelectorAll('[data-per]').forEach(el => el.addEventListener('click', () => { periodo = el.dataset.per; render(); }));
   pg.querySelectorAll('[data-act="import"]').forEach(el => el.addEventListener('click', openImport));
   pg.querySelectorAll('[data-act="manual"]').forEach(el => el.addEventListener('click', openManual_));
+  pg.querySelectorAll('[data-act="manual-sb"]').forEach(el => el.addEventListener('click', () => { vdParceiro = 'welcome_salesbound'; openManual_(); }));
   pg.querySelectorAll('[data-act="salvar-custo"]').forEach(el => el.addEventListener('click', () => salvarCustos_(el.dataset.canal)));
   pg.querySelectorAll('[data-act="resumo"]').forEach(el => el.addEventListener('click', copiarResumo_));
   pg.querySelectorAll('[data-vdp]').forEach(el => el.addEventListener('click', () => { vdParceiro = el.dataset.vdp; render(); }));
