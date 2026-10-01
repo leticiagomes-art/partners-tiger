@@ -1413,7 +1413,7 @@ function parseMasterAccounts_(rows, nome){
   }
   Object.keys(t).forEach(f => t[f] = Math.round(t[f]*100)/100);
   return {tipo:'master', tipoLbl:'Master Accounts · CRM interno da Help', arquivo: nome, mes, interno: true,
-    aviso: 'Master Accounts é a conta BuyGoods interna da Help: entra todo na Helpgrid, no setor "CRM interno da Help".',
+    aviso: 'Master Accounts é a conta BuyGoods interna da Help: entra todo na Helpgrid, no setor "CRM interno da Help". Atenção: se a conta interna desse mês já entrou por um Master Affiliates (contas com "BG"/"PAG"), não importe este — ela seria contada duas vezes.',
     registros: {hgset_interno: {[mes]: t}}, linhas: []};
 }
 // o CRM interno soma no total da Helpgrid: junto com o Master Affiliates do mês, soma no que veio;
@@ -1444,13 +1444,15 @@ function parseMaster_(rows, nome){
   const datas = titulo.match(/([A-Za-z]+)\s+\d{1,2},?\s+\d{4}/g) || [];
   const aviso = datas.length >= 2 && parseMesInicioTitulo_(datas[0]) !== parseMesInicioTitulo_(datas[1])
     ? `O arquivo cobre mais de um mês (${titulo.replace(/^Master Affiliates\s*/i,'')}). Tudo vai ser salvo em ${mesLblCurto_(mes)} — pra separar certo, exporte um mês por vez.` : '';
-  const byCanal = {}; let welcomeCalls = 0;
+  const byCanal = {}; let welcomeCalls = 0, temInterno = false;
   for(let i=hpos+1; i<rows.length; i++){
     const row = rows[i]; if(!row) continue;
     const nomeAf = row[hidx['Affiliate']], account = row[hidx['Account']];
     if(!nomeAf || account === 'Total') continue;
     if(normName(nomeAf) === 'welcome calls'){ welcomeCalls += Number(row[hidx['Gross Sales']])||0; continue; }
     const key = canalDoNome_(normName(nomeAf)); if(!key) continue;
+    // contas de produto com "BG"/"PAG" no fim são da conta BuyGoods interna da Help
+    if(key === 'helpgrid' && /\s(BG|PAG)$/i.test(String(account || '').trim())) temInterno = true;
     const alvos = [key];
     if(key === 'helpgrid'){ const st = setorHelpgrid_(nomeAf); if(st) alvos.push('hgset_' + st); }
     alvos.forEach(k => {
@@ -1465,7 +1467,7 @@ function parseMaster_(rows, nome){
   const registros = {};
   keys.forEach(k => { const r = byCanal[k]; registros[k] = {[mes]: {orders: r.orders, gross: Math.round(r.gross*100)/100, net: Math.round(r.net*100)/100, refunds: Math.round(r.refunds*100)/100, taxes: Math.round(r.taxes*100)/100}}; });
   const avisoWC = welcomeCalls > 0 ? `A conta "Welcome Calls" (NuYu + iSellForU) tem ${fmtMoney(welcomeCalls)} de bruto nesse arquivo e não entrou em nenhum dos dois — ainda falta definir como dividir.` : '';
-  return {tipo:'master', tipoLbl:'Master Affiliates', arquivo: nome, aviso: [aviso, avisoWC].filter(Boolean).join(' '), registros, mes,
+  return {tipo:'master', tipoLbl:'Master Affiliates', arquivo: nome, aviso: [aviso, avisoWC].filter(Boolean).join(' '), registros, mes, temInterno,
     linhas: keys.filter(k => PMETA[k]).map(k => ({key: k, mes, antes: ((canalMensal[k]||{})[mes]||{}).gross ?? null, depois: registros[k][mes].gross}))};
 }
 // vários Master do mesmo mês (ex: as duas contas BuyGoods da Helpgrid) viram um import só, somado
@@ -1480,6 +1482,7 @@ function somarMasters_(lista){
     ['orders','gross','net','refunds','taxes'].forEach(f => a[f] = Math.round(((a[f]||0) + (v[f]||0))*100)/100);
   }));
   const keys = Object.keys(registros).filter(k => PMETA[k]);
+  if(lista.some(x => x.interno) && lista.some(x => x.temInterno)) return {erro: 'A conta interna da Help veio duas vezes: num Master Affiliates (contas com "BG"/"PAG") e no Master Accounts. Suba só um dos dois junto com o Master Affiliates geral.'};
   if(lista.some(x => x.interno)) return aplicarInternoHelpgrid_({tipo:'master', tipoLbl:`Master Affiliates + Accounts · ${lista.length} arquivos somados`, arquivo: lista.map(x => x.arquivo).join(' + '), mes,
     aviso: Array.from(new Set(lista.map(x => x.aviso).filter(Boolean))).join(' '), registros, linhas: []});
   return {tipo:'master', tipoLbl:`Master Affiliates · ${lista.length} arquivos somados`, arquivo: lista.map(x => x.arquivo).join(' + '), mes,
