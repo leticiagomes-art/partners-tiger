@@ -1061,8 +1061,14 @@ function barChart_(series, keys, h){
 let route = {page:'overview'}, ptab = 'visao', metric = 'gross', periodo = 'mes';
 function go(page, key){ route = {page, key}; ptab = key === 'helpgrid' ? 'setores' : 'visao'; periodo = 'mes'; render(); $('#page').scrollTo({top:0}); }
 
+// Virada de mês: enquanto o mês novo não tem dado nenhum, as telas mostram o fechamento do mês anterior
+// comparado com o mês antes dele (e voltam pro mês corrente sozinhas assim que chegar o primeiro dado)
+function temDadoMes_(key, m){ const v = valorMes_(key, m); return !!(v && (v.gross || v.orders)); }
+function mesRef_(){ const mk = mesAtual_(); return PKEYS.some(k => temDadoMes_(k, mk)) ? mk : mesAnterior_(mk); }
+let ovMes = null; // mês escolhido à mão na visão geral (null = automático)
+
 function renderNav_(){
-  const mk = mesAtual_();
+  const mk = mesRef_();
   $('#navPartners').innerHTML = PKEYS.map(k => {
     const v = valorMes_(k, mk);
     return `<button class="nav ${route.page==='partner'&&route.key===k?'on':''}" data-go="${k}">${plogo_(k)}${PMETA[k].nome}<span class="ct">${v ? fmtK_(v.gross) : '—'}</span></button>`;
@@ -1076,7 +1082,10 @@ function renderNav_(){
 }
 
 function overview_(){
-  const mk = mesAtual_(), ant = mesAnterior_(mk);
+  const mAtual = mesAtual_(), mAnt = mesAnterior_(mAtual);
+  if(ovMes && ovMes !== mAtual && ovMes !== mAnt) ovMes = null;
+  const mk = ovMes || mesRef_(), ant = mesAnterior_(mk), fechado = mk !== mAtual;
+  const auto = !ovMes && fechado;
   const tot = m => PKEYS.reduce((a,k) => { const v = valorMes_(k, m); if(v){ a.g += v.gross; a.n += v.net || 0; a.o += v.orders; } return a; }, {g:0,n:0,o:0});
   const A = tot(mk), B = tot(ant);
   const ordem = PKEYS.slice().sort((a,b) => ((valorMes_(b,mk)||{}).gross||0) - ((valorMes_(a,mk)||{}).gross||0));
@@ -1100,12 +1109,13 @@ function overview_(){
   return `
   <div class="pad">
     <h1 class="h1">Visão geral dos parceiros</h1>
-    <p class="sub">Quanto cada parceiro trouxe no mês, quanto fica pra gente e quem está com dado atrasado.</p>
+    <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap"><p class="sub" style="flex:1;min-width:240px">Quanto cada parceiro trouxe no mês, quanto fica pra gente e quem está com dado atrasado.${auto ? ` <b>${mesLblCurto_(mAtual)} ainda sem dados — mostrando o fechamento de ${mesLblCurto_(mk)} comparado com ${mesLblCurto_(ant)}.</b>` : ''}</p>
+      <div class="seg">${[[mAtual, mesLblCurto_(mAtual) + ' · em andamento'], [mAnt, 'Fechamento ' + mesLblCurto_(mAnt)]].map(([m, l]) => `<button class="${m===mk?'on':''}" data-ovmes="${m}">${l}</button>`).join('')}</div></div>
     <div class="kpis">
-      <div class="kpi"><div class="l">Bruto do mês · ${mesLblCurto_(mk)}</div><div class="v">${fmtMoney(A.g)}</div><div class="d">${deltaHtml_(A.g,B.g)}<span>vs ${mesLblCurto_(ant)}</span></div></div>
+      <div class="kpi"><div class="l">${fechado ? 'Bruto · fechamento' : 'Bruto do mês'} · ${mesLblCurto_(mk)}</div><div class="v">${fmtMoney(A.g)}</div><div class="d">${deltaHtml_(A.g,B.g)}<span>vs ${mesLblCurto_(ant)}</span></div></div>
       <div class="kpi"><div class="l">Líquido nosso</div><div class="v">${fmtMoney(A.n)}</div><div class="d">${deltaHtml_(A.n,B.n)}<span>${A.g ? 'margem '+(A.n/A.g*100).toFixed(0)+'%' : ''}</span></div></div>
       <div class="kpi"><div class="l">Pedidos</div><div class="v">${A.o}</div><div class="d">${deltaHtml_(A.o,B.o)}<span>vs ${mesLblCurto_(ant)}</span></div></div>
-      <div class="kpi"><div class="l">Maior parceiro do mês</div>${vl ? `<div class="v" style="font-size:18px;display:flex;align-items:center;gap:8px">${plogo_(lider,22)}${PMETA[lider].nome}</div><div class="d"><span>${A.g ? (vl.gross/A.g*100).toFixed(0) : 0}% do bruto</span></div>` : '<div class="v muted">—</div>'}</div>
+      <div class="kpi"><div class="l">Maior parceiro · ${mesLblCurto_(mk)}</div>${vl ? `<div class="v" style="font-size:18px;display:flex;align-items:center;gap:8px">${plogo_(lider,22)}${PMETA[lider].nome}</div><div class="d"><span>${A.g ? (vl.gross/A.g*100).toFixed(0) : 0}% do bruto</span></div>` : '<div class="v muted">—</div>'}</div>
     </div>
   </div>
   ${atrasados.length ? `<div class="banner"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>${atrasados.length} ${atrasados.length===1?'parceiro':'parceiros'} sem import há mais de 7 dias:</b> ${atrasados.map(k=>PMETA[k].nome).join(', ')}.</span><span class="sp"></span><button class="btn" data-act="import">Importar</button></div>` : ''}
@@ -1193,12 +1203,14 @@ function partner_(key){
   }
   const mk = mesAtual_(), ant = mesAnterior_(mk);
   const acc = meses.reduce((a,x) => { const v = valorMes_(key,x); a.g += v.gross; a.n += v.net || 0; a.o += v.orders; return a; }, {g:0,n:0,o:0});
-  const cur = valorMes_(key, mk) || {gross:0,net:0,orders:0}, pv = valorMes_(key, ant) || {gross:0,net:0,orders:0};
+  // mês novo ainda sem dado desse parceiro: os cartões mostram o fechamento do mês anterior x o mês antes dele
+  const mkK = temDadoMes_(key, mk) ? mk : ant, antK = mesAnterior_(mkK), fechadoK = mkK !== mk;
+  const cur = valorMes_(key, mkK) || {gross:0,net:0,orders:0}, pv = valorMes_(key, antK) || {gross:0,net:0,orders:0};
   const somaLeads = ms => { const l = ms.map(x => leadsMes_(key, x)).filter(x => x !== null); return l.length ? l.reduce((a,b) => a + b, 0) : null; };
   const kp = `<div class="kpis k3">
       <div class="kpi"><div class="l">Acumulado · ${meses.length} ${meses.length===1?'mês':'meses'}</div><div class="v">${fmtMoney(acc.g)}</div><div class="d2"><b>${acc.o}</b> pedidos${leadsKpi_(key, acc.o, somaLeads(meses))}</div><div class="d"><span>${fmtMoney(acc.n)} líquido nosso</span></div></div>
-      <div class="kpi"><div class="l">Mês atual · ${mesLblCurto_(mk)}</div><div class="v">${fmtMoney(cur.gross)}</div><div class="d2"><b>${cur.orders}</b> pedidos${leadsKpi_(key, cur.orders, leadsMes_(key, mk))}</div><div class="d"><span>${fmtNet_(cur.net)} líquido</span>${deltaHtml_(cur.gross, pv.gross)}</div></div>
-      <div class="kpi"><div class="l">Mês anterior · ${mesLblCurto_(ant)}</div><div class="v">${fmtMoney(pv.gross)}</div><div class="d2"><b>${pv.orders}</b> pedidos${leadsKpi_(key, pv.orders, leadsMes_(key, ant))}</div><div class="d"><span>${fmtNet_(pv.net)} líquido</span></div></div>
+      <div class="kpi"><div class="l">${fechadoK ? 'Fechamento' : 'Mês atual'} · ${mesLblCurto_(mkK)}${fechadoK ? ` <span class="muted" title="${mesLblCurto_(mk)} ainda sem dados">(${mesLblCurto_(mk)} sem dados)</span>` : ''}</div><div class="v">${fmtMoney(cur.gross)}</div><div class="d2"><b>${cur.orders}</b> pedidos${leadsKpi_(key, cur.orders, leadsMes_(key, mkK))}</div><div class="d"><span>${fmtNet_(cur.net)} líquido</span>${deltaHtml_(cur.gross, pv.gross)}</div></div>
+      <div class="kpi"><div class="l">${fechadoK ? 'Comparado com' : 'Mês anterior'} · ${mesLblCurto_(antK)}</div><div class="v">${fmtMoney(pv.gross)}</div><div class="d2"><b>${pv.orders}</b> pedidos${leadsKpi_(key, pv.orders, leadsMes_(key, antK))}</div><div class="d"><span>${fmtNet_(pv.net)} líquido</span></div></div>
     </div>`;
   const nImp = importsDe_(key).length;
   const tabs = `<div class="views">${(key === 'helpgrid' ? [['setores','Setores']] : []).concat([['visao','Visão geral'],['periodo','Por período'],['imp','Importações']]).map(([k,l]) => `<button class="view ${ptab===k?'on':''}" data-ptab="${k}">${l}${k==='imp' && nImp ? `<span class="ct">${nImp}</span>` : ''}</button>`).join('')}</div>`;
@@ -1265,6 +1277,7 @@ function render(){
   pg.querySelectorAll('[data-act="salvar-custo"]').forEach(el => el.addEventListener('click', () => salvarCustos_(el.dataset.canal)));
   pg.querySelectorAll('[data-act="resumo"]').forEach(el => el.addEventListener('click', copiarResumo_));
   pg.querySelectorAll('[data-vdp]').forEach(el => el.addEventListener('click', () => { vdParceiro = el.dataset.vdp; render(); }));
+  pg.querySelectorAll('[data-ovmes]').forEach(el => el.addEventListener('click', () => { ovMes = el.dataset.ovmes; render(); }));
   pg.querySelectorAll('[data-hgmes]').forEach(el => el.addEventListener('click', () => { hgMes = el.dataset.hgmes; render(); }));
   pg.querySelectorAll('[data-vgper]').forEach(el => el.addEventListener('click', () => { vgPeriodo = el.dataset.vgper; render(); }));
   pg.querySelectorAll('[data-vdper]').forEach(el => el.addEventListener('click', () => { vdPeriodo = el.dataset.vdper; render(); }));
@@ -1492,7 +1505,7 @@ async function confirmarImport_(){
 // ---------- Busca rápida ----------
 function openCmd(){ $('#cmdk').classList.add('on'); $('#scrim').classList.add('on'); $('#cmdq').value=''; renderCmd_(); setTimeout(() => $('#cmdq').focus(), 20); }
 function renderCmd_(){
-  const q = $('#cmdq').value.toLowerCase(), mk = mesAtual_();
+  const q = $('#cmdq').value.toLowerCase(), mk = mesRef_();
   const ps = PKEYS.filter(k => !q || PMETA[k].nome.toLowerCase().includes(q));
   const acts = [['Visão geral', () => go('overview')], ['Importar arquivo', openImport], ['Ver importações', () => go('imports')]].filter(a => !q || a[0].toLowerCase().includes(q));
   $('#cmdres').innerHTML = (ps.length ? '<div class="grp">Parceiros</div>' + ps.map((k,i) => { const v = valorMes_(k, mk); return `<div class="it ${i===0?'hl':''}" data-k="${k}">${plogo_(k)}${PMETA[k].nome}<span>${v ? fmtMoney(v.gross)+' em '+mesLblCurto_(mk) : 'sem dado'}</span></div>`; }).join('') : '')
