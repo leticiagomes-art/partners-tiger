@@ -384,7 +384,8 @@ const SETORES_HG_ = [
   {k:'ordertaking', nome:'HelpGrid Order Taking', desc:'O cliente liga numa das linhas de venda pra fazer o pedido.', en:'When customers call one of our sales lines to place an order'},
   {k:'incredibles', nome:'HelpGrid Incredibles', desc:'Vendas por fatura (invoice) enviada por email e SMS.', en:'Invoices sales (email and text message)'},
   {k:'champions', nome:'HelpGrid Champions', desc:'Pedidos que entram quando o cliente liga no número de atendimento (CS).', en:'Inbound Order Taking revenue from customer calls to the CS number'},
-  {k:'welcomeultimate', nome:'Helpgrid Welcome Ultimate', desc:'Descrição a definir com a Helpgrid.', en:''}
+  {k:'welcomeultimate', nome:'Helpgrid Welcome Ultimate', desc:'Descrição a definir com a Helpgrid.', en:''},
+  {k:'interno', nome:'CRM interno da Help', desc:'Vendas da conta BuyGoods interna da Help (relatório Master Accounts) — vem por produto, sem separar setor.', en:''}
 ];
 function setorHelpgrid_(nome){
   const n = String(nome || '').toLowerCase().replace(/\s+/g, ' ');
@@ -1365,6 +1366,7 @@ function lerArquivos_(files){
     }
     const r = detectarEParsear_(lidos[0].wb, lidos[0].f.name);
     if(r.erro){ renderImport_(r.erro); return; }
+    if(r.interno) aplicarInternoHelpgrid_(r);
     if(r.tipo === 'master' && r.registros.helpgrid) r.aviso = ((r.aviso ? r.aviso + ' ' : '') + 'A Helpgrid vem em dois arquivos (duas contas BuyGoods). Se tiver o outro, volte e selecione os dois juntos — senão o mês fica só com uma conta.');
     impPending = r; renderImport_();
   });
@@ -1389,7 +1391,47 @@ function detectarEParsear_(wb, nome){
   }
   const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:null});
   if(rows.some(r => r && r[0] === 'Account' && r[1] === 'Affiliate')) return parseMaster_(rows, nome);
-  return {erro: 'Não reconheci esse arquivo. Ele precisa ser o Master Affiliates (export da BuyGoods) ou o Salesbound Financial Performance.'};
+  if(rows.some(r => r && r[0] === 'Account' && r[1] === 'Visitors')) return parseMasterAccounts_(rows, nome);
+  return {erro: 'Não reconheci esse arquivo. Ele precisa ser o Master Affiliates / Master Accounts (export da BuyGoods) ou o Salesbound Financial Performance.'};
+}
+// Master Accounts = conta BuyGoods interna da Help, por produto (sem coluna de afiliado/setor). Entra
+// inteiro na Helpgrid, no setor "CRM interno". Pedidos não vêm no arquivo: saem de bruto ÷ AOV.
+function parseMasterAccounts_(rows, nome){
+  const hpos = rows.findIndex(r => r && r[0] === 'Account' && r[1] === 'Visitors');
+  const hidx = {}; rows[hpos].forEach((h,i) => hidx[h] = i);
+  const need = ['Gross Sales','Refunds','Chargebacks','Taxes','AOV','Net Sales'];
+  if(!need.every(h => h in hidx)) return {erro: 'Esse Master Accounts está sem alguma coluna esperada (Gross Sales, Refunds, Chargebacks, Taxes, AOV, Net Sales).'};
+  const titulo = rows[0] && rows[0][0] ? String(rows[0][0]) : '';
+  const mes = parseMesInicioTitulo_(titulo);
+  if(!mes) return {erro: `Não identifiquei o mês pelo título do arquivo ("${titulo}").`};
+  const t = {orders:0, gross:0, net:0, refunds:0, taxes:0};
+  for(let i=hpos+1; i<rows.length; i++){
+    const row = rows[i]; if(!row || !row[0] || row[0] === 'Total') continue;
+    const g = Number(row[hidx['Gross Sales']])||0, aov = Number(row[hidx['AOV']])||0;
+    t.orders += aov ? Math.round(g / aov) : 0; t.gross += g; t.net += Number(row[hidx['Net Sales']])||0;
+    t.refunds += (Number(row[hidx['Refunds']])||0) + (Number(row[hidx['Chargebacks']])||0); t.taxes += Number(row[hidx['Taxes']])||0;
+  }
+  Object.keys(t).forEach(f => t[f] = Math.round(t[f]*100)/100);
+  return {tipo:'master', tipoLbl:'Master Accounts · CRM interno da Help', arquivo: nome, mes, interno: true,
+    aviso: 'Master Accounts é a conta BuyGoods interna da Help: entra todo na Helpgrid, no setor "CRM interno da Help".',
+    registros: {hgset_interno: {[mes]: t}}, linhas: []};
+}
+// o CRM interno soma no total da Helpgrid: junto com o Master Affiliates do mês, soma no que veio;
+// sozinho, troca só a parte interna do total que já estava salvo
+function aplicarInternoHelpgrid_(r){
+  const mes = r.mes, novo = ((r.registros.hgset_interno || {})[mes]);
+  if(!novo) return r;
+  let base;
+  if(r.registros.helpgrid && r.registros.helpgrid[mes]) base = r.registros.helpgrid[mes];
+  else {
+    const atual = (canalMensal.helpgrid || {})[mes] || {orders:0, gross:0, net:0, refunds:0, taxes:0};
+    const velho = (canalMensal.hgset_interno || {})[mes] || {orders:0, gross:0, net:0, refunds:0, taxes:0};
+    base = {}; ['orders','gross','net','refunds','taxes'].forEach(f => base[f] = (atual[f]||0) - (velho[f]||0));
+  }
+  const tot = {}; ['orders','gross','net','refunds','taxes'].forEach(f => tot[f] = Math.round(((base[f]||0) + (novo[f]||0))*100)/100);
+  r.registros.helpgrid = {[mes]: tot};
+  r.linhas = [{key:'helpgrid', mes, antes: ((canalMensal.helpgrid||{})[mes]||{}).gross ?? null, depois: tot.gross}];
+  return r;
 }
 function parseMaster_(rows, nome){
   const hpos = rows.findIndex(r => r && r[0] === 'Account' && r[1] === 'Affiliate');
@@ -1438,6 +1480,8 @@ function somarMasters_(lista){
     ['orders','gross','net','refunds','taxes'].forEach(f => a[f] = Math.round(((a[f]||0) + (v[f]||0))*100)/100);
   }));
   const keys = Object.keys(registros).filter(k => PMETA[k]);
+  if(lista.some(x => x.interno)) return aplicarInternoHelpgrid_({tipo:'master', tipoLbl:`Master Affiliates + Accounts · ${lista.length} arquivos somados`, arquivo: lista.map(x => x.arquivo).join(' + '), mes,
+    aviso: Array.from(new Set(lista.map(x => x.aviso).filter(Boolean))).join(' '), registros, linhas: []});
   return {tipo:'master', tipoLbl:`Master Affiliates · ${lista.length} arquivos somados`, arquivo: lista.map(x => x.arquivo).join(' + '), mes,
     aviso: Array.from(new Set(lista.map(x => x.aviso).filter(Boolean))).join(' '), registros,
     linhas: keys.map(k => ({key: k, mes, antes: ((canalMensal[k]||{})[mes]||{}).gross ?? null, depois: registros[k][mes].gross}))};
