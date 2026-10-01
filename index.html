@@ -354,7 +354,8 @@ function serverCanalMensalToLocal(obj){
     if(!out[r.canal]) out[r.canal] = {};
     out[r.canal][mesKey] = {
       orders: Number(r.orders)||0, gross: Number(r.gross)||0, net: Number(r.net)||0,
-      refunds: Number(r.refunds)||0, taxes: Number(r.taxes)||0, custo: Number(r.custo)||0
+      refunds: Number(r.refunds)||0, taxes: Number(r.taxes)||0, custo: Number(r.custo)||0,
+      leads: (r.leads === '' || r.leads === undefined || r.leads === null) ? null : Number(r.leads)
     };
   });
   return out;
@@ -1000,6 +1001,15 @@ function valorMes_(key, mk){
   if(bf) return {gross: bf.gross||0, net: SPLIT_WELCOME_[key] ? liqMensal_(key, bf) : (bf.net||0), orders: bf.orders||0};
   return null;
 }
+// Welcome (iSellForU, NuYu): quantos leads foram passados no mês — lançado à mão, vem do parceiro
+const LEADS_CANAIS_ = ['welcome_isellforu','nuyu'];
+function leadsMes_(key, mk){ const bf = (canalMensal[key] || {})[mk]; return bf && bf.leads !== null && bf.leads !== undefined ? bf.leads : null; }
+function fmtInt_(n){ return Number(n).toLocaleString('pt-BR'); }
+function convTxt_(orders, leads){ return leads ? (orders / leads * 100).toLocaleString('pt-BR', {maximumFractionDigits: 2}) + '%' : '—'; }
+function leadsKpi_(key, orders, leads){
+  if(!LEADS_CANAIS_.includes(key) || leads === null) return '';
+  return ` · <b>${fmtInt_(leads)}</b> leads · conversão <b>${convTxt_(orders, leads)}</b>`;
+}
 function mesesDo_(key){
   const s = new Set(Object.keys(canalMensal[key] || {}));
   if(!MODO_MENSAL_.includes(key)) canalAllDays_(key).forEach(d => s.add(d.slice(0,7)));
@@ -1184,10 +1194,11 @@ function partner_(key){
   const mk = mesAtual_(), ant = mesAnterior_(mk);
   const acc = meses.reduce((a,x) => { const v = valorMes_(key,x); a.g += v.gross; a.n += v.net || 0; a.o += v.orders; return a; }, {g:0,n:0,o:0});
   const cur = valorMes_(key, mk) || {gross:0,net:0,orders:0}, pv = valorMes_(key, ant) || {gross:0,net:0,orders:0};
+  const somaLeads = ms => { const l = ms.map(x => leadsMes_(key, x)).filter(x => x !== null); return l.length ? l.reduce((a,b) => a + b, 0) : null; };
   const kp = `<div class="kpis k3">
-      <div class="kpi"><div class="l">Acumulado · ${meses.length} ${meses.length===1?'mês':'meses'}</div><div class="v">${fmtMoney(acc.g)}</div><div class="d2"><b>${acc.o}</b> pedidos</div><div class="d"><span>${fmtMoney(acc.n)} líquido nosso</span></div></div>
-      <div class="kpi"><div class="l">Mês atual · ${mesLblCurto_(mk)}</div><div class="v">${fmtMoney(cur.gross)}</div><div class="d2"><b>${cur.orders}</b> pedidos</div><div class="d"><span>${fmtNet_(cur.net)} líquido</span>${deltaHtml_(cur.gross, pv.gross)}</div></div>
-      <div class="kpi"><div class="l">Mês anterior · ${mesLblCurto_(ant)}</div><div class="v">${fmtMoney(pv.gross)}</div><div class="d2"><b>${pv.orders}</b> pedidos</div><div class="d"><span>${fmtNet_(pv.net)} líquido</span></div></div>
+      <div class="kpi"><div class="l">Acumulado · ${meses.length} ${meses.length===1?'mês':'meses'}</div><div class="v">${fmtMoney(acc.g)}</div><div class="d2"><b>${acc.o}</b> pedidos${leadsKpi_(key, acc.o, somaLeads(meses))}</div><div class="d"><span>${fmtMoney(acc.n)} líquido nosso</span></div></div>
+      <div class="kpi"><div class="l">Mês atual · ${mesLblCurto_(mk)}</div><div class="v">${fmtMoney(cur.gross)}</div><div class="d2"><b>${cur.orders}</b> pedidos${leadsKpi_(key, cur.orders, leadsMes_(key, mk))}</div><div class="d"><span>${fmtNet_(cur.net)} líquido</span>${deltaHtml_(cur.gross, pv.gross)}</div></div>
+      <div class="kpi"><div class="l">Mês anterior · ${mesLblCurto_(ant)}</div><div class="v">${fmtMoney(pv.gross)}</div><div class="d2"><b>${pv.orders}</b> pedidos${leadsKpi_(key, pv.orders, leadsMes_(key, ant))}</div><div class="d"><span>${fmtNet_(pv.net)} líquido</span></div></div>
     </div>`;
   const nImp = importsDe_(key).length;
   const tabs = `<div class="views">${(key === 'helpgrid' ? [['setores','Setores']] : []).concat([['visao','Visão geral'],['periodo','Por período'],['imp','Importações']]).map(([k,l]) => `<button class="view ${ptab===k?'on':''}" data-ptab="${k}">${l}${k==='imp' && nImp ? `<span class="ct">${nImp}</span>` : ''}</button>`).join('')}</div>`;
@@ -1208,7 +1219,7 @@ function partner_(key){
     const seg = (diario || lancar) ? `<div class="pad" style="padding-top:12px;padding-bottom:4px;display:flex;align-items:center;gap:8px">${diario ? `<div class="seg">${[['mes','Por mês'],['semana','Por semana'],['dia','Por dia']].map(([k,l]) => `<button class="${periodo===k?'on':''}" data-per="${k}">${l}</button>`).join('')}</div>` : ''}${lancar}</div>` : '';
     let linhas = [];
     if(periodo === 'mes' || !diario){
-      linhas = meses.slice().reverse().map((x,i,arr) => ({lbl: mesLblCurto_(x) + (x===mk ? ' <span class="pill neu" style="margin-left:6px">em andamento</span>' : ''), v: valorMes_(key,x), prev: arr[i+1] ? valorMes_(key, arr[i+1]) : null}));
+      linhas = meses.slice().reverse().map((x,i,arr) => ({m: x, lbl: mesLblCurto_(x) + (x===mk ? ' <span class="pill neu" style="margin-left:6px">em andamento</span>' : ''), v: valorMes_(key,x), prev: arr[i+1] ? valorMes_(key, arr[i+1]) : null}));
     } else {
       const dias = canalAllDays_(key);
       const grupos = periodo === 'semana' ? Array.from(new Set(dias.map(isoWeekMonday_))).sort().reverse().slice(0,12) : dias.slice().reverse().slice(0,21);
@@ -1221,9 +1232,11 @@ function partner_(key){
       });
     }
     const tot = linhas.reduce((a,l) => { a.g += l.v.gross; a.n += l.v.net || 0; a.o += l.v.orders; return a; }, {g:0,n:0,o:0});
-    body = seg + `<table><thead><tr><th>${periodo==='dia'&&diario?'Dia':periodo==='semana'&&diario?'Semana':'Mês'}</th><th class="r">Bruto</th><th class="r">Variação</th><th class="r">Líquido nosso</th><th class="r">Pedidos</th><th class="r hide-sm">Ticket médio</th></tr></thead><tbody>
-      ${linhas.map(l => `<tr><td><b style="font-weight:550">${l.lbl}</b></td><td class="r num">${fmtMoney(l.v.gross)}</td><td class="r">${l.prev ? deltaHtml_(l.v.gross, l.prev.gross) : '<span class="muted">—</span>'}</td><td class="r num">${fmtNet_(l.v.net)}</td><td class="r num">${l.v.orders}</td><td class="r num hide-sm">${l.v.orders ? fmtMoney(l.v.gross/l.v.orders) : '—'}</td></tr>`).join('')}
-      </tbody><tfoot><tr><td>Total</td><td class="r num">${fmtMoney(tot.g)}</td><td></td><td class="r num">${linhas.every(l => l.v.net === null || l.v.net === undefined) ? '<span class="muted">—</span>' : fmtMoney(tot.n)}</td><td class="r num">${tot.o}</td><td class="r num hide-sm">${tot.o ? fmtMoney(tot.g/tot.o) : '—'}</td></tr></tfoot></table>`;
+    const comLeads = LEADS_CANAIS_.includes(key) && linhas.some(l => l.m);
+    const totLeads = comLeads ? somaLeads(linhas.map(l => l.m)) : null;
+    body = seg + `<table><thead><tr><th>${periodo==='dia'&&diario?'Dia':periodo==='semana'&&diario?'Semana':'Mês'}</th><th class="r">Bruto</th><th class="r">Variação</th><th class="r">Líquido nosso</th><th class="r">Pedidos</th><th class="r hide-sm">Ticket médio</th>${comLeads ? '<th class="r">Leads</th><th class="r">Conversão</th>' : ''}</tr></thead><tbody>
+      ${linhas.map(l => `<tr><td><b style="font-weight:550">${l.lbl}</b></td><td class="r num">${fmtMoney(l.v.gross)}</td><td class="r">${l.prev ? deltaHtml_(l.v.gross, l.prev.gross) : '<span class="muted">—</span>'}</td><td class="r num">${fmtNet_(l.v.net)}</td><td class="r num">${l.v.orders}</td><td class="r num hide-sm">${l.v.orders ? fmtMoney(l.v.gross/l.v.orders) : '—'}</td>${comLeads ? (lds => `<td class="r num">${lds === null ? '<span class="muted">—</span>' : fmtInt_(lds)}</td><td class="r num">${lds === null ? '<span class="muted">—</span>' : convTxt_(l.v.orders, lds)}</td>`)(leadsMes_(key, l.m)) : ''}</tr>`).join('')}
+      </tbody><tfoot><tr><td>Total</td><td class="r num">${fmtMoney(tot.g)}</td><td></td><td class="r num">${linhas.every(l => l.v.net === null || l.v.net === undefined) ? '<span class="muted">—</span>' : fmtMoney(tot.n)}</td><td class="r num">${tot.o}</td><td class="r num hide-sm">${tot.o ? fmtMoney(tot.g/tot.o) : '—'}</td>${comLeads ? `<td class="r num">${totLeads === null ? '—' : fmtInt_(totLeads)}</td><td class="r num">${totLeads === null ? '—' : convTxt_(tot.o, totLeads)}</td>` : ''}</tr></tfoot></table>`;
   } else {
     body = `<div class="pad" style="padding-top:16px">${timelineImports_(importsDe_(key))}</div>`;
   }
