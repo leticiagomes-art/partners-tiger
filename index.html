@@ -221,6 +221,23 @@ table.mini td:last-child, table.mini th:last-child{padding-right:0}
 .st-bar{height:4px;border-radius:2px;background:var(--bg-active);margin-top:6px;max-width:240px;overflow:hidden}
 .st-bar i{display:block;height:100%;background:#2E86AB}
 table.vg tr.vg-tot td{font-weight:700;background:var(--bg-sub);border-top:1px solid var(--line-strong)}
+.ro-card{overflow:hidden}
+.ro-nota{font-size:12px;margin:8px 0 0;line-height:1.5}
+.ro-card table.mini td, .ro-card table.mini th{white-space:nowrap}
+.ro-card tr.ro-grupo td{background:var(--bg-sub);font-weight:600;padding-top:8px;padding-bottom:8px}
+.ro-nicho{display:inline-block;font-size:11px;color:var(--text-3);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:4px;font-weight:400}
+.ro-th{text-align:center !important;border-bottom:1px solid var(--line)}
+.ro-sel{height:28px;border:1px solid var(--line-strong);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:12.5px;padding:0 6px}
+.ro-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.ro-chip{border:1px solid var(--line-strong);background:var(--bg);color:var(--text-2);border-radius:999px;padding:3px 10px;font-size:12px}
+.ro-chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.banner.ro-aviso{align-items:flex-start}
+.banner.ro-aviso ul{margin:4px 0 0;padding-left:18px}
+.banner.ro-ok{background:var(--green-bg);color:var(--green)}
+.crm-cola{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-3);font-weight:500;margin-bottom:10px}
+.crm-cola textarea{border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;font:inherit;font-size:12.5px;background:var(--bg);color:var(--text);resize:vertical}
+.crm-lido{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:var(--bg-sub);font-size:12.5px;line-height:1.5}
+.ld-tab select, .ld-tab input{height:30px;border:1px solid var(--line-strong);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:12.5px;padding:0 6px}
 </style>
 <script>
   (function(){
@@ -237,6 +254,7 @@ table.vg tr.vg-tot td{font-weight:700;background:var(--bg-sub);border-top:1px so
   <aside class="side">
     <div class="ws"><div class="logo">T</div><div><b>Tiger Offers</b><small>Parceiros</small></div></div>
     <div class="side-search" id="sideSearch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar<kbd>Ctrl K</kbd></div>
+    <button class="nav" id="nav-resumo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h12"/></svg>Resumo por oferta</button>
     <button class="nav" id="nav-overview"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Visão geral</button>
     <button class="nav" id="nav-vendas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></svg>Vendas por dia</button>
     <button class="nav" id="nav-vendasgeral"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/></svg>Vendas por dia geral</button>
@@ -785,7 +803,9 @@ function openManual_(){
   const m = $('#importModal');
   m.innerHTML = `<div class="mh"><b>Lançar dia manual</b><span class="sp"></span><button class="icon-x" data-close aria-label="Fechar">✕</button></div>
     <div class="mb">
-      <p class="muted" style="margin:0 0 10px;font-size:12.5px">Pra parceiros que não aparecem no relatório BuyGoods (Sales Bound, iSellForU, NuYu). Lançar de novo o mesmo dia e conta substitui o valor.</p>
+      <p class="muted" style="margin:0 0 10px;font-size:12.5px">Pra parceiros que não aparecem no relatório BuyGoods (Sales Bound, iSellForU, NuYu). Lançar de novo o mesmo dia e conta substitui o valor. Dia sem venda: lance 0.</p>
+      <label class="crm-cola">Sales Bound: cole aqui a página do Dashboard do CRM do dia (Ctrl+A, Ctrl+C) — preenche tudo, inclusive as ofertas do "Top Products"<textarea id="mnCola" rows="3" placeholder="Cole o Dashboard do Checkout Champ filtrado por um dia"></textarea></label>
+      <div id="mnLido"></div>
       <div class="mgrid">
         <label>Parceiro<select id="mnCanal">${PKEYS.map(k => `<option value="${k}" ${k===(vdParceiro||'welcome_salesbound')?'selected':''}>${PMETA[k].nome}</option>`).join('')}</select></label>
         <label>Dia<input type="date" id="mnDia" value="${new Date(Date.now()-86400000).toISOString().slice(0,10)}"></label>
@@ -799,6 +819,19 @@ function openManual_(){
     <div class="mf"><button class="btn" data-close>Cancelar</button><button class="btn pri" id="mnSalvar">Salvar dia</button></div>`;
   m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeAll));
   m.querySelector('#mnSalvar').addEventListener('click', salvarManual_);
+  mnProdutos = null;
+  m.querySelector('#mnCola').addEventListener('input', e => {
+    const txt = e.target.value.trim(); mnProdutos = null;
+    if(!txt){ $('#mnLido').innerHTML = ''; return; }
+    const r = lerResumoCRM_(txt);
+    if(r.erro){ $('#mnLido').innerHTML = `<div class="alert-err">${escapeHtml(r.erro)}</div>`; return; }
+    $('#mnCanal').value = 'welcome_salesbound'; $('#mnDia').value = r.dia; $('#mnConta').value = 'CRM';
+    if(r.vendas !== null) $('#mnV').value = r.vendas;
+    $('#mnG').value = r.sales; $('#mnR').value = r.refunds;
+    mnProdutos = {dia: r.dia, pi: r.produtos};
+    const ofs = Object.entries(r.produtos);
+    $('#mnLido').innerHTML = `<div class="crm-lido"><b>Lido do CRM · ${diaLbl_(r.dia)}:</b> ${r.vendas ?? '?'} vendas · ${fmtMoney(r.sales)} · reembolso ${fmtMoney(r.refunds)}${ofs.length ? `<br>Ofertas (Top Products): ${ofs.map(([o, n]) => `${escapeHtml(o)} ${n}`).join(' · ')}${r.top10 ? ' <span class="muted">— lista do CRM limitada a 10 linhas</span>' : ''}` : '<br><span class="muted">Sem "Top Products" no texto.</span>'}${r.vendas === null ? '<br><span style="color:var(--red)">Não achei a quantidade de vendas — preencha à mão.</span>' : ''}</div>`;
+  });
   m.classList.add('on'); $('#scrim').classList.add('on');
 }
 async function salvarManual_(){
@@ -811,7 +844,9 @@ async function salvarManual_(){
     Object.keys(canaisPorDia[canal] || {}).forEach(d => { const x = canaisPorDia[canal][d]; parceirosDia[canal][d] = {c: {CRM: {v: x.vendas||0, i: x.vendas||0, g: x.gross||0, r: x.refund||0, cb: x.chargeback||0, p: {}}}}; });
   }
   if(!parceirosDia[canal][dia]) parceirosDia[canal][dia] = {c: {}};
-  parceirosDia[canal][dia].c[conta] = {v, i: v, g: Math.round(g*100)/100, r: Math.round(r*100)/100, cb: 0, p: {}};
+  const piAntes = (parceirosDia[canal][dia].c[conta] || {}).pi;
+  const pi = (mnProdutos && mnProdutos.dia === dia && canal === 'welcome_salesbound') ? mnProdutos.pi : piAntes;
+  parceirosDia[canal][dia].c[conta] = Object.assign({v, i: v, g: Math.round(g*100)/100, r: Math.round(r*100)/100, cb: 0, p: {}}, pi ? {pi} : {});
   const meses = new Set(Object.keys(parceirosDia[canal]).map(d => d.slice(0,7)));
   await salvarParceirosDia_([canal], Array.from(meses), {arquivo: 'Lançamento manual', tipo: 'Lançamento manual', parceiros: [canal],
     resumo: `${PMETA[canal].nome} ${diaLbl_(dia)} (${conta}): ${v} vendas · ${fmtMoney(g)}${r ? ' · −' + fmtMoney(r) : ''}`});
@@ -944,15 +979,326 @@ async function reenviarParceirosDia_(){
   if(r && r.ok){ try { localStorage.removeItem('tiger_pd_pendente'); } catch(e){} showToast('Vendas por dia sincronizadas com o Sheets ✓'); render(); }
 }
 function parceirosDiaDoServidor_(obj){
-  const pd = {}, dias = new Set();
+  const pd = {}, dias = new Set(), leads = {};
   Object.values(obj || {}).forEach(r => {
     let dados; try { dados = JSON.parse(r.dados_json || '{}'); } catch(e){ return; }
     if(r.canal === '__dias'){ (Array.isArray(dados) ? dados : []).forEach(d => dias.add(d)); return; }
+    if(r.canal === '__leads'){ Object.assign(leads, dados); return; }
     if(!r.canal) return;
     if(!pd[r.canal]) pd[r.canal] = {};
     Object.assign(pd[r.canal], dados);
   });
-  return {pd, dias: Array.from(dias).sort()};
+  return {pd, dias: Array.from(dias).sort(), leads};
+}
+
+// ================= Resumo por oferta: vendas × leads × performance =================
+// A visão principal pedida pela gestão: por parceiro e por oferta, quantas vendas, quantos leads o
+// parceiro recebeu e a conversão, no período escolhido — e um aviso explícito de todo dado que falta,
+// pra nenhum número ser lido como completo quando não está.
+const LEADS_PARCEIROS_ = ['welcome_salesbound','welcome_isellforu','nuyu']; // parceiros que recebem leads da gente
+const SEM_OFERTA_ = '(sem separar por oferta)';
+let leadsDia = loadLS('tiger_leads_dia_v1', {}); // {dia: {parceiro: {oferta: {l: leads, a: agendamentos}}}}
+let roPeriodo = 'semana_passada', roAgrupar = 'parceiro';
+let roCmp = {a: 'welcome_salesbound', b: 'welcome_isellforu', ofertas: ['NailsCleanPro','NervoLyn','AudiLeaf']};
+
+// nomes de oferta: BuyGoods usa o nome da aba ("NailsCleanPro"), o CRM da Sales Bound usa "Soda HorsePeak - 1 Bottle"
+const OFERTAS_ = ['SodaHorsePeak','NervoLyn','NailsCleanPro','AudiLeaf','BreathEaseX','Prostafense','FloraNew','VisiumPro','AlphaErec','GlucoRecover','MaroBrain','BakingSlim','PressureCalmX','BoosterXT','VigorLong','Erectrozil','EyeVitalis','IronPulseX','BoostSteelX','AudiQuiet','LipoBliss','GlycoMelt','SkinRenewPro','GoldenSkinPro','CardioEaseX','Artera','Oatzem','Testofense','TestoVirility','Blue Omega Oil','MounjaMelt','Reduburn','LipoVive','LipoPeak','LipoTrine','NailsClean','Booster','MenoCaps'];
+const chaveOferta_ = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const OFERTA_POR_CHAVE_ = Object.fromEntries(OFERTAS_.map(o => [chaveOferta_(o), o]));
+function nomeOferta_(s){
+  const limpo = String(s || '').replace(/\s*-\s*\d+\s*(bottles?|frascos?|units?|un)\b.*$/i, '').trim();
+  return OFERTA_POR_CHAVE_[chaveOferta_(limpo)] || limpo || SEM_OFERTA_;
+}
+// nicho de cada oferta — "a confirmar" onde a classificação ainda não foi validada
+const NICHOS_ = {
+  'Neuropatia': ['NervoLyn'],
+  'Saúde masculina': ['SodaHorsePeak','AlphaErec','BoosterXT','Booster','Erectrozil','VigorLong','BoostSteelX','TestoVirility','Testofense'],
+  'Próstata': ['Prostafense'],
+  'Audição': ['AudiLeaf','AudiQuiet'],
+  'Unhas (fungo)': ['NailsCleanPro','NailsClean'],
+  'Respiratório': ['BreathEaseX'],
+  'Glicemia': ['GlucoRecover'],
+  'Pressão / cardio': ['PressureCalmX','CardioEaseX','Artera'],
+  'Visão': ['VisiumPro','EyeVitalis'],
+  'Memória': ['MaroBrain'],
+  'Emagrecimento': ['BakingSlim','LipoBliss','GlycoMelt','MounjaMelt','Reduburn','LipoVive','LipoPeak','LipoTrine','Oatzem'],
+  'Pele': ['SkinRenewPro','GoldenSkinPro'],
+  'A confirmar': ['FloraNew','IronPulseX','Blue Omega Oil','MenoCaps']
+};
+const NICHO_DE_ = {}; Object.keys(NICHOS_).forEach(n => NICHOS_[n].forEach(o => { NICHO_DE_[o] = n; }));
+const nichoDe_ = o => NICHO_DE_[o] || 'A confirmar';
+
+const ontemKey_ = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0,10); };
+function listaDias_(ini, fim){
+  const out = []; if(!ini || !fim || fim < ini) return out;
+  for(let d = new Date(ini + 'T12:00:00'); d.toISOString().slice(0,10) <= fim; d.setDate(d.getDate() + 1)) out.push(d.toISOString().slice(0,10));
+  return out;
+}
+function periodoRO_(p){
+  const ontem = ontemKey_(), k = dt => dt.toISOString().slice(0,10), d = s => new Date(s + 'T12:00:00');
+  if(p === 'ontem') return {ini: ontem, fim: ontem, lbl: 'Ontem'};
+  if(p === '7dias'){ const i = d(ontem); i.setDate(i.getDate() - 6); return {ini: k(i), fim: ontem, lbl: 'Últimos 7 dias'}; }
+  if(p === 'semana_passada'){ const seg = d(isoWeekMonday_(hojeKey_())); seg.setDate(seg.getDate() - 7); const dom = new Date(seg); dom.setDate(dom.getDate() + 6); return {ini: k(seg), fim: k(dom), lbl: 'Semana passada'}; }
+  if(p === 'mes_passado'){ const m = mesAnterior_(mesAtual_()); const fim = d(m + '-01'); fim.setMonth(fim.getMonth() + 1); fim.setDate(0); return {ini: m + '-01', fim: k(fim), lbl: 'Mês passado', mes: m, mesInteiro: true}; }
+  const m = mesAtual_(); return {ini: m + '-01', fim: ontem < m + '-01' ? m + '-01' : ontem, lbl: 'Este mês', mes: m};
+}
+
+function resumoOfertas_(per){
+  const dias = listaDias_(per.ini, per.fim);
+  const R = {};
+  PKEYS.forEach(k => {
+    const P = R[k] = {v:0, g:0, r:0, l:0, a:0, temLeads:false, leadsMensal:false, itensCRM:false, ofertas:{}};
+    const of = o => P.ofertas[o] || (P.ofertas[o] = {v:0, g:0, itens:0, l:0, a:0, temLeads:false});
+    dias.forEach(dia => {
+      const reg = (parceirosDia[k] || {})[dia];
+      if(reg) Object.values(reg.c || {}).forEach(x => {
+        P.v += x.v || 0; P.g += x.g || 0; P.r += (x.r || 0) + (x.cb || 0);
+        Object.keys(x.p || {}).forEach(pr => { const o = of(nomeOferta_(pr)); o.v += x.p[pr][0] || 0; o.g += x.p[pr][1] || 0; });
+        Object.keys(x.pi || {}).forEach(pr => { of(nomeOferta_(pr)).itens += x.pi[pr] || 0; P.itensCRM = true; });
+      });
+      const ld = (leadsDia[dia] || {})[k];
+      if(ld){ P.temLeads = true; Object.keys(ld).forEach(o => { const x = of(o); x.temLeads = true; x.l += ld[o].l || 0; x.a += ld[o].a || 0; P.l += ld[o].l || 0; P.a += ld[o].a || 0; }); }
+    });
+    // mês inteiro sem leads por dia: usa o total de leads do mês lançado no parceiro
+    if(per.mes && !P.temLeads){ const bf = (canalMensal[k] || {})[per.mes]; if(bf && bf.leads !== null && bf.leads !== undefined){ P.l = bf.leads; P.temLeads = true; P.leadsMensal = true; } }
+    // mês fechado: o total do parceiro é o fechamento oficial (Master / CRM do mês), não a soma dos dias
+    if(per.mesInteiro){ const bf = (canalMensal[k] || {})[per.mes]; if(bf) P.oficial = {v: bf.orders || 0, g: bf.gross || 0, r: bf.refunds || 0, vDia: P.v, gDia: P.g}; }
+  });
+  return R;
+}
+function coberturaRO_(per){
+  const ate = per.fim > ontemKey_() ? ontemKey_() : per.fim;
+  const dias = listaDias_(per.ini, ate);
+  const sbd = parceirosDia.welcome_salesbound || {};
+  const R = {dias, semRelatorio: dias.filter(d => !diasRelatorio.includes(d)), sbFalta: dias.filter(d => !sbd[d]),
+    sbSemQtd: dias.filter(d => sbd[d] && Object.values(sbd[d].c || {}).some(x => (x.g || 0) > 0 && !(x.v || 0))), leadsFalta: {}};
+  LEADS_PARCEIROS_.forEach(k => { R.leadsFalta[k] = dias.filter(d => !((leadsDia[d] || {})[k])); });
+  return R;
+}
+const faixaDias_ = ds => {
+  if(!ds.length) return '';
+  const grupos = []; let ini = ds[0], ant = ds[0];
+  for(let i = 1; i <= ds.length; i++){
+    const d = ds[i], prox = new Date(ant + 'T12:00:00'); prox.setDate(prox.getDate() + 1);
+    if(d && d === prox.toISOString().slice(0,10)){ ant = d; continue; }
+    grupos.push(ini === ant ? diaLbl_(ini) : `${diaLbl_(ini)} a ${diaLbl_(ant)}`); ini = ant = d;
+  }
+  return grupos.join(', ');
+};
+const conv_ = (v, l) => l ? (v / l * 100).toLocaleString('pt-BR', {maximumFractionDigits: 2}) + '%' : '—';
+const int_ = n => Number(n || 0).toLocaleString('pt-BR');
+
+function resumoOfertasPage_(){
+  const per = periodoRO_(roPeriodo), R = resumoOfertas_(per), cob = coberturaRO_(per);
+  // ---- avisos de dado faltando ----
+  const avisos = [];
+  if(cob.semRelatorio.length) avisos.push(`<b>Relatório BuyGoods diário</b> não importado: ${faixaDias_(cob.semRelatorio)} — Helpgrid, Email, SMS e iSellForU ficam sem esses dias.`);
+  if(cob.sbFalta.length) avisos.push(`<b>Sales Bound</b> sem lançamento do CRM: ${faixaDias_(cob.sbFalta)}.`);
+  if(cob.sbSemQtd.length) avisos.push(`<b>Sales Bound</b> com valor mas sem a quantidade de vendas: ${faixaDias_(cob.sbSemQtd)}.`);
+  LEADS_PARCEIROS_.forEach(k => { const f = cob.leadsFalta[k]; if(f.length && !R[k].leadsMensal) avisos.push(`<b>Leads ${PMETA[k].nome}</b> não lançados: ${f.length === cob.dias.length ? 'nenhum dia do período' : faixaDias_(f)}.`); });
+  if(R.welcome_salesbound.v && !R.welcome_salesbound.itensCRM) avisos.push('<b>Sales Bound por oferta</b>: o CRM só foi lançado com o total do dia — cole o resumo do CRM (com "Top Products") pra separar por oferta.');
+  const banner = avisos.length
+    ? `<div class="banner ro-aviso"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg><div><b>Dados incompletos neste período — os números abaixo não são finais:</b><ul>${avisos.map(a => `<li>${a}</li>`).join('')}</ul></div></div>`
+    : `<div class="banner ro-ok"><span>✓ Todos os dados do período estão lançados.</span></div>`;
+
+  // ---- tabela por parceiro ----
+  const linhasP = PKEYS.filter(k => R[k].v || R[k].g || R[k].temLeads || R[k].oficial || LEADS_PARCEIROS_.includes(k)).map(k => {
+    const P = Object.assign({}, R[k], R[k].oficial ? {v: R[k].oficial.v, g: R[k].oficial.g, r: R[k].oficial.r} : {});
+    const tagOf = R[k].oficial ? ` <span class="ro-nicho" title="Fechamento oficial do mês (Master / CRM). Soma dos relatórios diários: ${int_(R[k].oficial.vDia)} vendas · ${fmtMoney(R[k].oficial.gDia)}">fechamento</span>` : '';
+    return `<tr class="click" data-go="${k}"><td><div class="who">${plogo_(k,22)}<b>${PMETA[k].nome}</b>${tagOf}</div></td>
+      <td class="r num"><b>${int_(P.v)}</b></td><td class="r num">${fmtMoney(P.g)}</td><td class="r num">${P.r ? '−' + fmtMoney(P.r) : '<span class="muted">—</span>'}</td>
+      <td class="r num">${P.temLeads ? int_(P.l) + (P.leadsMensal ? ' <span class="muted" title="total do mês, não por dia">(mês)</span>' : '') : '<span class="muted" title="leads não lançados">—</span>'}</td>
+      <td class="r num">${P.a ? int_(P.a) : '<span class="muted">—</span>'}</td>
+      <td class="r num"><b>${P.temLeads ? conv_(P.v, P.l) : '—'}</b></td>
+      <td class="r num hide-sm">${P.v ? fmtMoney(P.g / P.v) : '—'}</td></tr>`;
+  }).join('');
+  const tabP = `<div class="card ro-card"><div class="card-h"><b>Por parceiro · ${per.lbl} (${diaLbl_(per.ini)} a ${diaLbl_(per.fim)})</b><span class="muted" style="font-size:12px">vendas = pedidos frontais (BuyGoods) / vendas do CRM (Sales Bound)</span></div>
+    <div style="overflow-x:auto"><table class="mini"><thead><tr><th>Parceiro</th><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">Reemb./CB</th><th class="r">Leads recebidos</th><th class="r">Agendamentos</th><th class="r">Conversão</th><th class="r hide-sm">Ticket</th></tr></thead><tbody>${linhasP}</tbody></table></div>
+    <p class="muted ro-nota">${per.mesInteiro ? 'Mês fechado: o total de cada parceiro é o <b>fechamento oficial</b> (Master Affiliates / CRM) — na Helpgrid inclui a conta interna da Help e pedidos FE+BE. A parte "Por oferta" abaixo vem dos relatórios diários.' : 'Pelos relatórios diários: vendas = pedidos frontais. Helpgrid aqui é só a conta geral — a conta interna da Help não vem no relatório diário (ela entra no fechamento do mês, na Visão geral).'} Leads "(mês)" = total do mês, sem separar por dia.</p></div>`;
+
+  // ---- tabela por oferta (agrupada por parceiro ou por nicho) ----
+  const linhaOf = (o, x, k) => `<tr><td>${escapeHtml(o)}${o !== SEM_OFERTA_ ? ` <span class="ro-nicho">${escapeHtml(nichoDe_(o))}</span>` : ''}</td>
+    <td class="r num">${x.v ? int_(x.v) : (x.itens ? '<span class="muted">—</span>' : '<span class="muted">0</span>')}</td>
+    <td class="r num">${x.itens ? int_(x.itens) : '<span class="muted">—</span>'}</td>
+    <td class="r num">${x.g ? fmtMoney(x.g) : '<span class="muted">—</span>'}</td>
+    <td class="r num">${x.temLeads ? int_(x.l) : '<span class="muted">—</span>'}</td>
+    <td class="r num">${x.a ? int_(x.a) : '<span class="muted">—</span>'}</td>
+    <td class="r num">${x.temLeads && x.l ? conv_(x.v || x.itens, x.l) : '—'}</td></tr>`;
+  const ordOf = (a, b) => (b[1].v + b[1].itens) - (a[1].v + a[1].itens) || b[1].g - a[1].g || b[1].l - a[1].l;
+  let corpoOf = '';
+  if(roAgrupar === 'parceiro'){
+    PKEYS.forEach(k => {
+      const ofs = Object.entries(R[k].ofertas).filter(([o, x]) => x.v || x.g || x.itens || x.temLeads).sort(ordOf);
+      if(!ofs.length) return;
+      corpoOf += `<tr class="ro-grupo"><td colspan="7"><div class="who">${plogo_(k,18)}<b>${PMETA[k].nome}</b>${k === 'welcome_salesbound' ? '<span class="muted" style="font-weight:400;font-size:12px">· por oferta = itens do "Top Products" do CRM (top 10 do dia)</span>' : ''}</div></td></tr>` + ofs.map(([o, x]) => linhaOf(o, x, k)).join('');
+    });
+  } else {
+    const porNicho = {};
+    PKEYS.forEach(k => Object.entries(R[k].ofertas).forEach(([o, x]) => {
+      if(!(x.v || x.g || x.itens || x.temLeads) || o === SEM_OFERTA_) return;
+      const n = nichoDe_(o); const a = porNicho[n] || (porNicho[n] = {}); const c = a[k] || (a[k] = {v:0, g:0, itens:0, l:0, a:0, temLeads:false, ofertas:[]});
+      c.v += x.v; c.g += x.g; c.itens += x.itens; c.l += x.l; c.a += x.a; c.temLeads = c.temLeads || x.temLeads; c.ofertas.push(o);
+    }));
+    Object.keys(porNicho).sort((a, b) => Object.values(porNicho[b]).reduce((s, c) => s + c.g, 0) - Object.values(porNicho[a]).reduce((s, c) => s + c.g, 0)).forEach(n => {
+      corpoOf += `<tr class="ro-grupo"><td colspan="7"><b>${escapeHtml(n)}</b></td></tr>` + Object.entries(porNicho[n]).map(([k, c]) => linhaOf(`${PMETA[k].nome} — ${c.ofertas.join(', ')}`, c, k).replace(/ <span class="ro-nicho">[^<]*<\/span>/, '')).join('');
+    });
+  }
+  const tabO = `<div class="card ro-card"><div class="card-h"><b>Por oferta</b><div class="seg">${[['parceiro','Por parceiro'],['nicho','Por nicho']].map(([k,l]) => `<button class="${roAgrupar===k?'on':''}" data-ro-agr="${k}">${l}</button>`).join('')}</div></div>
+    ${corpoOf ? `<div style="overflow-x:auto"><table class="mini"><thead><tr><th>Oferta</th><th class="r">Vendas</th><th class="r" title="Sales Bound: itens do produto no Top Products do CRM">Itens (CRM)</th><th class="r">Bruto</th><th class="r">Leads</th><th class="r">Agend.</th><th class="r">Conversão</th></tr></thead><tbody>${corpoOf}</tbody></table></div>` : '<p class="muted">Sem venda nem lead no período.</p>'}</div>`;
+
+  // ---- comparação entre dois parceiros nas mesmas ofertas ----
+  const A = roCmp.a, B = roCmp.b;
+  const opcoesOf = Array.from(new Set(roCmp.ofertas.concat(Object.keys(R[A].ofertas), Object.keys(R[B].ofertas)).filter(o => o !== SEM_OFERTA_))).sort();
+  const cel = (k, o) => { const x = R[k].ofertas[o] || {v:0, g:0, itens:0, l:0, temLeads:false};
+    const vend = k === 'welcome_salesbound' ? (x.itens ? `${int_(x.itens)} <small class="muted">itens</small>` : '<span class="muted">0</span>') : int_(x.v);
+    return `<td class="r num ro-a">${vend}</td><td class="r num">${x.g ? fmtMoney(x.g) : '<span class="muted">—</span>'}</td><td class="r num">${x.temLeads ? int_(x.l) : '<span class="muted">—</span>'}</td><td class="r num"><b>${x.temLeads && x.l ? conv_(k === 'welcome_salesbound' ? x.itens : x.v, x.l) : '—'}</b></td>`; };
+  const sel = (id, v) => `<select id="${id}" class="ro-sel">${PKEYS.map(k => `<option value="${k}" ${k===v?'selected':''}>${PMETA[k].nome}</option>`).join('')}</select>`;
+  const tabC = `<div class="card ro-card"><div class="card-h"><b>Comparar parceiros nas mesmas ofertas · ${per.lbl}</b><span style="display:flex;gap:6px;align-items:center">${sel('roA', A)}<span class="muted">×</span>${sel('roB', B)}</span></div>
+    <div class="ro-chips">${opcoesOf.map(o => `<button class="ro-chip ${roCmp.ofertas.includes(o)?'on':''}" data-ro-of="${escapeHtml(o)}">${escapeHtml(o)}</button>`).join('')}</div>
+    ${roCmp.ofertas.length ? `<div style="overflow-x:auto"><table class="mini"><thead><tr><th rowspan="2">Oferta</th><th colspan="4" class="r ro-th">${PMETA[A].nome}</th><th colspan="4" class="r ro-th">${PMETA[B].nome}</th></tr>
+      <tr><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">Leads</th><th class="r">Conv.</th><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">Leads</th><th class="r">Conv.</th></tr></thead>
+      <tbody>${roCmp.ofertas.map(o => `<tr><td><b>${escapeHtml(o)}</b> <span class="ro-nicho">${escapeHtml(nichoDe_(o))}</span></td>${cel(A, o)}${cel(B, o)}</tr>`).join('')}</tbody></table></div>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">${[A, B].includes('welcome_salesbound') ? 'Sales Bound: o CRM não mostra pedidos por produto, só os itens do "Top Products" (top 10 do dia) — é a melhor aproximação até a gente ter o relatório de pedidos por produto do CRM. ' : ''}Conversão = vendas ÷ leads recebidos da oferta no período; "—" = leads da oferta não lançados.</p>`
+    : '<p class="muted">Escolha as ofertas acima.</p>'}</div>`;
+
+  return `<div class="pad">
+    <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:240px">
+      <h1 class="h1">Resumo por oferta</h1>
+      <p class="sub">Vendas, leads recebidos e conversão de cada parceiro, por oferta. Atualize todo dia: relatório BuyGoods, CRM da Sales Bound e leads.</p></div>
+      <button class="btn" data-act="leads">Lançar leads</button>
+      <button class="btn" data-act="manual-sb">Lançar dia Sales Bound</button>
+      <button class="btn" data-act="copiar-ro">Copiar resumo</button>
+      <button class="btn pri" data-act="import">Importar relatórios</button></div>
+    <div class="seg" style="margin-bottom:14px">${[['ontem','Ontem'],['7dias','Últimos 7 dias'],['semana_passada','Semana passada'],['mes','Este mês'],['mes_passado','Mês passado']].map(([k,l]) => `<button class="${roPeriodo===k?'on':''}" data-ro-per="${k}">${l}</button>`).join('')}</div>
+    <span class="muted" style="font-size:12.5px;margin-left:8px">${diaLbl_(per.ini)} a ${diaLbl_(per.fim)}</span>
+  </div>
+  ${banner}${tabP}${tabO}${tabC}<div style="height:40px"></div>`;
+}
+
+// texto pronto pra mandar (WhatsApp / e-mail) com o resumo do período
+function textoResumoRO_(){
+  const per = periodoRO_(roPeriodo), R = resumoOfertas_(per), cob = coberturaRO_(per);
+  const L = [`Resumo parceiros — ${per.lbl} (${diaLbl_(per.ini)} a ${diaLbl_(per.fim)})`, ''];
+  PKEYS.forEach(k => {
+    const P = Object.assign({}, R[k], R[k].oficial ? {v: R[k].oficial.v, g: R[k].oficial.g} : {}); if(!(P.v || P.g || P.temLeads || R[k].oficial)) return;
+    L.push(`• ${PMETA[k].nome}${R[k].oficial ? ' (fechamento)' : ''}: ${int_(P.v)} ${P.v === 1 ? 'venda' : 'vendas'} · ${fmtMoney(P.g)} bruto${P.temLeads ? ` · ${int_(P.l)} leads${P.leadsMensal ? ' (mês)' : ''} · conversão ${conv_(P.v, P.l)}` : ' · leads não lançados'}${P.a ? ` · ${int_(P.a)} agendamentos` : ''}`);
+    const top = Object.entries(P.ofertas).filter(([o, x]) => o !== SEM_OFERTA_ && (x.v || x.itens)).sort((a, b) => (b[1].v + b[1].itens) - (a[1].v + a[1].itens)).slice(0, 4);
+    if(top.length) L.push('   ' + top.map(([o, x]) => `${o} ${x.v ? int_(x.v) : int_(x.itens) + ' itens'}`).join(' · '));
+  });
+  const A = roCmp.a, B = roCmp.b;
+  if(roCmp.ofertas.length){
+    L.push('', `Comparação ${PMETA[A].nome} × ${PMETA[B].nome}:`);
+    roCmp.ofertas.forEach(o => {
+      const f = k => { const x = R[k].ofertas[o] || {}; const n = k === 'welcome_salesbound' ? `${int_(x.itens)} ${x.itens === 1 ? 'item' : 'itens'}` : `${int_(x.v)} ${x.v === 1 ? 'venda' : 'vendas'}`; return `${n}${x.temLeads ? ` / ${int_(x.l)} leads (${conv_(k === 'welcome_salesbound' ? x.itens : x.v, x.l)})` : ''}`; };
+      L.push(`• ${o}: ${PMETA[A].nome} ${f(A)} | ${PMETA[B].nome} ${f(B)}`);
+    });
+  }
+  const falta = [];
+  if(cob.semRelatorio.length) falta.push(`relatório BuyGoods ${faixaDias_(cob.semRelatorio)}`);
+  if(cob.sbFalta.length) falta.push(`CRM Sales Bound ${faixaDias_(cob.sbFalta)}`);
+  if(cob.sbSemQtd.length) falta.push(`quantidade de vendas da Sales Bound em ${faixaDias_(cob.sbSemQtd)}`);
+  LEADS_PARCEIROS_.forEach(k => { if(cob.leadsFalta[k].length && !R[k].leadsMensal) falta.push(`leads ${PMETA[k].nome}`); });
+  if(falta.length) L.push('', 'Pendente: ' + falta.join('; ') + '.');
+  L.push('', per.mesInteiro ? 'Totais por parceiro = fechamento oficial do mês; ofertas pelos relatórios diários.' : 'Pelos relatórios diários (vendas = pedidos frontais; Helpgrid só conta geral). Sales Bound por oferta = itens do Top Products do CRM.');
+  return L.join('\n');
+}
+function copiarResumoRO_(){
+  const t = textoResumoRO_();
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => showToast('Resumo copiado ✓')).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); showToast('Resumo copiado ✓');
+  });
+}
+
+// ---------- Lançar leads (por parceiro, dia e oferta; agendamentos pra NuYu) ----------
+let ldLinhas = [], mnProdutos = null;
+function openLeads_(){
+  const m = $('#importModal');
+  const ontem = ontemKey_();
+  m.innerHTML = `<div class="mh"><b>Lançar leads recebidos</b><span class="sp"></span><button class="icon-x" data-close aria-label="Fechar">✕</button></div>
+    <div class="mb">
+      <p class="muted" style="margin:0 0 10px;font-size:12.5px">Quantos leads o parceiro recebeu no dia — por oferta quando tiver, ou só o total. Lançar de novo o mesmo parceiro e dia substitui. Dia sem lead: lance 0 (assim o painel sabe que foi conferido).</p>
+      <div class="mgrid">
+        <label>Parceiro<select id="ldCanal">${LEADS_PARCEIROS_.concat(PKEYS.filter(k => !LEADS_PARCEIROS_.includes(k))).map(k => `<option value="${k}">${PMETA[k].nome}</option>`).join('')}</select></label>
+        <label>Dia<input type="date" id="ldDia" value="${ontem}"></label>
+      </div>
+      <table class="mini ld-tab" style="margin-top:12px"><thead><tr><th>Oferta</th><th class="r">Leads</th><th class="r">Agendamentos</th><th></th></tr></thead><tbody id="ldBody"></tbody></table>
+      <button class="btn" id="ldMais" style="margin-top:8px">+ oferta</button>
+      <div id="ldErr"></div>
+    </div>
+    <div class="mf"><button class="btn" data-close>Cancelar</button><button class="btn pri" id="ldSalvar">Salvar leads</button></div>`;
+  const carregar = () => {
+    const k = $('#ldCanal').value, dia = $('#ldDia').value, atual = (leadsDia[dia] || {})[k] || {};
+    ldLinhas = Object.keys(atual).length ? Object.keys(atual).map(o => ({o, l: atual[o].l || 0, a: atual[o].a || 0})) : [{o: SEM_OFERTA_, l: '', a: ''}];
+    desenha();
+  };
+  const desenha = () => {
+    $('#ldBody').innerHTML = ldLinhas.map((x, i) => `<tr>
+      <td><select data-ld-o="${i}">${[SEM_OFERTA_].concat(OFERTAS_).map(o => `<option ${o===x.o?'selected':''}>${escapeHtml(o)}</option>`).join('')}</select></td>
+      <td class="r"><input type="number" min="0" step="1" data-ld-l="${i}" value="${x.l}" style="width:90px"></td>
+      <td class="r"><input type="number" min="0" step="1" data-ld-a="${i}" value="${x.a}" style="width:90px"></td>
+      <td>${ldLinhas.length > 1 ? `<button class="icon-x" data-ld-x="${i}" aria-label="Remover">✕</button>` : ''}</td></tr>`).join('');
+    $('#ldBody').querySelectorAll('[data-ld-o]').forEach(el => el.addEventListener('change', () => { ldLinhas[+el.dataset.ldO].o = el.value; }));
+    $('#ldBody').querySelectorAll('[data-ld-l]').forEach(el => el.addEventListener('input', () => { ldLinhas[+el.dataset.ldL].l = el.value; }));
+    $('#ldBody').querySelectorAll('[data-ld-a]').forEach(el => el.addEventListener('input', () => { ldLinhas[+el.dataset.ldA].a = el.value; }));
+    $('#ldBody').querySelectorAll('[data-ld-x]').forEach(el => el.addEventListener('click', () => { ldLinhas.splice(+el.dataset.ldX, 1); desenha(); }));
+  };
+  m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeAll));
+  $('#ldCanal').addEventListener('change', carregar); $('#ldDia').addEventListener('change', carregar);
+  $('#ldMais').addEventListener('click', () => { ldLinhas.push({o: 'NailsCleanPro', l: '', a: ''}); desenha(); });
+  $('#ldSalvar').addEventListener('click', salvarLeads_);
+  carregar();
+  m.classList.add('on'); $('#scrim').classList.add('on');
+}
+async function salvarLeads_(){
+  const k = $('#ldCanal').value, dia = $('#ldDia').value;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dia)){ $('#ldErr').innerHTML = '<div class="alert-err">Escolha o dia.</div>'; return; }
+  const reg = {};
+  for(const x of ldLinhas){
+    if(x.l === '' && x.a === '') continue;
+    const l = parseInt(x.l, 10), a = parseInt(x.a, 10);
+    if((x.l !== '' && (isNaN(l) || l < 0)) || (x.a !== '' && (isNaN(a) || a < 0))){ $('#ldErr').innerHTML = '<div class="alert-err">Leads e agendamentos precisam ser números inteiros (0 ou mais).</div>'; return; }
+    if(reg[x.o]){ $('#ldErr').innerHTML = `<div class="alert-err">A oferta ${escapeHtml(x.o)} aparece duas vezes.</div>`; return; }
+    reg[x.o] = {l: isNaN(l) ? 0 : l, a: isNaN(a) ? 0 : a};
+  }
+  if(!Object.keys(reg).length){ $('#ldErr').innerHTML = '<div class="alert-err">Preencha pelo menos uma linha (pode ser 0).</div>'; return; }
+  if(!leadsDia[dia]) leadsDia[dia] = {};
+  leadsDia[dia][k] = reg;
+  saveLS('tiger_leads_dia_v1', leadsDia);
+  const tot = Object.values(reg).reduce((s, x) => ({l: s.l + x.l, a: s.a + x.a}), {l:0, a:0});
+  const resumo = `Leads ${PMETA[k].nome} ${diaLbl_(dia)}: ${int_(tot.l)} leads${tot.a ? ` · ${int_(tot.a)} agendamentos` : ''}` + (Object.keys(reg).length > 1 || !reg[SEM_OFERTA_] ? ` (${Object.entries(reg).map(([o, x]) => `${o} ${x.l}`).join(', ')})` : '');
+  const regLog = {id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), quando: new Date().toISOString(), arquivo: 'Leads', tipo: 'Leads', tipoLbl: 'Leads', parceiros: k, resumo};
+  importLog.unshift(regLog); saveLS('tiger_import_log_v1', importLog);
+  closeAll(); render(); showToast('Leads salvos' + (APPS_SCRIPT_URL ? ' — sincronizando...' : ''));
+  if(!APPS_SCRIPT_URL) return;
+  const mk = dia.slice(0,7), dados = {}; Object.keys(leadsDia).forEach(d => { if(d.slice(0,7) === mk) dados[d] = leadsDia[d]; });
+  const [r1] = await Promise.all([apiPost('importParceirosDiaBatch', [{id: '__leads__' + mk.replace('-','_'), canal: '__leads', mes: mk.replace('-','_'), dados_json: JSON.stringify(dados)}]),
+    apiPost('logImport', {id: regLog.id, arquivo: regLog.arquivo, tipo: regLog.tipo, parceiros: regLog.parceiros, resumo})]);
+  syncStatus = r1 && r1.ok ? 'ok' : 'erro'; renderSyncBadge();
+  showToast(r1 && r1.ok ? 'Leads sincronizados com o Sheets ✓' : 'Leads salvos só neste navegador — não sincronizou');
+}
+
+// ---------- Resumo do CRM colado (Checkout Champ da Sales Bound) ----------
+function lerResumoCRM_(txt){
+  const t = String(txt || '').replace(/\r/g, '');
+  const m = t.match(/(\d{2})\/(\d{2})\/(\d{4})\s+12:00\s*AM[\s\S]{0,60}?(\d{2})\/(\d{2})\/(\d{4})\s+11:59\s*PM/);
+  // colado com os links do CRM: o período só aparece nas URLs (startDateTime / endDateTime)
+  const u1 = t.match(/startDateTime=(\d{4}-\d{2}-\d{2})/), u2 = t.match(/endDateTime=(\d{4}-\d{2}-\d{2})/);
+  if(!m && !u1) return {erro: 'Não achei o período no texto colado (ex: "10/08/2026 12:00 AM … 10/08/2026 11:59 PM"). Copie a página do Dashboard do CRM inteira.'};
+  const ini = m ? `${m[3]}-${m[1]}-${m[2]}` : u1[1], fim = m ? `${m[6]}-${m[4]}-${m[5]}` : (u2 ? u2[1] : u1[1]);
+  if(ini !== fim) return {erro: `O resumo colado é de um período (${diaLbl_(ini)} a ${diaLbl_(fim)}), não de um dia só. Filtre o Dashboard por um dia.`};
+  const bloco = (a, b) => { const i = t.indexOf(a); if(i < 0) return ''; const j = b ? t.indexOf(b, i + a.length) : -1; return t.slice(i, j < 0 ? undefined : j); };
+  const bill = bloco('Billing Summary', 'Sales Summary');
+  const val = rot => { const r = new RegExp('(?:^|\\n)[\\s*]*' + rot + '\\s*\\n\\s*\\[?(-?\\$[\\d,]+(?:\\.\\d+)?|---)', 'i').exec(bill); if(!r) return null; return r[1] === '---' ? 0 : Math.abs(parseFloat(r[1].replace(/[$,]/g, ''))); };
+  const sales = val('Sales'), refunds = val('Refunds');
+  if(sales === null) return {erro: 'Não achei o valor de "Sales" no Billing Summary.'};
+  const ss = bloco('Sales Summary', 'Fulfillment Summary') || bloco('Sales Summary', 'Top Products');
+  const vm = /\n[\s*]*Sales\s*\n\s*\[?(\d+)/.exec(ss);
+  const tp = bloco('Top Products', 'Customer Summary').split('\n').map(s => s.trim()).filter(Boolean).slice(1);
+  const produtos = {}; let nLinhas = 0;
+  for(let i = 0; i < tp.length - 1; i++){
+    if(!/^\d+$/.test(tp[i]) && /^\d+$/.test(tp[i + 1])){ const o = nomeOferta_(tp[i]); produtos[o] = (produtos[o] || 0) + parseInt(tp[i + 1], 10); nLinhas++; i++; }
+  }
+  return {dia: ini, sales, refunds: refunds || 0, vendas: vm ? parseInt(vm[1], 10) : null, produtos, top10: nLinhas >= 10};
 }
 
 // ================= Painel de parceiros (layout Attio) =================
@@ -997,7 +1343,7 @@ function valorMes_(key, mk){
     return null;
   }
   const d = somaCanalPeriodo_(key, x => x.slice(0,7) === mk);
-  const temD = (d.vendas > 0 || d.gross !== 0) && !(bf && (bf.gross||0) > d.gross);
+  const temD = (d.vendas > 0 || d.gross !== 0) && !(bf && (bf.gross||0) > d.gross) && !(bf && SPLIT_WELCOME_[key]);
   if(temD) return {gross: d.gross, net: netCanal_(key, d), orders: d.vendas};
   if(bf) return {gross: bf.gross||0, net: SPLIT_WELCOME_[key] ? liqMensal_(key, bf) : (bf.net||0), orders: bf.orders||0};
   return null;
@@ -1059,7 +1405,7 @@ function barChart_(series, keys, h){
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-height:260px">${g}</svg>`;
 }
 
-let route = {page:'overview'}, ptab = 'visao', metric = 'gross', periodo = 'mes';
+let route = {page:'resumo'}, ptab = 'visao', metric = 'gross', periodo = 'mes';
 function go(page, key){ route = {page, key}; ptab = key === 'helpgrid' ? 'setores' : 'visao'; periodo = 'mes'; render(); $('#page').scrollTo({top:0}); }
 
 // Virada de mês: enquanto o mês novo não tem dado nenhum, as telas mostram o fechamento do mês anterior
@@ -1078,6 +1424,7 @@ function renderNav_(){
   $('#nav-overview').classList.toggle('on', route.page==='overview');
   $('#nav-imports').classList.toggle('on', route.page==='imports');
   $('#nav-vendas').classList.toggle('on', route.page==='vendas');
+  $('#nav-resumo').classList.toggle('on', route.page==='resumo');
   $('#nav-vendasgeral').classList.toggle('on', route.page==='vendasgeral');
   $('#ct-imp').textContent = importLog.length || '';
 }
@@ -1265,8 +1612,8 @@ function imports_(){
 function render(){
   renderNav_();
   const k = route.page === 'partner' ? route.key : null;
-  $('#crumb').innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><a data-go-over>Parceiros</a><span>/</span><b>${k ? PMETA[k].nome : route.page==='imports' ? 'Importações' : route.page==='vendas' ? 'Vendas por dia' : route.page==='vendasgeral' ? 'Vendas por dia geral' : 'Visão geral'}</b>`;
-  $('#page').innerHTML = k ? partner_(k) : route.page === 'imports' ? imports_() : route.page === 'vendas' ? vendasDia_() : route.page === 'vendasgeral' ? vendasGeral_() : overview_();
+  $('#crumb').innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><a data-go-over>Parceiros</a><span>/</span><b>${k ? PMETA[k].nome : route.page==='imports' ? 'Importações' : route.page==='vendas' ? 'Vendas por dia' : route.page==='vendasgeral' ? 'Vendas por dia geral' : route.page==='resumo' ? 'Resumo por oferta' : 'Visão geral'}</b>`;
+  $('#page').innerHTML = k ? partner_(k) : route.page === 'imports' ? imports_() : route.page === 'vendas' ? vendasDia_() : route.page === 'vendasgeral' ? vendasGeral_() : route.page === 'resumo' ? resumoOfertasPage_() : overview_();
   const pg = $('#page');
   pg.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => go('partner', el.dataset.go)));
   pg.querySelectorAll('[data-metric]').forEach(el => el.addEventListener('click', () => { metric = el.dataset.metric; render(); }));
@@ -1274,6 +1621,12 @@ function render(){
   pg.querySelectorAll('[data-per]').forEach(el => el.addEventListener('click', () => { periodo = el.dataset.per; render(); }));
   pg.querySelectorAll('[data-act="import"]').forEach(el => el.addEventListener('click', openImport));
   pg.querySelectorAll('[data-act="manual"]').forEach(el => el.addEventListener('click', openManual_));
+  pg.querySelectorAll('[data-act="leads"]').forEach(el => el.addEventListener('click', openLeads_));
+  pg.querySelectorAll('[data-act="copiar-ro"]').forEach(el => el.addEventListener('click', copiarResumoRO_));
+  pg.querySelectorAll('[data-ro-per]').forEach(el => el.addEventListener('click', () => { roPeriodo = el.dataset.roPer; render(); }));
+  pg.querySelectorAll('[data-ro-agr]').forEach(el => el.addEventListener('click', () => { roAgrupar = el.dataset.roAgr; render(); }));
+  pg.querySelectorAll('[data-ro-of]').forEach(el => el.addEventListener('click', () => { const o = el.dataset.roOf; roCmp.ofertas = roCmp.ofertas.includes(o) ? roCmp.ofertas.filter(x => x !== o) : roCmp.ofertas.concat([o]); render(); }));
+  ['roA','roB'].forEach(id => { const el = pg.querySelector('#' + id); if(el) el.addEventListener('change', () => { roCmp[id === 'roA' ? 'a' : 'b'] = el.value; render(); }); });
   pg.querySelectorAll('[data-act="manual-sb"]').forEach(el => el.addEventListener('click', () => { vdParceiro = 'welcome_salesbound'; openManual_(); }));
   pg.querySelectorAll('[data-act="salvar-custo"]').forEach(el => el.addEventListener('click', () => salvarCustos_(el.dataset.canal)));
   pg.querySelectorAll('[data-act="resumo"]').forEach(el => el.addEventListener('click', copiarResumo_));
@@ -1570,6 +1923,7 @@ $('#scrim').addEventListener('click', closeAll);
 $('#sideSearch').addEventListener('click', openCmd);
 $('#topImport').addEventListener('click', openImport);
 $('#nav-overview').addEventListener('click', () => go('overview'));
+$('#nav-resumo').addEventListener('click', () => go('resumo'));
 $('#nav-imports').addEventListener('click', () => go('imports'));
 $('#nav-vendas').addEventListener('click', () => go('vendas'));
 $('#nav-vendasgeral').addEventListener('click', () => go('vendasgeral'));
@@ -1606,7 +1960,8 @@ async function syncFromServer(){
     // dados importados enquanto o backend não aceitava: mantém os daqui e sobe quando der
     if(j.parceirosDia !== undefined) setTimeout(reenviarParceirosDia_, 0);
   } else if(Object.keys(pdi.pd).length || pdi.dias.length){ parceirosDia = pdi.pd; diasRelatorio = pdi.dias; }
-  Object.values(j.parceirosDia || {}).forEach(r => { if(r.canal !== '__dias') marca(r.canal, r.atualizado_em); });
+  if(j.parceirosDia !== undefined){ leadsDia = pdi.leads; saveLS('tiger_leads_dia_v1', leadsDia); }
+  Object.values(j.parceirosDia || {}).forEach(r => { if(!String(r.canal || '').startsWith('__')) marca(r.canal, r.atualizado_em); });
   saveLS('tiger_parceiros_dia_v1', parceirosDia); saveLS('tiger_dias_relatorio_v1', diasRelatorio);
   const dj_ = obj => { const out = {}; Object.keys(obj || {}).forEach(k => { try { out[k] = JSON.parse(obj[k].dados_json || '{}'); } catch(e){ out[k] = {}; } }); return out; };
   if(j.vendasPorProduto){ vendasPorProdutoDia = dj_(j.vendasPorProduto); saveLS('tiger_vendas_produto_v1', vendasPorProdutoDia); }
