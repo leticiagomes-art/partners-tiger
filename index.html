@@ -1009,10 +1009,11 @@ function nomeOferta_(s){
   const limpo = String(s || '').replace(/\s*-\s*\d+\s*(bottles?|frascos?|units?|un)\b.*$/i, '').trim();
   return OFERTA_POR_CHAVE_[chaveOferta_(limpo)] || limpo || SEM_OFERTA_;
 }
-// nicho de cada oferta — "a confirmar" onde a classificação ainda não foi validada
+// nicho de cada oferta (validado com a operação); downsell fica como "Indefinido"
 const NICHOS_ = {
   'Neuropatia': ['NervoLyn'],
-  'Saúde masculina': ['SodaHorsePeak','AlphaErec','BoosterXT','Booster','Erectrozil','VigorLong','BoostSteelX','TestoVirility','Testofense'],
+  'Intestino (gut)': ['FloraNew'],
+  'Saúde masculina': ['SodaHorsePeak','AlphaErec','BoosterXT','Booster','Erectrozil','VigorLong','BoostSteelX','TestoVirility','Testofense','IronPulseX'],
   'Próstata': ['Prostafense'],
   'Audição': ['AudiLeaf','AudiQuiet'],
   'Unhas (fungo)': ['NailsCleanPro','NailsClean'],
@@ -1023,10 +1024,10 @@ const NICHOS_ = {
   'Memória': ['MaroBrain'],
   'Emagrecimento': ['BakingSlim','LipoBliss','GlycoMelt','MounjaMelt','Reduburn','LipoVive','LipoPeak','LipoTrine','Oatzem'],
   'Pele': ['SkinRenewPro','GoldenSkinPro'],
-  'A confirmar': ['FloraNew','IronPulseX','Blue Omega Oil','MenoCaps']
+  'Indefinido': ['Blue Omega Oil','MenoCaps'] // downsell
 };
 const NICHO_DE_ = {}; Object.keys(NICHOS_).forEach(n => NICHOS_[n].forEach(o => { NICHO_DE_[o] = n; }));
-const nichoDe_ = o => NICHO_DE_[o] || 'A confirmar';
+const nichoDe_ = o => NICHO_DE_[o] || 'Indefinido';
 
 const ontemKey_ = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0,10); };
 function listaDias_(ini, fim){
