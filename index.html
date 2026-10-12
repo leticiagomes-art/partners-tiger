@@ -242,8 +242,7 @@ table.vg tr.vg-tot td{font-weight:700;background:var(--bg-sub);border-top:1px so
 
 /* ---------- Painel: só duas cores (tinta + azul), variações por intensidade ---------- */
 .pn{--pn-ink:#0F172A;--pn-ink-rgb:15,23,42;--pn-acc:#1D4ED8;--pn-acc-rgb:29,78,216;--pn-bg:#FFFFFF;color:var(--pn-ink);background:var(--pn-bg);padding:20px 24px 40px;min-height:100%}
-:root[data-theme="dark"] .pn{--pn-ink:#E8EDF5;--pn-ink-rgb:232,237,245;--pn-acc:#6EA8FF;--pn-acc-rgb:110,168,255;--pn-bg:#0B1220}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pn{--pn-ink:#E8EDF5;--pn-ink-rgb:232,237,245;--pn-acc:#6EA8FF;--pn-acc-rgb:110,168,255;--pn-bg:#0B1220}}
+/* o Painel fica sempre com fundo branco, mesmo no modo escuro */
 .pn *{border-color:rgba(var(--pn-ink-rgb),.12)}
 .pn-muted{color:rgba(var(--pn-ink-rgb),.55)}
 .pn-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px}
