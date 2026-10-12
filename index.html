@@ -979,16 +979,17 @@ async function reenviarParceirosDia_(){
   if(r && r.ok){ try { localStorage.removeItem('tiger_pd_pendente'); } catch(e){} showToast('Vendas por dia sincronizadas com o Sheets ✓'); render(); }
 }
 function parceirosDiaDoServidor_(obj){
-  const pd = {}, dias = new Set(), leads = {};
+  const pd = {}, dias = new Set(), leads = {}; let funis = null;
   Object.values(obj || {}).forEach(r => {
     let dados; try { dados = JSON.parse(r.dados_json || '{}'); } catch(e){ return; }
     if(r.canal === '__dias'){ (Array.isArray(dados) ? dados : []).forEach(d => dias.add(d)); return; }
     if(r.canal === '__leads'){ Object.assign(leads, dados); return; }
+    if(r.canal === '__funil_nuyu'){ funis = dados; return; }
     if(!r.canal) return;
     if(!pd[r.canal]) pd[r.canal] = {};
     Object.assign(pd[r.canal], dados);
   });
-  return {pd, dias: Array.from(dias).sort(), leads};
+  return {pd, dias: Array.from(dias).sort(), leads, funis};
 }
 
 // ================= Resumo por oferta: vendas × leads × performance =================
@@ -1173,7 +1174,7 @@ function resumoOfertasPage_(){
     <div class="seg" style="margin-bottom:14px">${[['ontem','Ontem'],['7dias','Últimos 7 dias'],['semana_passada','Semana passada'],['mes','Este mês'],['mes_passado','Mês passado']].map(([k,l]) => `<button class="${roPeriodo===k?'on':''}" data-ro-per="${k}">${l}</button>`).join('')}</div>
     <span class="muted" style="font-size:12.5px;margin-left:8px">${diaLbl_(per.ini)} a ${diaLbl_(per.fim)}</span>
   </div>
-  ${banner}${tabP}${tabO}${tabC}<div style="height:40px"></div>`;
+  ${banner}${tabP}${funilNuyuCard_()}${tabO}${tabC}<div style="height:40px"></div>`;
 }
 
 // texto pronto pra mandar (WhatsApp / e-mail) com o resumo do período
@@ -1276,6 +1277,83 @@ async function salvarLeads_(){
     apiPost('logImport', {id: regLog.id, arquivo: regLog.arquivo, tipo: regLog.tipo, parceiros: regLog.parceiros, resumo})]);
   syncStatus = r1 && r1.ok ? 'ok' : 'erro'; renderSyncBadge();
   showToast(r1 && r1.ok ? 'Leads sincronizados com o Sheets ✓' : 'Leads salvos só neste navegador — não sincronizou');
+}
+
+// ---------- Funil da NuYu (painel KPI deles colado: leads → avaliações → agendamentos → comparecimentos → vendas) ----------
+let funisNuyu = loadLS('tiger_funil_nuyu_v1', {}); // {'AAAA-MM-DD_AAAA-MM-DD': {ini, fim, leads, aval, agend, shows, vendas, valor, liquido, salvoEm}}
+const MES3_ = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+function lerPainelNuyu_(txt){
+  const t = '\n' + String(txt || '').replace(/\r/g, '') + '\n';
+  const dt = (mes, dia, ano) => { const n = MES3_[String(mes).slice(0,3).toLowerCase()]; return n ? `${ano}-${String(n).padStart(2,'0')}-${String(dia).padStart(2,'0')}` : null; };
+  const m = t.match(/Showing data for\s+([A-Za-z]{3,9})\s+(\d{1,2}),\s*(\d{4})(?:\s*[-–]\s*([A-Za-z]{3,9})\s+(\d{1,2}),\s*(\d{4}))?/);
+  if(!m) return {erro: 'Não achei o período ("Showing data for …"). Copie a página do KPI Dashboard da NuYu inteira.'};
+  const ini = dt(m[1], m[2], m[3]), fim = m[4] ? dt(m[4], m[5], m[6]) : ini;
+  if(!ini || !fim) return {erro: 'Não entendi as datas do período.'};
+  // cada cartão do painel: título, uma linha de descrição e o número
+  const cartao = rot => {
+    const i = t.indexOf('\n' + rot + '\n'); if(i < 0) return null;
+    const linhas = t.slice(i + rot.length + 2).split('\n').map(x => x.trim()).filter(Boolean).slice(0, 3);
+    for(const l of linhas){ if(/^\$?-?[\d,]+(\.\d+)?$/.test(l)) return parseFloat(l.replace(/[$,]/g, '')); }
+    return null;
+  };
+  const aval = (t.match(/(\d[\d,]*)\s+assessments/) || [])[1];
+  const r = {ini, fim, leads: cartao('Total Leads'), agend: cartao('Bookings'), shows: cartao('Shows'), vendas: cartao('Sales'),
+    aval: aval ? parseInt(aval.replace(/,/g, ''), 10) : null, valor: cartao('Total Sales Amount'), liquido: cartao('Net Revenue')};
+  if(r.leads === null) return {erro: 'Não achei "Total Leads" no texto colado.'};
+  return r;
+}
+function funilNuyuCard_(){
+  const lista = Object.values(funisNuyu).sort((a, b) => b.fim.localeCompare(a.fim) || a.ini.localeCompare(b.ini)).slice(0, 8);
+  const pct = (a, b) => b ? (a / b * 100).toLocaleString('pt-BR', {maximumFractionDigits: 2}) + '%' : '—';
+  const n = x => x === null || x === undefined ? '—' : int_(x);
+  return `<div class="card ro-card"><div class="card-h"><b>Funil NuYu — leads × agendamentos × vendas</b><button class="btn" data-act="painel-nuyu">Colar painel NuYu</button></div>
+    ${lista.length ? `<div style="overflow-x:auto"><table class="mini"><thead><tr><th>Período</th><th class="r">Leads</th><th class="r">Avaliações</th><th class="r">Agendamentos</th><th class="r">Compareceram</th><th class="r">Vendas</th><th class="r">Agend./lead</th><th class="r">Comparec./agend.</th><th class="r">Venda/comparec.</th><th class="r">Venda/lead</th><th class="r">Valor vendido</th></tr></thead><tbody>
+      ${lista.map(f => `<tr><td>${diaLbl_(f.ini)}${f.fim !== f.ini ? ' a ' + diaLbl_(f.fim) : ''}</td><td class="r num">${n(f.leads)}</td><td class="r num">${n(f.aval)}</td><td class="r num"><b>${n(f.agend)}</b></td><td class="r num">${n(f.shows)}</td><td class="r num"><b>${n(f.vendas)}</b></td>
+        <td class="r num">${pct(f.agend, f.leads)}</td><td class="r num">${pct(f.shows, f.agend)}</td><td class="r num">${pct(f.vendas, f.shows)}</td><td class="r num"><b>${pct(f.vendas, f.leads)}</b></td><td class="r num">${f.valor !== null && f.valor !== undefined ? fmtMoney(f.valor) : '—'}</td></tr>`).join('')}
+      </tbody></table></div><p class="muted ro-nota">Direto do KPI Dashboard da NuYu, no período que foi colado. Colar o painel filtrado por "Yesterday" todo dia também lança os leads e agendamentos do dia no resumo acima.</p>`
+    : '<p class="muted">Nenhum painel da NuYu colado ainda.</p>'}</div>`;
+}
+function openPainelNuyu_(){
+  const m = $('#importModal');
+  m.innerHTML = `<div class="mh"><b>Colar painel NuYu</b><span class="sp"></span><button class="icon-x" data-close aria-label="Fechar">✕</button></div>
+    <div class="mb">
+      <label class="crm-cola">Copie a página do KPI Dashboard da NuYu (Ctrl+A, Ctrl+C) e cole aqui. Qualquer período; filtrado por um dia ("Yesterday") também lança os leads e agendamentos do dia.<textarea id="nyCola" rows="5" placeholder="Cole o KPI Dashboard da NuYu"></textarea></label>
+      <div id="nyLido"></div>
+    </div>
+    <div class="mf"><button class="btn" data-close>Cancelar</button><button class="btn pri" id="nySalvar" disabled>Salvar</button></div>`;
+  let lido = null;
+  m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeAll));
+  m.querySelector('#nyCola').addEventListener('input', e => {
+    lido = null; $('#nySalvar').disabled = true;
+    const txt = e.target.value.trim(); if(!txt){ $('#nyLido').innerHTML = ''; return; }
+    const r = lerPainelNuyu_(txt);
+    if(r.erro){ $('#nyLido').innerHTML = `<div class="alert-err">${escapeHtml(r.erro)}</div>`; return; }
+    lido = r; $('#nySalvar').disabled = false;
+    $('#nyLido').innerHTML = `<div class="crm-lido"><b>Lido · ${diaLbl_(r.ini)}${r.fim !== r.ini ? ' a ' + diaLbl_(r.fim) : ''}:</b> ${int_(r.leads)} leads · ${r.aval ?? '?'} avaliações · ${r.agend ?? '?'} agendamentos · ${r.shows ?? '?'} compareceram · ${r.vendas ?? '?'} vendas${r.valor !== null ? ' · ' + fmtMoney(r.valor) : ''}${r.ini === r.fim ? '<br>Dia único: os leads e agendamentos entram no resumo desse dia.' : ''}</div>`;
+  });
+  m.querySelector('#nySalvar').addEventListener('click', async () => {
+    if(!lido) return;
+    const r = lido;
+    funisNuyu[r.ini + '_' + r.fim] = Object.assign({}, r, {salvoEm: new Date().toISOString()});
+    saveLS('tiger_funil_nuyu_v1', funisNuyu);
+    const batch = [{id: '__funil_nuyu', canal: '__funil_nuyu', mes: '', dados_json: JSON.stringify(funisNuyu)}];
+    if(r.ini === r.fim){
+      if(!leadsDia[r.ini]) leadsDia[r.ini] = {};
+      leadsDia[r.ini].nuyu = {[SEM_OFERTA_]: {l: r.leads || 0, a: r.agend || 0}};
+      saveLS('tiger_leads_dia_v1', leadsDia);
+      const mk = r.ini.slice(0,7), dados = {}; Object.keys(leadsDia).forEach(d => { if(d.slice(0,7) === mk) dados[d] = leadsDia[d]; });
+      batch.push({id: '__leads__' + mk.replace('-','_'), canal: '__leads', mes: mk.replace('-','_'), dados_json: JSON.stringify(dados)});
+    }
+    const resumo = `Painel NuYu ${diaLbl_(r.ini)}${r.fim !== r.ini ? ' a ' + diaLbl_(r.fim) : ''}: ${int_(r.leads)} leads · ${r.agend ?? '?'} agendamentos · ${r.shows ?? '?'} compareceram · ${r.vendas ?? '?'} vendas${r.valor !== null ? ' · ' + fmtMoney(r.valor) : ''}`;
+    const reg = {id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), quando: new Date().toISOString(), arquivo: 'Painel NuYu', tipo: 'Painel NuYu', tipoLbl: 'Painel NuYu', parceiros: 'nuyu', resumo};
+    importLog.unshift(reg); saveLS('tiger_import_log_v1', importLog);
+    closeAll(); render(); showToast('Painel NuYu salvo' + (APPS_SCRIPT_URL ? ' — sincronizando...' : ''));
+    if(!APPS_SCRIPT_URL) return;
+    const [r1] = await Promise.all([apiPost('importParceirosDiaBatch', batch), apiPost('logImport', {id: reg.id, arquivo: reg.arquivo, tipo: reg.tipo, parceiros: reg.parceiros, resumo})]);
+    syncStatus = r1 && r1.ok ? 'ok' : 'erro'; renderSyncBadge();
+    showToast(r1 && r1.ok ? 'Painel NuYu sincronizado ✓' : 'Salvo só neste navegador — não sincronizou');
+  });
+  m.classList.add('on'); $('#scrim').classList.add('on');
 }
 
 // ---------- Resumo do CRM colado (Checkout Champ da Sales Bound) ----------
@@ -1623,6 +1701,7 @@ function render(){
   pg.querySelectorAll('[data-act="import"]').forEach(el => el.addEventListener('click', openImport));
   pg.querySelectorAll('[data-act="manual"]').forEach(el => el.addEventListener('click', openManual_));
   pg.querySelectorAll('[data-act="leads"]').forEach(el => el.addEventListener('click', openLeads_));
+  pg.querySelectorAll('[data-act="painel-nuyu"]').forEach(el => el.addEventListener('click', openPainelNuyu_));
   pg.querySelectorAll('[data-act="copiar-ro"]').forEach(el => el.addEventListener('click', copiarResumoRO_));
   pg.querySelectorAll('[data-ro-per]').forEach(el => el.addEventListener('click', () => { roPeriodo = el.dataset.roPer; render(); }));
   pg.querySelectorAll('[data-ro-agr]').forEach(el => el.addEventListener('click', () => { roAgrupar = el.dataset.roAgr; render(); }));
@@ -1961,7 +2040,7 @@ async function syncFromServer(){
     // dados importados enquanto o backend não aceitava: mantém os daqui e sobe quando der
     if(j.parceirosDia !== undefined) setTimeout(reenviarParceirosDia_, 0);
   } else if(Object.keys(pdi.pd).length || pdi.dias.length){ parceirosDia = pdi.pd; diasRelatorio = pdi.dias; }
-  if(j.parceirosDia !== undefined){ leadsDia = pdi.leads; saveLS('tiger_leads_dia_v1', leadsDia); }
+  if(j.parceirosDia !== undefined){ leadsDia = pdi.leads; saveLS('tiger_leads_dia_v1', leadsDia); if(pdi.funis){ funisNuyu = pdi.funis; saveLS('tiger_funil_nuyu_v1', funisNuyu); } }
   Object.values(j.parceirosDia || {}).forEach(r => { if(!String(r.canal || '').startsWith('__')) marca(r.canal, r.atualizado_em); });
   saveLS('tiger_parceiros_dia_v1', parceirosDia); saveLS('tiger_dias_relatorio_v1', diasRelatorio);
   const dj_ = obj => { const out = {}; Object.keys(obj || {}).forEach(k => { try { out[k] = JSON.parse(obj[k].dados_json || '{}'); } catch(e){ out[k] = {}; } }); return out; };
