@@ -239,6 +239,73 @@ table.vg tr.vg-tot td{font-weight:700;background:var(--bg-sub);border-top:1px so
 .pill.warn{background:var(--amber-bg);color:var(--amber)}
 .crm-lido{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:var(--bg-sub);font-size:12.5px;line-height:1.5}
 .ld-tab select, .ld-tab input{height:30px;border:1px solid var(--line-strong);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:12.5px;padding:0 6px}
+
+/* ---------- Painel: só duas cores (tinta + azul), variações por intensidade ---------- */
+.pn{--pn-ink:#0F172A;--pn-ink-rgb:15,23,42;--pn-acc:#1D4ED8;--pn-acc-rgb:29,78,216;--pn-bg:#FFFFFF;color:var(--pn-ink);background:var(--pn-bg);padding:20px 24px 40px;min-height:100%}
+:root[data-theme="dark"] .pn{--pn-ink:#E8EDF5;--pn-ink-rgb:232,237,245;--pn-acc:#6EA8FF;--pn-acc-rgb:110,168,255;--pn-bg:#0B1220}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pn{--pn-ink:#E8EDF5;--pn-ink-rgb:232,237,245;--pn-acc:#6EA8FF;--pn-acc-rgb:110,168,255;--pn-bg:#0B1220}}
+.pn *{border-color:rgba(var(--pn-ink-rgb),.12)}
+.pn-muted{color:rgba(var(--pn-ink-rgb),.55)}
+.pn-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.pn-head h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+.pn-head p{margin:2px 0 0;color:rgba(var(--pn-ink-rgb),.6);font-size:13px}
+.pn-seg{display:inline-flex;border:1px solid rgba(var(--pn-ink-rgb),.2);border-radius:8px;overflow:hidden}
+.pn-seg button{border:0;background:transparent;color:rgba(var(--pn-ink-rgb),.7);padding:6px 12px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.pn-seg button.on{background:var(--pn-ink);color:var(--pn-bg)}
+.pn-falta{font-size:12.5px;padding:8px 12px;border:1px dashed rgba(var(--pn-ink-rgb),.35);border-radius:8px;margin:0 0 12px;color:rgba(var(--pn-ink-rgb),.8)}
+.pn-falta b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--pn-ink);color:var(--pn-bg);font-size:11px;margin-right:6px}
+.pn-falta a{color:var(--pn-acc);cursor:pointer;text-decoration:underline;font-weight:600}
+.pn-tabs{display:flex;gap:4px;border-bottom:1px solid rgba(var(--pn-ink-rgb),.15);margin:0 0 16px;overflow-x:auto}
+.pn-tabs button{border:0;background:none;color:rgba(var(--pn-ink-rgb),.6);font:inherit;font-weight:600;font-size:13.5px;padding:10px 12px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.pn-tabs button.on{color:var(--pn-ink);border-bottom-color:var(--pn-acc)}
+.pn-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.pn-kpi{border:1px solid rgba(var(--pn-ink-rgb),.12);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.pn-kpi>span:first-child{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:rgba(var(--pn-ink-rgb),.6);font-weight:600}
+.pn-kpi b{font-size:26px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pn-d{font-size:12px;color:rgba(var(--pn-ink-rgb),.6);font-weight:600}
+.pn-up{color:var(--pn-acc)} .pn-dn{color:var(--pn-ink)}
+.pn-card{border:1px solid rgba(var(--pn-ink-rgb),.12);border-radius:12px;padding:14px 16px;margin-bottom:12px;min-width:0}
+.pn-ch{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.pn-ch b{font-size:14px} .pn-ch span{font-size:12px;color:rgba(var(--pn-ink-rgb),.55)}
+.pn-lbl{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:rgba(var(--pn-ink-rgb),.6);margin-bottom:6px}
+.pn-hero{display:grid;grid-template-columns:1.3fr 1fr 1.3fr;gap:12px}
+.pn-hero h2{margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.pn-hero h2 small{font-size:14px;font-weight:600;color:rgba(var(--pn-ink-rgb),.6)}
+.pn-hero p{margin:6px 0 0;font-size:13px;color:rgba(var(--pn-ink-rgb),.75)}
+.pn-destaque{background:var(--pn-acc);border-color:var(--pn-acc);color:#fff}
+.pn-destaque .pn-lbl,.pn-destaque h2 small,.pn-destaque p{color:rgba(255,255,255,.85)}
+.pn-card ul,.pn-card ol{margin:0;padding-left:18px;font-size:13px;line-height:1.5}
+.pn-card li{margin-bottom:6px}
+.pn-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pn-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pn-atn{border:2px solid var(--pn-ink)}
+.pn-bars{display:flex;align-items:flex-end;gap:4px;height:170px;padding-top:16px}
+.pn-bar{flex:1;min-width:12px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.pn-bar i{display:block;width:100%;background:var(--pn-acc);border-radius:4px 4px 0 0}
+.pn-bar:last-child i{background:var(--pn-ink)}
+.pn-bv{font-size:10px;font-weight:600;color:rgba(var(--pn-ink-rgb),.7);white-space:nowrap;margin-bottom:2px}
+.pn-bl{font-size:10px;line-height:1.15;color:rgba(var(--pn-ink-rgb),.55);text-align:center;margin-top:4px;height:24px}
+.pn-rank{display:flex;flex-direction:column;gap:10px}
+.pn-ri{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center}
+.pn-rn{font-weight:700;font-size:13px;color:rgba(var(--pn-ink-rgb),.5)}
+.pn-rt b{font-size:13.5px} .pn-rt small{display:block;font-size:11.5px;color:rgba(var(--pn-ink-rgb),.6)}
+.pn-rb{height:8px;border-radius:4px;background:rgba(var(--pn-acc-rgb),.12);margin-top:4px;overflow:hidden}
+.pn-rb i{display:block;height:100%;background:var(--pn-acc);border-radius:4px}
+.pn-rv{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.pn-mapa-w{overflow-x:auto}
+.pn-mapa{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5px}
+.pn-mapa th{font-weight:600;text-align:left;padding:4px 6px;white-space:nowrap;color:rgba(var(--pn-ink-rgb),.75)}
+.pn-mapa thead th{text-align:center;font-size:12px}
+.pn-mapa th small{display:block;font-weight:400;font-size:10.5px;color:rgba(var(--pn-ink-rgb),.5)}
+.pn-mapa td{text-align:center;padding:8px 6px;border-radius:6px;font-weight:600;font-variant-numeric:tabular-nums;min-width:74px}
+.pn-tab{width:100%;border-collapse:collapse;font-size:13px}
+.pn-tab th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:rgba(var(--pn-ink-rgb),.6);padding:6px 8px;border-bottom:1px solid rgba(var(--pn-ink-rgb),.15);white-space:nowrap}
+.pn-tab td{padding:8px;border-bottom:1px solid rgba(var(--pn-ink-rgb),.08);white-space:nowrap}
+.pn-tab .r{text-align:right;font-variant-numeric:tabular-nums}
+.pn-mini{display:inline-block;width:70px;height:8px;background:rgba(var(--pn-acc-rgb),.12);border-radius:4px;overflow:hidden;vertical-align:middle;margin-right:6px}
+.pn-mini i{display:block;height:100%;background:var(--pn-acc)}
+.pn-nota{font-size:12px;margin:6px 0 0}
+@media (max-width:900px){.pn{padding:16px}.pn-hero,.pn-2col,.pn-3col{grid-template-columns:1fr}.pn-bars{height:140px}}
 </style>
 <script>
   (function(){
@@ -255,6 +322,7 @@ table.vg tr.vg-tot td{font-weight:700;background:var(--bg-sub);border-top:1px so
   <aside class="side">
     <div class="ws"><div class="logo">T</div><div><b>Tiger Offers</b><small>Parceiros</small></div></div>
     <div class="side-search" id="sideSearch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar<kbd>Ctrl K</kbd></div>
+    <button class="nav" id="nav-painel"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 16v-4M12 16V8M17 16v-6"/></svg>Painel</button>
     <button class="nav" id="nav-resumo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h12"/></svg>Resumo por oferta</button>
     <button class="nav" id="nav-overview"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Visão geral</button>
     <button class="nav" id="nav-vendas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></svg>Vendas por dia</button>
@@ -1478,6 +1546,184 @@ function lerResumoCRM_(txt){
   return {dia: ini, sales, refunds: refunds || 0, vendas: vm ? parseInt(vm[1], 10) : null, produtos, top10: nLinhas >= 10};
 }
 
+// ================= Painel (tela única, duas cores) =================
+// Uma tela pra bater o olho: vendas por dia, top parceiros, top ofertas, mapa oferta × parceiro e, por
+// parceiro, o que funciona / o que melhorar / o que conversar. Tudo calculado dos mesmos dados do resto do
+// painel — mês fechado usa o fechamento oficial, e comparação só aparece quando o período anterior tem dado.
+let pnTab = 'geral', pnPer = 'mes';
+const pnK_ = v => { const a = Math.abs(v || 0), s = v < 0 ? '−' : ''; return a >= 1e6 ? s + '$' + (a/1e6).toLocaleString('en-US', {maximumFractionDigits: 2}) + 'M' : a >= 1e4 ? s + '$' + (a/1e3).toLocaleString('en-US', {maximumFractionDigits: 1}) + 'k' : s + '$' + Math.round(a).toLocaleString('en-US'); };
+const pnPct_ = (a, b) => b ? Math.round(a / b * 1000) / 10 : 0;
+const pnFmtPct_ = x => (Math.abs(x) < 1 && x !== 0 ? Math.round(x * 100) / 100 : Math.round(x * 10) / 10).toLocaleString('pt-BR') + '%';
+const PN_DIAS_SEM_ = ['dom','seg','ter','qua','qui','sex','sáb'];
+function pnPeriodoAnterior_(per){
+  if(per.mesInteiro){ const m = mesAnterior_(per.mes); const f = new Date(m + '-01T12:00:00'); f.setMonth(f.getMonth() + 1); f.setDate(0); return {ini: m + '-01', fim: f.toISOString().slice(0,10), mes: m, mesInteiro: true, lbl: mesLblCurto_(m)}; }
+  const n = listaDias_(per.ini, per.fim).length; const fim = new Date(per.ini + 'T12:00:00'); fim.setDate(fim.getDate() - 1); const ini = new Date(fim); ini.setDate(ini.getDate() - n + 1);
+  return {ini: ini.toISOString().slice(0,10), fim: fim.toISOString().slice(0,10), lbl: 'período anterior'};
+}
+// tem dado diário do parceiro no período? (sem isso não dá pra comparar ofertas)
+function pnTemDia_(k, per){ return listaDias_(per.ini, per.fim).some(d => (parceirosDia[k] || {})[d]); }
+// números do parceiro no período: oficial no mês fechado, senão a soma dos dias
+function pnTot_(R, k){ const P = R[k]; return P.oficial ? {v: P.oficial.v, g: P.oficial.g, r: P.oficial.r} : {v: P.v, g: P.g, r: P.r}; }
+// ofertas do parceiro: vendas (BuyGoods) ou pedidos com a oferta (Sales Bound), receita, leads
+function pnOfertas_(R, k){
+  return Object.entries(R[k].ofertas).filter(([o, x]) => o !== SEM_OFERTA_ && (x.v || x.itens || x.g || x.l))
+    .map(([o, x]) => ({o, n: k === 'welcome_salesbound' ? x.itens : x.v, g: x.g, l: x.temLeads ? x.l : null, x}))
+    .sort((a, b) => b.g - a.g || b.n - a.n || (b.l || 0) - (a.l || 0));
+}
+function pnDelta_(a, b, temBase){
+  if(!temBase || !b) return '';
+  const d = (a - b) / Math.abs(b) * 100; if(Math.abs(d) < 0.5) return '<span class="pn-d">= anterior</span>';
+  return `<span class="pn-d ${d > 0 ? 'pn-up' : 'pn-dn'}">${d > 0 ? '▲' : '▼'} ${pnFmtPct_(Math.abs(d))}</span>`;
+}
+// leitura automática: o que funciona, o que melhorar, o que conversar
+function pnLeitura_(k, R, Rp, per, perAnt, Rc){
+  Rc = Rc || R;
+  const bom = [], melhorar = [], pauta = [];
+  const M = (prio, t) => melhorar.push([prio, t]); // 1 = mais grave
+  const T = pnTot_(R, k), Tc = pnTot_(Rc, k), Tp = pnTot_(Rp, k), temBase = pnTemDia_(k, perAnt) || !!Rp[k].oficial;
+  const ofs = pnOfertas_(R, k), ofsC = pnOfertas_(Rc, k), ofsAnt = pnTemDia_(k, perAnt) ? pnOfertas_(Rp, k) : null;
+  const totG = ofs.reduce((s, x) => s + x.g, 0) || 1, totL = ofs.reduce((s, x) => s + (x.l || 0), 0);
+  const nome = PMETA[k].nome, un = k === 'welcome_salesbound' ? 'pedidos c/ a oferta' : 'vendas';
+  if(ofs[0] && ofs[0].g > 0) bom.push(`<b>${escapeHtml(ofs[0].o)}</b> é a oferta que mais fatura: ${pnK_(ofs[0].g)} (${pnFmtPct_(pnPct_(ofs[0].g, totG))} da receita) · ${int_(ofs[0].n)} ${un}.`);
+  if(ofs[1] && ofs[1].g > 0) bom.push(`<b>${escapeHtml(ofs[1].o)}</b> vem em seguida: ${pnK_(ofs[1].g)} · ${int_(ofs[1].n)} ${un}.`);
+  if(ofsAnt){
+    ofsC.forEach(x => { const a = ofsAnt.find(y => y.o === x.o); if(!a || a.n < 3) return; const d = (x.n - a.n) / a.n * 100;
+      if(d >= 30) bom.push(`<b>${escapeHtml(x.o)}</b> subiu ${pnFmtPct_(d)} (${int_(a.n)} → ${int_(x.n)} ${un}, ${perAnt.cmp}).`);
+      if(d <= -30 && a.n >= 5) M(6, `<b>${escapeHtml(x.o)}</b> caiu ${pnFmtPct_(-d)} (${int_(a.n)} → ${int_(x.n)} ${un}, ${perAnt.cmp}).`); });
+  }
+  if(temBase && Tp.g){ const d = (Tc.g - Tp.g) / Tp.g * 100; if(d <= -20) M(3, `Faturamento caiu ${pnFmtPct_(-d)} (${pnK_(Tp.g)} → ${pnK_(Tc.g)}, ${perAnt.cmp}).`); else if(d >= 20) bom.push(`Faturamento subiu ${pnFmtPct_(d)} (${perAnt.cmp}).`); }
+  // leads × vendas por oferta
+  ofs.filter(x => x.l >= 50 && !x.n).sort((a, b) => b.l - a.l).slice(0, 3).forEach(x => {
+    M(1, `<b>${escapeHtml(x.o)}</b>: ${int_(x.l)} leads e nenhuma venda.`);
+    pauta.push(`Por que <b>${escapeHtml(x.o)}</b> não vendeu com ${int_(x.l)} leads? Rever abordagem ou parar de enviar esses leads.`); });
+  if(totL >= 100) ofs.filter(x => x.l && x.n).forEach(x => { const ls = pnPct_(x.l, totL), rs = pnPct_(x.g, totG);
+    if(ls - rs >= 20){ M(2, `<b>${escapeHtml(x.o)}</b> recebe ${pnFmtPct_(ls)} dos leads e gera ${pnFmtPct_(rs)} da receita.`); pauta.push(`<b>${escapeHtml(x.o)}</b> consome ${pnFmtPct_(ls)} dos leads pra ${pnFmtPct_(rs)} da receita — redistribuir leads ou rever o pitch dessa oferta.`); }
+    if(rs - ls >= 10 && x.l >= 10) bom.push(`<b>${escapeHtml(x.o)}</b> rende acima da média: ${pnFmtPct_(ls)} dos leads geram ${pnFmtPct_(rs)} da receita — vale mandar mais leads.`); });
+  // conversão total × outros parceiros que recebem leads
+  const conv = kk => { const P = R[kk]; if(!P.temLeads || !P.l) return null; const v = P.leadsJanela ? P.vJan : pnTot_(R, kk).v; return v / P.l * 100; };
+  const c = conv(k);
+  if(c !== null){
+    const outros = LEADS_PARCEIROS_.filter(x => x !== k).map(x => ({x, c: conv(x)})).filter(y => y.c !== null).sort((a, b) => b.c - a.c);
+    if(outros.length && c >= outros[0].c) bom.push(`Melhor conversão entre os parceiros que recebem leads: ${pnFmtPct_(c)} (${PMETA[outros[0].x].nome}: ${pnFmtPct_(outros[0].c)}).`);
+    else if(outros.length){ M(3, `Conversão de ${pnFmtPct_(c)} — abaixo da ${PMETA[outros[0].x].nome} (${pnFmtPct_(outros[0].c)}).`); pauta.push(`Conversão de ${pnFmtPct_(c)} contra ${pnFmtPct_(outros[0].c)} da ${PMETA[outros[0].x].nome}: pedir plano de ação com meta de conversão.`); }
+  } else if(LEADS_PARCEIROS_.includes(k)) pauta.push(`Pedir os <b>leads recebidos por oferta</b> — sem isso não dá pra medir a performance.`);
+  // reembolso
+  if(T.g && T.r / T.g >= 0.15){ M(4, `Reembolso/chargeback em ${pnFmtPct_(pnPct_(T.r, T.g))} do bruto (${pnK_(T.r)}).`); pauta.push(`Entender os motivos de reembolso (${pnFmtPct_(pnPct_(T.r, T.g))} do bruto) — produto, promessa na ligação ou entrega?`); }
+  // dias sem venda (parceiros lançados à mão)
+  if(k === 'welcome_salesbound'){ const zeros = listaDias_(per.ini, per.fim > ontemKey_() ? ontemKey_() : per.fim).filter(d => { const x = (((parceirosDia[k] || {})[d] || {}).c || {}).CRM; return x && !x.v && !x.g; });
+    if(zeros.length >= 2) M(5, `${zeros.length} dias sem venda no período (${faixaDias_(zeros)}).`); }
+  // NuYu: funil
+  if(k === 'nuyu'){ const f = Object.values(funisNuyu).sort((a, b) => b.fim.localeCompare(a.fim))[0];
+    if(f && f.leads){ const ag = f.agend / f.leads * 100; if(ag < 1){ M(1, `Só ${pnFmtPct_(ag)} dos leads viram agendamento (${int_(f.agend)} de ${int_(f.leads)}, ${diaLbl_(f.ini)} a ${diaLbl_(f.fim)}).`); pauta.push(`Agendamento de ${pnFmtPct_(ag)} dos leads: comparar com o prometido e pedir plano pra subir agendamentos (velocidade de contato, tentativas, horário).`); }
+      if(f.shows) bom.push(`Quem comparece compra: ${pnFmtPct_(f.vendas / f.shows * 100)} de fechamento nos comparecimentos.`); } }
+  if(ofs[0] && ofs[0].g > 0) pauta.push(`Manter o foco em <b>${escapeHtml(ofs[0].o)}</b> e pedir mais volume nela.`);
+  if(!T.v && !T.g) M(2, `Nenhuma venda no período.`);
+  return {bom: bom.slice(0, 4), melhorar: melhorar.sort((x, y) => x[0] - y[0]).map(x => x[1]).slice(0, 4), pauta: pauta.slice(0, 4)};
+}
+function pnBarrasDia_(dias, valores, rotulo){
+  const max = Math.max(1, ...valores.map(x => x.g));
+  return `<div class="pn-bars">${dias.map((d, i) => { const x = valores[i], h = Math.round(x.g / max * 100); const dt = new Date(d + 'T12:00:00');
+    return `<div class="pn-bar" title="${diaLbl_(d)} · ${PN_DIAS_SEM_[dt.getDay()]} — ${int_(x.v)} ${rotulo} · ${fmtMoney(x.g)}"><span class="pn-bv">${x.g ? pnK_(x.g) : ''}</span><i style="height:${Math.max(x.g ? 2 : 0, h)}%"></i><span class="pn-bl">${d.slice(8)}<br>${PN_DIAS_SEM_[dt.getDay()]}</span></div>`; }).join('')}</div>`;
+}
+function pnRanking_(itens){ // [{rot, sub, val, txt}]
+  const max = Math.max(1, ...itens.map(x => x.val));
+  return `<div class="pn-rank">${itens.map((x, i) => `<div class="pn-ri"><span class="pn-rn">${i + 1}</span><div class="pn-rt"><b>${x.rot}</b>${x.sub ? `<small>${x.sub}</small>` : ''}<div class="pn-rb"><i style="width:${Math.max(1, x.val / max * 100)}%"></i></div></div><span class="pn-rv">${x.txt}</span></div>`).join('')}</div>`;
+}
+function painel_(){
+  const per = periodoRO_(pnPer), cob = coberturaRO_(per);
+  // comparação justa: no período em aberto, só os dias que já têm dado (relatório BuyGoods e CRM da Sales Bound)
+  // contra o mesmo número de dias antes; mês fechado compara com o fechamento do mês anterior
+  let perC = per;
+  if(!per.mesInteiro){
+    const okDia = d => diasRelatorio.includes(d) && !!(parceirosDia.welcome_salesbound || {})[d];
+    const comDado = cob.dias.filter(okDia); const ult = comDado[comDado.length - 1];
+    if(ult && ult < per.fim) perC = Object.assign({}, per, {fim: ult});
+  }
+  const perAnt = pnPeriodoAnterior_(perC);
+  perAnt.cmp = perC.mesInteiro ? `vs ${perAnt.lbl}` : `${diaLbl_(perC.ini)}–${diaLbl_(perC.fim)} vs ${diaLbl_(perAnt.ini)}–${diaLbl_(perAnt.fim)}`;
+  const R = resumoOfertas_(per), Rc = perC === per ? R : resumoOfertas_(perC), Rp = resumoOfertas_(perAnt);
+  const ativos = PKEYS.filter(k => { const t = pnTot_(R, k); return t.v || t.g || R[k].temLeads; });
+  const ate = per.fim > ontemKey_() ? ontemKey_() : per.fim;
+  const dias = listaDias_(per.ini, ate);
+  const falta = [];
+  if(cob.semRelatorio.length) falta.push(`relatório BuyGoods ${faixaDias_(cob.semRelatorio)}`);
+  if(cob.sbFalta.length) falta.push(`Sales Bound ${faixaDias_(cob.sbFalta)}`);
+  if(cob.sbSemQtd && cob.sbSemQtd.length) falta.push(`qtd. de vendas Sales Bound ${faixaDias_(cob.sbSemQtd)}`);
+  LEADS_PARCEIROS_.forEach(k => { if(cob.leadsFalta[k].length && !R[k].leadsMensal && !R[k].leadsJanela) falta.push(`leads ${PMETA[k].nome}`); });
+  const tabs = [['geral','Geral']].concat(PKEYS.map(k => [k, PMETA[k].nome]));
+  const head = `<div class="pn-head"><div><h1>Painel de parceiros</h1><p>${per.lbl} · ${diaLbl_(per.ini)} a ${diaLbl_(per.fim)}${per.mesInteiro ? ' · fechamento oficial' : ''} · ▲▼ = ${perAnt.cmp}</p></div>
+    <div class="pn-seg">${[['7dias','7 dias'],['semana_passada','Semana passada'],['mes','Este mês'],['mes_passado','Mês passado']].map(([k,l]) => `<button class="${pnPer===k?'on':''}" data-pn-per="${k}">${l}</button>`).join('')}</div></div>
+    ${falta.length ? `<div class="pn-falta"><b>!</b> Dados faltando: ${falta.join(' · ')}. <a data-go-resumo>Ver detalhes</a></div>` : ''}
+    <div class="pn-tabs">${tabs.map(([k,l]) => `<button class="${pnTab===k?'on':''}" data-pn-tab="${k}">${l}</button>`).join('')}</div>`;
+  let corpo = '';
+  if(pnTab === 'geral'){
+    const tot = ativos.reduce((a, k) => { const t = pnTot_(R, k); a.v += t.v; a.g += t.g; return a; }, {v:0, g:0});
+    const totAnt = PKEYS.reduce((a, k) => { const t = pnTot_(Rp, k); a.v += t.v; a.g += t.g; return a; }, {v:0, g:0});
+    const totC = PKEYS.reduce((a, k) => { const t = pnTot_(Rc, k); a.v += t.v; a.g += t.g; return a; }, {v:0, g:0});
+    const baseAnt = PKEYS.some(k => pnTemDia_(k, perAnt) || Rp[k].oficial);
+    const leads = LEADS_PARCEIROS_.reduce((s, k) => s + (R[k].temLeads ? R[k].l : 0), 0);
+    const vendLeads = LEADS_PARCEIROS_.reduce((s, k) => s + (R[k].temLeads ? (R[k].leadsJanela ? R[k].vJan : pnTot_(R, k).v) : 0), 0);
+    const parc = ativos.map(k => ({k, ...pnTot_(R, k)})).filter(x => x.g || x.v).sort((a, b) => b.g - a.g);
+    const ofs = []; ativos.forEach(k => pnOfertas_(R, k).forEach(x => { if(x.g > 0) ofs.push({k, ...x}); })); ofs.sort((a, b) => b.g - a.g);
+    const top = ofs[0];
+    // atenção: o primeiro ponto de "melhorar" de cada parceiro
+    const atencao = ativos.map(k => ({k, m: pnLeitura_(k, R, Rp, per, perAnt, Rc).melhorar[0]})).filter(x => x.m).slice(0, 4);
+    const diaSerie = dias.map(d => PKEYS.reduce((a, k) => { const reg = (parceirosDia[k] || {})[d]; if(reg) Object.values(reg.c || {}).forEach(x => { a.v += x.v || 0; a.g += x.g || 0; }); return a; }, {v:0, g:0}));
+    // mapa oferta × parceiro
+    const ofsMapa = Array.from(new Set(ofs.map(x => x.o))).slice(0, 12), cols = parc.map(x => x.k);
+    const cel = (o, k) => (ofs.find(x => x.o === o && x.k === k) || {}).g || 0;
+    const maxCel = Math.max(1, ...ofsMapa.flatMap(o => cols.map(k => cel(o, k))));
+    corpo = `<div class="pn-kpis">
+        <div class="pn-kpi"><span>Faturamento bruto</span><b>${pnK_(tot.g)}</b>${pnDelta_(totC.g, totAnt.g, baseAnt)}</div>
+        <div class="pn-kpi"><span>Vendas</span><b>${int_(tot.v)}</b>${pnDelta_(totC.v, totAnt.v, baseAnt)}</div>
+        <div class="pn-kpi"><span>Leads recebidos</span><b>${leads ? int_(leads) : '—'}</b><span class="pn-d">Sales Bound, iSellForU, NuYu</span></div>
+        <div class="pn-kpi"><span>Conversão dos leads</span><b>${leads ? pnFmtPct_(vendLeads / leads * 100) : '—'}</b><span class="pn-d">vendas ÷ leads</span></div>
+      </div>
+      <div class="pn-hero">
+        <div class="pn-card pn-destaque"><span class="pn-lbl">Oferta sucesso</span>${top ? `<h2>${escapeHtml(top.o)} <small>na ${PMETA[top.k].nome}</small></h2><p>${pnK_(top.g)} de receita · ${int_(top.n)} ${top.k === 'welcome_salesbound' ? 'pedidos com a oferta' : 'vendas'}${top.l ? ` · ${int_(top.l)} leads` : ''}</p>` : '<p>Sem vendas no período.</p>'}</div>
+        <div class="pn-card"><span class="pn-lbl">Parceiro destaque</span>${parc[0] ? `<h2>${PMETA[parc[0].k].nome}</h2><p>${pnK_(parc[0].g)} · ${pnFmtPct_(pnPct_(parc[0].g, tot.g))} do faturamento · ${int_(parc[0].v)} vendas</p>` : '<p>—</p>'}</div>
+        <div class="pn-card"><span class="pn-lbl">Precisa de atenção</span>${atencao.length ? `<ul>${atencao.map(a => `<li><b>${PMETA[a.k].nome}:</b> ${a.m}</li>`).join('')}</ul>` : '<p>Nada crítico no período.</p>'}</div>
+      </div>
+      <div class="pn-card"><div class="pn-ch"><b>Vendas por dia</b><span>faturamento bruto de todos os parceiros (relatórios diários)</span></div>${dias.length ? pnBarrasDia_(dias, diaSerie, 'vendas') : '<p class="pn-muted">Sem dias no período.</p>'}</div>
+      <div class="pn-2col">
+        <div class="pn-card"><div class="pn-ch"><b>Top parceiros</b><span>por faturamento</span></div>${pnRanking_(parc.map(x => ({rot: PMETA[x.k].nome, sub: `${int_(x.v)} vendas · ${pnFmtPct_(pnPct_(x.g, tot.g))} do total`, val: x.g, txt: pnK_(x.g)})))}</div>
+        <div class="pn-card"><div class="pn-ch"><b>Top ofertas</b><span>oferta × parceiro, por receita</span></div>${pnRanking_(ofs.slice(0, 8).map(x => ({rot: escapeHtml(x.o), sub: `${PMETA[x.k].nome} · ${int_(x.n)} ${x.k === 'welcome_salesbound' ? 'pedidos c/' : 'vendas'}${x.l ? ' · ' + int_(x.l) + ' leads' : ''}`, val: x.g, txt: pnK_(x.g)})))}</div>
+      </div>
+      <div class="pn-card"><div class="pn-ch"><b>Onde cada oferta funciona</b><span>receita da oferta em cada parceiro — quanto mais escuro, mais vende</span></div>
+        ${ofsMapa.length ? `<div class="pn-mapa-w"><table class="pn-mapa"><thead><tr><th></th>${cols.map(k => `<th>${PMETA[k].nome}</th>`).join('')}</tr></thead><tbody>
+        ${ofsMapa.map(o => `<tr><th>${escapeHtml(o)}<small>${escapeHtml(nichoDe_(o))}</small></th>${cols.map(k => { const v = cel(o, k), a = v / maxCel; return `<td style="background:rgba(var(--pn-acc-rgb),${v ? (0.08 + a * 0.85).toFixed(2) : 0});color:${a > 0.45 ? '#fff' : 'var(--pn-ink)'}">${v ? pnK_(v) : '<span class="pn-muted">·</span>'}</td>`; }).join('')}</tr>`).join('')}
+        </tbody></table></div>` : '<p class="pn-muted">Sem ofertas no período.</p>'}</div>`;
+  } else {
+    const k = pnTab, P = R[k], T = pnTot_(R, k), Tc = pnTot_(Rc, k), Tp = pnTot_(Rp, k), temBase = pnTemDia_(k, perAnt) || !!Rp[k].oficial;
+    const ofs = pnOfertas_(R, k), lt = pnLeitura_(k, R, Rp, per, perAnt, Rc);
+    const totG = ofs.reduce((s, x) => s + x.g, 0) || 1, totL = ofs.reduce((s, x) => s + (x.l || 0), 0);
+    const conv = P.temLeads && P.l ? (P.leadsJanela ? P.vJan : T.v) / P.l * 100 : null;
+    const serie = dias.map(d => { const reg = (parceirosDia[k] || {})[d], a = {v:0, g:0}; if(reg) Object.values(reg.c || {}).forEach(x => { a.v += x.v || 0; a.g += x.g || 0; }); return a; });
+    const un = k === 'welcome_salesbound' ? 'Pedidos c/ a oferta' : 'Vendas';
+    const f = k === 'nuyu' ? Object.values(funisNuyu).sort((a, b) => b.fim.localeCompare(a.fim))[0] : null;
+    corpo = `<div class="pn-kpis">
+        <div class="pn-kpi"><span>Faturamento bruto</span><b>${pnK_(T.g)}</b>${pnDelta_(Tc.g, Tp.g, temBase)}</div>
+        <div class="pn-kpi"><span>Vendas</span><b>${int_(T.v)}</b>${pnDelta_(Tc.v, Tp.v, temBase)}</div>
+        <div class="pn-kpi"><span>Leads recebidos</span><b>${P.temLeads ? int_(P.l) : '—'}</b><span class="pn-d">${P.leadsJanela ? P.leadsJanela : P.leadsMensal ? 'total do mês' : P.temLeads ? '' : LEADS_PARCEIROS_.includes(k) ? 'não lançados' : 'não recebe leads'}</span></div>
+        <div class="pn-kpi"><span>Conversão</span><b>${conv !== null ? pnFmtPct_(conv) : '—'}</b><span class="pn-d">${conv !== null ? 'vendas ÷ leads' : ''}</span></div>
+        <div class="pn-kpi"><span>Ticket médio</span><b>${T.v ? pnK_(T.g / T.v) : '—'}</b></div>
+        <div class="pn-kpi"><span>Reembolso</span><b>${T.g ? pnFmtPct_(pnPct_(T.r, T.g)) : '—'}</b><span class="pn-d">${T.r ? pnK_(T.r) : ''}</span></div>
+      </div>
+      <div class="pn-3col">
+        <div class="pn-card pn-lista"><span class="pn-lbl">O que está funcionando</span>${lt.bom.length ? `<ul>${lt.bom.map(x => `<li>${x}</li>`).join('')}</ul>` : '<p class="pn-muted">Sem destaque no período.</p>'}</div>
+        <div class="pn-card pn-lista pn-atn"><span class="pn-lbl">O que precisa melhorar</span>${lt.melhorar.length ? `<ul>${lt.melhorar.map(x => `<li>${x}</li>`).join('')}</ul>` : '<p class="pn-muted">Nada crítico no período.</p>'}</div>
+        <div class="pn-card pn-lista"><span class="pn-lbl">Pauta pra conversar com a ${PMETA[k].nome}</span>${lt.pauta.length ? `<ol>${lt.pauta.map(x => `<li>${x}</li>`).join('')}</ol>` : '<p class="pn-muted">—</p>'}</div>
+      </div>
+      ${f ? `<div class="pn-card"><div class="pn-ch"><b>Funil NuYu</b><span>${diaLbl_(f.ini)} a ${diaLbl_(f.fim)} · painel KPI da NuYu</span></div>${pnRanking_([['Leads', f.leads], ['Avaliações', f.aval], ['Agendamentos', f.agend], ['Compareceram', f.shows], ['Vendas', f.vendas]].filter(x => x[1] !== null && x[1] !== undefined).map(([r, v], i, arr) => ({rot: r, sub: i ? `${pnFmtPct_(v / (arr[0][1] || 1) * 100)} dos leads` : '', val: Math.sqrt(v), txt: int_(v)})))}<p class="pn-muted pn-nota">Barras em escala raiz pra caber leads e vendas na mesma régua.</p></div>` : ''}
+      <div class="pn-card"><div class="pn-ch"><b>Vendas por dia</b><span>${k === 'welcome_salesbound' ? 'CRM da Sales Bound' : 'relatórios diários'}</span></div>${dias.length ? pnBarrasDia_(dias, serie, 'vendas') : '<p class="pn-muted">Sem dias no período.</p>'}</div>
+      <div class="pn-card"><div class="pn-ch"><b>Ofertas</b><span>${k === 'welcome_salesbound' ? 'cada pedido leva 3–4 produtos: "pedidos c/ a oferta" soma mais que o total' : 'por receita'}</span></div>
+        ${ofs.length ? `<div class="pn-mapa-w"><table class="pn-tab"><thead><tr><th>Oferta</th><th class="r">${un}</th><th class="r">Receita</th><th>% da receita</th><th class="r">Leads</th><th class="r">% dos leads</th>${k !== 'welcome_salesbound' ? '<th class="r">Conversão</th>' : ''}</tr></thead><tbody>
+        ${ofs.map(x => { const rs = pnPct_(x.g, totG); return `<tr><td><b>${escapeHtml(x.o)}</b> <small class="pn-muted">${escapeHtml(nichoDe_(x.o))}</small></td><td class="r">${int_(x.n)}</td><td class="r">${fmtMoney(x.g)}</td><td><div class="pn-mini"><i style="width:${rs}%"></i></div><small>${pnFmtPct_(rs)}</small></td><td class="r">${x.l !== null ? int_(x.l) : '<span class="pn-muted">—</span>'}</td><td class="r">${x.l && totL ? pnFmtPct_(pnPct_(x.l, totL)) : '<span class="pn-muted">—</span>'}</td>${k !== 'welcome_salesbound' ? `<td class="r">${x.l ? pnFmtPct_((P.leadsJanela ? (x.x.vJan || 0) : x.n) / x.l * 100) : '<span class="pn-muted">—</span>'}</td>` : ''}</tr>`; }).join('')}
+        </tbody></table></div>` : '<p class="pn-muted">Sem vendas por oferta no período.</p>'}</div>`;
+  }
+  return `<div class="pn">${head}${corpo}<p class="pn-muted pn-nota">${per.mesInteiro ? 'Mês fechado: totais de cada parceiro = fechamento oficial (Master / CRM). Ofertas e dias vêm dos relatórios diários.' : 'Pelos relatórios diários (vendas = pedidos frontais; Helpgrid só a conta geral — a conta interna entra no fechamento do mês).'} Comparações só aparecem quando o período anterior tem dado.</p></div>`;
+}
+
 // ================= Painel de parceiros (layout Attio) =================
 const PMETA = {
   welcome_salesbound: {nome:'Sales Bound', cor:'#E4572E', tipo:'Welcome · call center', fonte:'Planilha Financial Performance', repasse:'55% nosso',
@@ -1582,7 +1828,7 @@ function barChart_(series, keys, h){
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-height:260px">${g}</svg>`;
 }
 
-let route = {page:'resumo'}, ptab = 'visao', metric = 'gross', periodo = 'mes';
+let route = {page:'painel'}, ptab = 'visao', metric = 'gross', periodo = 'mes';
 function go(page, key){ route = {page, key}; ptab = key === 'helpgrid' ? 'setores' : 'visao'; periodo = 'mes'; render(); $('#page').scrollTo({top:0}); }
 
 // Virada de mês: enquanto o mês novo não tem dado nenhum, as telas mostram o fechamento do mês anterior
@@ -1602,6 +1848,7 @@ function renderNav_(){
   $('#nav-imports').classList.toggle('on', route.page==='imports');
   $('#nav-vendas').classList.toggle('on', route.page==='vendas');
   $('#nav-resumo').classList.toggle('on', route.page==='resumo');
+  $('#nav-painel').classList.toggle('on', route.page==='painel');
   $('#nav-vendasgeral').classList.toggle('on', route.page==='vendasgeral');
   $('#ct-imp').textContent = importLog.length || '';
 }
@@ -1789,8 +2036,8 @@ function imports_(){
 function render(){
   renderNav_();
   const k = route.page === 'partner' ? route.key : null;
-  $('#crumb').innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><a data-go-over>Parceiros</a><span>/</span><b>${k ? PMETA[k].nome : route.page==='imports' ? 'Importações' : route.page==='vendas' ? 'Vendas por dia' : route.page==='vendasgeral' ? 'Vendas por dia geral' : route.page==='resumo' ? 'Resumo por oferta' : 'Visão geral'}</b>`;
-  $('#page').innerHTML = k ? partner_(k) : route.page === 'imports' ? imports_() : route.page === 'vendas' ? vendasDia_() : route.page === 'vendasgeral' ? vendasGeral_() : route.page === 'resumo' ? resumoOfertasPage_() : overview_();
+  $('#crumb').innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><a data-go-over>Parceiros</a><span>/</span><b>${k ? PMETA[k].nome : route.page==='imports' ? 'Importações' : route.page==='vendas' ? 'Vendas por dia' : route.page==='vendasgeral' ? 'Vendas por dia geral' : route.page==='resumo' ? 'Resumo por oferta' : route.page==='painel' ? 'Painel' : 'Visão geral'}</b>`;
+  $('#page').innerHTML = k ? partner_(k) : route.page === 'imports' ? imports_() : route.page === 'vendas' ? vendasDia_() : route.page === 'vendasgeral' ? vendasGeral_() : route.page === 'resumo' ? resumoOfertasPage_() : route.page === 'painel' ? painel_() : overview_();
   const pg = $('#page');
   pg.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => go('partner', el.dataset.go)));
   pg.querySelectorAll('[data-metric]').forEach(el => el.addEventListener('click', () => { metric = el.dataset.metric; render(); }));
@@ -1798,6 +2045,9 @@ function render(){
   pg.querySelectorAll('[data-per]').forEach(el => el.addEventListener('click', () => { periodo = el.dataset.per; render(); }));
   pg.querySelectorAll('[data-act="import"]').forEach(el => el.addEventListener('click', openImport));
   pg.querySelectorAll('[data-act="manual"]').forEach(el => el.addEventListener('click', openManual_));
+  pg.querySelectorAll('[data-pn-tab]').forEach(el => el.addEventListener('click', () => { pnTab = el.dataset.pnTab; render(); }));
+  pg.querySelectorAll('[data-pn-per]').forEach(el => el.addEventListener('click', () => { pnPer = el.dataset.pnPer; render(); }));
+  pg.querySelectorAll('[data-go-resumo]').forEach(el => el.addEventListener('click', () => { roPeriodo = pnPer; go('resumo'); }));
   pg.querySelectorAll('[data-act="leads"]').forEach(el => el.addEventListener('click', openLeads_));
   pg.querySelectorAll('[data-act="painel-nuyu"]').forEach(el => el.addEventListener('click', openPainelNuyu_));
   pg.querySelectorAll('[data-act="copiar-ro"]').forEach(el => el.addEventListener('click', copiarResumoRO_));
@@ -2112,6 +2362,7 @@ $('#sideSearch').addEventListener('click', openCmd);
 $('#topImport').addEventListener('click', openImport);
 $('#nav-overview').addEventListener('click', () => go('overview'));
 $('#nav-resumo').addEventListener('click', () => go('resumo'));
+$('#nav-painel').addEventListener('click', () => go('painel'));
 $('#nav-imports').addEventListener('click', () => go('imports'));
 $('#nav-vendas').addEventListener('click', () => go('vendas'));
 $('#nav-vendasgeral').addEventListener('click', () => go('vendasgeral'));
