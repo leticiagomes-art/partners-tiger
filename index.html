@@ -1116,7 +1116,10 @@ function periodoRO_(p){
   if(p === '7dias'){ const i = d(ontem); i.setDate(i.getDate() - 6); return {ini: k(i), fim: ontem, lbl: 'Últimos 7 dias'}; }
   if(p === 'semana_passada'){ const seg = d(isoWeekMonday_(hojeKey_())); seg.setDate(seg.getDate() - 7); const dom = new Date(seg); dom.setDate(dom.getDate() + 6); return {ini: k(seg), fim: k(dom), lbl: 'Semana passada'}; }
   if(p === 'mes_passado'){ const m = mesAnterior_(mesAtual_()); const fim = d(m + '-01'); fim.setMonth(fim.getMonth() + 1); fim.setDate(0); return {ini: m + '-01', fim: k(fim), lbl: 'Mês passado', mes: m, mesInteiro: true}; }
-  const m = mesAtual_(); return {ini: m + '-01', fim: ontem < m + '-01' ? m + '-01' : ontem, lbl: 'Este mês', mes: m};
+  // este mês vai até ontem — ou até hoje, se já tem dado de hoje (ex: painel da NuYu e venda lançada no dia)
+  const hoje = hojeKey_(), temHoje = PKEYS.some(k => (parceirosDia[k] || {})[hoje]) || !!leadsDia[hoje] || Object.values(leadsPeriodo).some(e => e.fim === hoje);
+  const fimMes = temHoje ? hoje : ontem;
+  const m = mesAtual_(); return {ini: m + '-01', fim: fimMes < m + '-01' ? m + '-01' : fimMes, lbl: 'Este mês', mes: m};
 }
 
 function resumoOfertas_(per){
@@ -1412,6 +1415,11 @@ function lerPainelNuyu_(txt){
   if(r.leads === null) return {erro: 'Não achei "Total Leads" no texto colado.'};
   return r;
 }
+function funilNuyuDoPeriodo_(per){
+  const todos = Object.values(funisNuyu);
+  const dentro = todos.filter(f => f.ini >= per.ini && f.ini <= per.fim).sort((a, b) => b.fim.localeCompare(a.fim) || a.ini.localeCompare(b.ini));
+  return dentro[0] || todos.sort((a, b) => b.fim.localeCompare(a.fim) || b.ini.localeCompare(a.ini))[0] || null;
+}
 function funilNuyuCard_(){
   const lista = Object.values(funisNuyu).sort((a, b) => b.fim.localeCompare(a.fim) || a.ini.localeCompare(b.ini)).slice(0, 8);
   const pct = (a, b) => b ? (a / b * 100).toLocaleString('pt-BR', {maximumFractionDigits: 2}) + '%' : '—';
@@ -1447,6 +1455,11 @@ function openPainelNuyu_(){
     funisNuyu[r.ini + '_' + r.fim] = Object.assign({}, r, {salvoEm: new Date().toISOString()});
     saveLS('tiger_funil_nuyu_v1', funisNuyu);
     const batch = [{id: '__funil_nuyu', canal: '__funil_nuyu', mes: '', dados_json: JSON.stringify(funisNuyu)}];
+    if(r.ini !== r.fim && r.leads !== null){
+      leadsPeriodo[`nuyu_${r.ini}_${r.fim}`] = {k: 'nuyu', ini: r.ini, fim: r.fim, of: {[SEM_OFERTA_]: r.leads}, salvoEm: new Date().toISOString()};
+      saveLS('tiger_leads_periodo_v1', leadsPeriodo);
+      batch.push({id: '__leads_periodo', canal: '__leads_periodo', mes: '', dados_json: JSON.stringify(leadsPeriodo)});
+    }
     if(r.ini === r.fim){
       if(!leadsDia[r.ini]) leadsDia[r.ini] = {};
       leadsDia[r.ini].nuyu = {[SEM_OFERTA_]: {l: r.leads || 0, a: r.agend || 0}};
@@ -1612,7 +1625,7 @@ function pnLeitura_(k, R, Rp, per, perAnt, Rc){
   if(k === 'welcome_salesbound'){ const zeros = listaDias_(per.ini, per.fim > ontemKey_() ? ontemKey_() : per.fim).filter(d => { const x = (((parceirosDia[k] || {})[d] || {}).c || {}).CRM; return x && !x.v && !x.g; });
     if(zeros.length >= 2) M(5, `${zeros.length} dias sem venda no período (${faixaDias_(zeros)}).`); }
   // NuYu: funil
-  if(k === 'nuyu'){ const f = Object.values(funisNuyu).sort((a, b) => b.fim.localeCompare(a.fim))[0];
+  if(k === 'nuyu'){ const f = funilNuyuDoPeriodo_(per);
     if(f && f.leads){ const ag = f.agend / f.leads * 100; if(ag < 1){ M(1, `Só ${pnFmtPct_(ag)} dos leads viram agendamento (${int_(f.agend)} de ${int_(f.leads)}, ${diaLbl_(f.ini)} a ${diaLbl_(f.fim)}).`); pauta.push(`Agendamento de ${pnFmtPct_(ag)} dos leads: comparar com o prometido e pedir plano pra subir agendamentos (velocidade de contato, tentativas, horário).`); }
       if(f.shows) bom.push(`Quem comparece compra: ${pnFmtPct_(f.vendas / f.shows * 100)} de fechamento nos comparecimentos.`); } }
   if(ofs[0] && ofs[0].g > 0) pauta.push(`Manter o foco em <b>${escapeHtml(ofs[0].o)}</b> e pedir mais volume nela.`);
@@ -1699,7 +1712,7 @@ function painel_(){
     const conv = P.temLeads && P.l ? (P.leadsJanela ? P.vJan : T.v) / P.l * 100 : null;
     const serie = dias.map(d => { const reg = (parceirosDia[k] || {})[d], a = {v:0, g:0}; if(reg) Object.values(reg.c || {}).forEach(x => { a.v += x.v || 0; a.g += x.g || 0; }); return a; });
     const un = k === 'welcome_salesbound' ? 'Pedidos c/ a oferta' : 'Vendas';
-    const f = k === 'nuyu' ? Object.values(funisNuyu).sort((a, b) => b.fim.localeCompare(a.fim))[0] : null;
+    const f = k === 'nuyu' ? funilNuyuDoPeriodo_(per) : null;
     corpo = `<div class="pn-kpis">
         <div class="pn-kpi"><span>Faturamento bruto</span><b>${pnK_(T.g)}</b>${pnDelta_(Tc.g, Tp.g, temBase)}</div>
         <div class="pn-kpi"><span>Vendas</span><b>${int_(T.v)}</b>${pnDelta_(Tc.v, Tp.v, temBase)}</div>
@@ -1720,7 +1733,8 @@ function painel_(){
         ${ofs.map(x => { const rs = pnPct_(x.g, totG); return `<tr><td><b>${escapeHtml(x.o)}</b> <small class="pn-muted">${escapeHtml(nichoDe_(x.o))}</small></td><td class="r">${int_(x.n)}</td><td class="r">${fmtMoney(x.g)}</td><td><div class="pn-mini"><i style="width:${rs}%"></i></div><small>${pnFmtPct_(rs)}</small></td><td class="r">${x.l !== null ? int_(x.l) : '<span class="pn-muted">—</span>'}</td><td class="r">${x.l && totL ? pnFmtPct_(pnPct_(x.l, totL)) : '<span class="pn-muted">—</span>'}</td>${k !== 'welcome_salesbound' ? `<td class="r">${x.l ? pnFmtPct_((P.leadsJanela ? (x.x.vJan || 0) : x.n) / x.l * 100) : '<span class="pn-muted">—</span>'}</td>` : ''}</tr>`; }).join('')}
         </tbody></table></div>` : '<p class="pn-muted">Sem vendas por oferta no período.</p>'}</div>`;
   }
-  return `<div class="pn">${head}${corpo}<p class="pn-muted pn-nota">${per.mesInteiro ? 'Mês fechado: totais de cada parceiro = fechamento oficial (Master / CRM). Ofertas e dias vêm dos relatórios diários.' : 'Pelos relatórios diários (vendas = pedidos frontais; Helpgrid só a conta geral — a conta interna entra no fechamento do mês).'} Comparações só aparecem quando o período anterior tem dado.</p></div>`;
+  // singular quando é 1 ("1 venda", "1 pedido c/ a oferta")
+  return (`<div class="pn">${head}${corpo}<p class="pn-muted pn-nota">${per.mesInteiro ? 'Mês fechado: totais de cada parceiro = fechamento oficial (Master / CRM). Ofertas e dias vêm dos relatórios diários.' : 'Pelos relatórios diários (vendas = pedidos frontais; Helpgrid só a conta geral — a conta interna entra no fechamento do mês).'} Comparações só aparecem quando o período anterior tem dado.</p></div>`).replace(/(^|[^\d.,])1 (vendas|pedidos)\b/g, (m, a, w) => a + '1 ' + (w === 'vendas' ? 'venda' : 'pedido'));
 }
 
 // ================= Painel de parceiros (layout Attio) =================
