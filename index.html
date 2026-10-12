@@ -236,6 +236,7 @@ table.vg tr.vg-tot td{font-weight:700;background:var(--bg-sub);border-top:1px so
 .banner.ro-ok{background:var(--green-bg);color:var(--green)}
 .crm-cola{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-3);font-weight:500;margin-bottom:10px}
 .crm-cola textarea{border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;font:inherit;font-size:12.5px;background:var(--bg);color:var(--text);resize:vertical}
+.pill.warn{background:var(--amber-bg);color:var(--amber)}
 .crm-lido{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:var(--bg-sub);font-size:12.5px;line-height:1.5}
 .ld-tab select, .ld-tab input{height:30px;border:1px solid var(--line-strong);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:12.5px;padding:0 6px}
 </style>
@@ -1002,9 +1003,9 @@ const SEM_OFERTA_ = '(sem separar por oferta)';
 let leadsDia = loadLS('tiger_leads_dia_v1', {}); // {dia: {parceiro: {oferta: {l: leads, a: agendamentos}}}}
 let leadsPeriodo = loadLS('tiger_leads_periodo_v1', {}); // leads de uma janela (ex: lead flow 01–09/10): {id: {k, ini, fim, of: {oferta: leads}}}
 // vendas que entram na conversão — quando os leads são de uma janela, só as vendas dessa mesma janela
-// Sales Bound por oferta só tem "itens" do CRM (um pedido leva vários produtos): não é venda, então não vira conversão
+// Sales Bound por oferta = pedidos em que a oferta aparece (um pedido leva 3–4 produtos): não é conversão da oferta
 const vConv_ = (k, x, P) => k === 'welcome_salesbound' ? null : (P && P.leadsJanela ? (x.vJan || 0) : (x.v || 0));
-const convOf_ = (k, x, P) => { const v = vConv_(k, x, P); return x.temLeads && x.l && v !== null ? conv_(v, x.l) : '<span class="muted" title="' + (k === 'welcome_salesbound' ? 'Sales Bound por oferta só tem itens do CRM, não pedidos — sem conversão por oferta até ter o relatório de pedidos por produto' : 'leads da oferta não lançados') + '">—</span>'; };
+const convOf_ = (k, x, P) => { const v = vConv_(k, x, P); return x.temLeads && x.l && v !== null ? conv_(v, x.l) : '<span class="muted" title="' + (k === 'welcome_salesbound' ? 'Sales Bound: um pedido leva várias ofertas, então pedidos com a oferta ÷ leads da oferta não é conversão' : 'leads da oferta não lançados') + '">—</span>'; };
 let roPeriodo = 'semana_passada', roAgrupar = 'parceiro';
 let roCmp = {a: 'welcome_salesbound', b: 'welcome_isellforu', ofertas: ['NailsCleanPro','NervoLyn','AudiLeaf']};
 
@@ -1063,6 +1064,7 @@ function resumoOfertas_(per){
         P.v += x.v || 0; P.g += x.g || 0; P.r += (x.r || 0) + (x.cb || 0);
         Object.keys(x.p || {}).forEach(pr => { const o = of(nomeOferta_(pr)); o.v += x.p[pr][0] || 0; o.g += x.p[pr][1] || 0; });
         Object.keys(x.pi || {}).forEach(pr => { of(nomeOferta_(pr)).itens += x.pi[pr] || 0; P.itensCRM = true; });
+        Object.keys(x.pr || {}).forEach(pr => { of(nomeOferta_(pr)).g += x.pr[pr] || 0; });
       });
       const ld = (leadsDia[dia] || {})[k];
       if(ld){ P.temLeads = true; Object.keys(ld).forEach(o => { const x = of(o); x.temLeads = true; x.l += ld[o].l || 0; x.a += ld[o].a || 0; P.l += ld[o].l || 0; P.a += ld[o].a || 0; }); }
@@ -1154,7 +1156,7 @@ function resumoOfertasPage_(){
     PKEYS.forEach(k => {
       const ofs = Object.entries(R[k].ofertas).filter(([o, x]) => x.v || x.g || x.itens || x.temLeads).sort(ordOf);
       if(!ofs.length) return;
-      corpoOf += `<tr class="ro-grupo"><td colspan="7"><div class="who">${plogo_(k,18)}<b>${PMETA[k].nome}</b>${k === 'welcome_salesbound' ? '<span class="muted" style="font-weight:400;font-size:12px">· por oferta = itens do "Top Products" do CRM (top 10 do dia)</span>' : ''}</div></td></tr>` + ofs.map(([o, x]) => linhaOf(o, x, k)).join('');
+      corpoOf += `<tr class="ro-grupo"><td colspan="7"><div class="who">${plogo_(k,18)}<b>${PMETA[k].nome}</b>${k === 'welcome_salesbound' ? '<span class="muted" style="font-weight:400;font-size:12px">· por oferta = pedidos em que a oferta aparece (cada pedido leva 3–4 produtos, então a soma passa do total)</span>' : ''}</div></td></tr>` + ofs.map(([o, x]) => linhaOf(o, x, k)).join('');
     });
   } else {
     const porNicho = {};
@@ -1168,13 +1170,13 @@ function resumoOfertasPage_(){
     });
   }
   const tabO = `<div class="card ro-card"><div class="card-h"><b>Por oferta</b><div class="seg">${[['parceiro','Por parceiro'],['nicho','Por nicho']].map(([k,l]) => `<button class="${roAgrupar===k?'on':''}" data-ro-agr="${k}">${l}</button>`).join('')}</div></div>
-    ${corpoOf ? `<div style="overflow-x:auto"><table class="mini"><thead><tr><th>Oferta</th><th class="r">Vendas</th><th class="r" title="Sales Bound: itens do produto no Top Products do CRM">Itens (CRM)</th><th class="r">Bruto</th><th class="r">Leads</th><th class="r">Agend.</th><th class="r">Conversão</th></tr></thead><tbody>${corpoOf}</tbody></table></div>` : '<p class="muted">Sem venda nem lead no período.</p>'}</div>`;
+    ${corpoOf ? `<div style="overflow-x:auto"><table class="mini"><thead><tr><th>Oferta</th><th class="r">Vendas</th><th class="r" title="Sales Bound: pedidos em que a oferta aparece (um pedido leva vários produtos)">Pedidos c/ a oferta</th><th class="r">Bruto</th><th class="r">Leads</th><th class="r">Agend.</th><th class="r">Conversão</th></tr></thead><tbody>${corpoOf}</tbody></table></div>` : '<p class="muted">Sem venda nem lead no período.</p>'}</div>`;
 
   // ---- comparação entre dois parceiros nas mesmas ofertas ----
   const A = roCmp.a, B = roCmp.b;
   const opcoesOf = Array.from(new Set(roCmp.ofertas.concat(Object.keys(R[A].ofertas), Object.keys(R[B].ofertas)).filter(o => o !== SEM_OFERTA_))).sort();
   const cel = (k, o) => { const x = R[k].ofertas[o] || {v:0, g:0, itens:0, l:0, temLeads:false};
-    const vend = k === 'welcome_salesbound' ? (x.itens ? `${int_(x.itens)} <small class="muted">itens</small>` : '<span class="muted">0</span>') : int_(x.v);
+    const vend = k === 'welcome_salesbound' ? (x.itens ? `${int_(x.itens)} <small class="muted">pedidos c/</small>` : '<span class="muted">0</span>') : int_(x.v);
     return `<td class="r num ro-a">${vend}</td><td class="r num">${x.g ? fmtMoney(x.g) : '<span class="muted">—</span>'}</td><td class="r num">${x.temLeads ? int_(x.l) : '<span class="muted">—</span>'}</td><td class="r num"><b>${convOf_(k, x, R[k])}</b></td>`; };
   const sel = (id, v) => `<select id="${id}" class="ro-sel">${PKEYS.map(k => `<option value="${k}" ${k===v?'selected':''}>${PMETA[k].nome}</option>`).join('')}</select>`;
   const tabC = `<div class="card ro-card"><div class="card-h"><b>Comparar parceiros nas mesmas ofertas · ${per.lbl}</b><span style="display:flex;gap:6px;align-items:center">${sel('roA', A)}<span class="muted">×</span>${sel('roB', B)}</span></div>
@@ -1182,7 +1184,7 @@ function resumoOfertasPage_(){
     ${roCmp.ofertas.length ? `<div style="overflow-x:auto"><table class="mini"><thead><tr><th rowspan="2">Oferta</th><th colspan="4" class="r ro-th">${PMETA[A].nome}</th><th colspan="4" class="r ro-th">${PMETA[B].nome}</th></tr>
       <tr><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">Leads</th><th class="r">Conv.</th><th class="r">Vendas</th><th class="r">Bruto</th><th class="r">Leads</th><th class="r">Conv.</th></tr></thead>
       <tbody>${roCmp.ofertas.map(o => `<tr><td><b>${escapeHtml(o)}</b> <span class="ro-nicho">${escapeHtml(nichoDe_(o))}</span></td>${cel(A, o)}${cel(B, o)}</tr>`).join('')}</tbody></table></div>
-      <p class="muted" style="font-size:12px;margin:8px 0 0">${[A, B].includes('welcome_salesbound') ? 'Sales Bound: o CRM não mostra pedidos por produto, só os itens do "Top Products" (top 10 do dia, e um pedido leva vários produtos) — por isso não tem conversão por oferta da Sales Bound até a gente ter o relatório de pedidos por produto do CRM; a conversão dela vale só no total (vendas ÷ leads). ' : ''}Conversão = vendas ÷ leads recebidos da oferta no período; "—" = leads da oferta não lançados.</p>`
+      <p class="muted" style="font-size:12px;margin:8px 0 0">${[A, B].includes('welcome_salesbound') ? 'Sales Bound: cada pedido leva 3–4 produtos, então por oferta o número é "pedidos em que a oferta aparece" e a receita é a da linha da oferta — não dá pra tratar como conversão da oferta (um mesmo pedido conta em várias); a conversão dela vale no total (pedidos ÷ leads). ' : ''}Conversão = vendas ÷ leads recebidos da oferta no período; "—" = leads da oferta não lançados.</p>`
     : '<p class="muted">Escolha as ofertas acima.</p>'}</div>`;
 
   return `<div class="pad">
@@ -1207,13 +1209,13 @@ function textoResumoRO_(){
     const P = Object.assign({}, R[k], R[k].oficial ? {v: R[k].oficial.v, g: R[k].oficial.g} : {}); if(!(P.v || P.g || P.temLeads || R[k].oficial)) return;
     L.push(`• ${PMETA[k].nome}${R[k].oficial ? ' (fechamento)' : ''}: ${int_(P.v)} ${P.v === 1 ? 'venda' : 'vendas'} · ${fmtMoney(P.g)} bruto${P.temLeads ? ` · ${int_(P.l)} leads${P.leadsMensal ? ' (mês)' : ''}${P.leadsJanela ? ` (${P.leadsJanela})` : ''} · conversão ${conv_(P.leadsJanela ? P.vJan : P.v, P.l)}` : ' · leads não lançados'}${P.a ? ` · ${int_(P.a)} agendamentos` : ''}`);
     const top = Object.entries(P.ofertas).filter(([o, x]) => o !== SEM_OFERTA_ && (x.v || x.itens)).sort((a, b) => (b[1].v + b[1].itens) - (a[1].v + a[1].itens)).slice(0, 4);
-    if(top.length) L.push('   ' + top.map(([o, x]) => `${o} ${x.v ? int_(x.v) : int_(x.itens) + ' itens'}`).join(' · '));
+    if(top.length) L.push('   ' + top.map(([o, x]) => `${o} ${x.v ? int_(x.v) : int_(x.itens) + ' pedidos c/'}`).join(' · '));
   });
   const A = roCmp.a, B = roCmp.b;
   if(roCmp.ofertas.length){
     L.push('', `Comparação ${PMETA[A].nome} × ${PMETA[B].nome}:`);
     roCmp.ofertas.forEach(o => {
-      const f = k => { const x = R[k].ofertas[o] || {}; const n = k === 'welcome_salesbound' ? `${int_(x.itens)} ${x.itens === 1 ? 'item' : 'itens'}` : `${int_(x.v)} ${x.v === 1 ? 'venda' : 'vendas'}`; const v = vConv_(k, x, R[k]); return `${n}${x.temLeads ? ` / ${int_(x.l)} leads${v !== null && x.l ? ` (${conv_(v, x.l)})` : ''}` : ''}`; };
+      const f = k => { const x = R[k].ofertas[o] || {}; const n = k === 'welcome_salesbound' ? `${int_(x.itens)} ${x.itens === 1 ? 'pedido' : 'pedidos'} com a oferta` : `${int_(x.v)} ${x.v === 1 ? 'venda' : 'vendas'}`; const v = vConv_(k, x, R[k]); return `${n}${x.temLeads ? ` / ${int_(x.l)} leads${v !== null && x.l ? ` (${conv_(v, x.l)})` : ''}` : ''}`; };
       L.push(`• ${o}: ${PMETA[A].nome} ${f(A)} | ${PMETA[B].nome} ${f(B)}`);
     });
   }
@@ -1223,7 +1225,7 @@ function textoResumoRO_(){
   if(cob.sbSemQtd.length) falta.push(`quantidade de vendas da Sales Bound em ${faixaDias_(cob.sbSemQtd)}`);
   LEADS_PARCEIROS_.forEach(k => { if(cob.leadsFalta[k].length && !R[k].leadsMensal && !R[k].leadsJanela) falta.push(`leads ${PMETA[k].nome}`); });
   if(falta.length) L.push('', 'Pendente: ' + falta.join('; ') + '.');
-  L.push('', per.mesInteiro ? 'Totais por parceiro = fechamento oficial do mês; ofertas pelos relatórios diários.' : 'Pelos relatórios diários (vendas = pedidos frontais; Helpgrid só conta geral). Sales Bound por oferta = itens do Top Products do CRM.');
+  L.push('', per.mesInteiro ? 'Totais por parceiro = fechamento oficial do mês; ofertas pelos relatórios diários.' : 'Pelos relatórios diários (vendas = pedidos frontais; Helpgrid só conta geral). Sales Bound por oferta = pedidos em que a oferta aparece.');
   return L.join('\n');
 }
 function copiarResumoRO_(){
@@ -1397,6 +1399,61 @@ function openPainelNuyu_(){
   m.classList.add('on'); $('#scrim').classList.add('on');
 }
 
+// ---------- Relatório de pedidos do CRM da Sales Bound (Checkout Champ → Order Details, .xlsx) ----------
+// Um pedido por linha, com até 10 produtos. Daqui sai, por dia: pedidos, bruto, e por oferta quantos pedidos
+// tiveram a oferta e a receita dela. Nenhum dado de cliente (nome, e-mail, endereço, cartão) é guardado.
+function ehPedidosCRM_(wb){
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:null}).slice(0, 12);
+  return rows.some(r => r && r.includes('orderStatus') && r.includes('product1 name') && r.includes('total'));
+}
+function parsePedidosCRM_(wb, nome){
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:null});
+  const hpos = rows.findIndex(r => r && r.includes('orderStatus') && r.includes('product1 name'));
+  const hidx = {}; rows[hpos].forEach((h, i) => { hidx[h] = i; });
+  const desde = mesAnterior_(mesAtual_()) + '-01'; // só mês anterior e atual — meses antigos ficam com o fechamento oficial
+  const porDia = {}; let ultimo = '', primeiro = '', antigos = 0, total = 0;
+  for(let i = hpos + 1; i < rows.length; i++){
+    const r = rows[i]; if(!r || !r[hidx['date']]) continue;
+    // a data pode vir como texto ("2026-10-07 17:14:37") ou como número de série do Excel (46302.718…)
+    let dt = r[hidx['date']];
+    if(typeof dt === 'number'){ const c = XLSX.SSF.parse_date_code(dt); const z = n => String(n).padStart(2, '0'); dt = `${c.y}-${z(c.m)}-${z(c.d)} ${z(c.H)}:${z(c.M)}:${z(Math.floor(c.S))}`; }
+    dt = String(dt).slice(0, 19); const dia = dt.slice(0, 10);
+    if(!/^\d{4}-\d{2}-\d{2}/.test(dia)) continue;
+    total++;
+    if(!primeiro || dia < primeiro) primeiro = dia;
+    if(dt > ultimo) ultimo = dt;
+    if(dia < desde){ antigos++; continue; }
+    const d = porDia[dia] || (porDia[dia] = {v:0, g:0, pi:{}, pr:{}});
+    d.v++; d.g = Math.round((d.g + (parseFloat(r[hidx['total']]) || 0)) * 100) / 100;
+    const vistos = new Set();
+    for(let n = 1; n <= 10; n++){
+      const nm = r[hidx[`product${n} name`]]; if(!nm) continue;
+      const o = nomeOferta_(nm);
+      d.pr[o] = Math.round(((d.pr[o] || 0) + (parseFloat(r[hidx[`product${n} price`]]) || 0)) * 100) / 100;
+      if(!vistos.has(o)){ d.pi[o] = (d.pi[o] || 0) + 1; vistos.add(o); }
+    }
+  }
+  if(!total) return {erro: 'O relatório de pedidos do CRM está vazio.'};
+  const ultimoDia = ultimo.slice(0, 10);
+  const dias = listaDias_(desde > primeiro ? desde : primeiro, ultimoDia);
+  dias.forEach(d => { if(!porDia[d]) porDia[d] = {v:0, g:0, pi:{}, pr:{}}; });
+  return {tipo: 'crm_pedidos', tipoLbl: 'Pedidos do CRM · Sales Bound', arquivo: nome, porDia, dias, ultimo, antigos, desde};
+}
+async function confirmarPedidosCRM_(p){
+  const sb = parceirosDia.welcome_salesbound || (parceirosDia.welcome_salesbound = {});
+  const meses = new Set(); let mud = 0;
+  p.dias.forEach(dia => {
+    const novo = p.porDia[dia], antes = ((sb[dia] || {}).c || {}).CRM || {};
+    if((antes.v || 0) !== novo.v || Math.round((antes.g || 0) * 100) !== Math.round(novo.g * 100)) mud++;
+    // reembolso do dia continua o do resumo do CRM (o relatório de pedidos não diz em que dia o reembolso foi feito)
+    sb[dia] = {c: {CRM: {v: novo.v, i: novo.v, g: novo.g, r: antes.r || 0, cb: antes.cb || 0, p: {}, pi: novo.pi, pr: novo.pr}}};
+    meses.add(dia.slice(0, 7));
+  });
+  const v = p.dias.reduce((s, d) => s + p.porDia[d].v, 0), g = p.dias.reduce((s, d) => s + p.porDia[d].g, 0);
+  await salvarParceirosDia_(['welcome_salesbound'], Array.from(meses), {arquivo: p.arquivo, tipo: 'Pedidos do CRM', parceiros: ['welcome_salesbound'],
+    resumo: `Sales Bound ${diaLbl_(p.dias[0])} a ${diaLbl_(p.dias[p.dias.length - 1])} pelos pedidos do CRM: ${int_(v)} pedidos · ${fmtMoney(g)} · por oferta (${mud} ${mud === 1 ? 'dia mudou' : 'dias mudaram'})`});
+}
+
 // ---------- Resumo do CRM colado (Checkout Champ da Sales Bound) ----------
 function lerResumoCRM_(txt){
   const t = String(txt || '').replace(/\r/g, '');
@@ -1463,7 +1520,7 @@ function valorMes_(key, mk){
     return null;
   }
   const d = somaCanalPeriodo_(key, x => x.slice(0,7) === mk);
-  const temD = (d.vendas > 0 || d.gross !== 0) && !(bf && (bf.gross||0) > d.gross) && !(bf && SPLIT_WELCOME_[key] && (bf.gross || 0) > 0);
+  const temD = (d.vendas > 0 || d.gross !== 0) && !(bf && (bf.gross||0) >= d.gross) && !(bf && SPLIT_WELCOME_[key] && (bf.gross || 0) > 0);
   if(temD) return {gross: d.gross, net: netCanal_(key, d), orders: d.vendas};
   if(bf) return {gross: bf.gross||0, net: SPLIT_WELCOME_[key] ? liqMensal_(key, bf) : (bf.net||0), orders: bf.orders||0};
   return null;
@@ -1783,6 +1840,14 @@ function renderImport_(erro, lendo){
       ${Object.keys(porParceiro).map(k => { const contas = new Set(); p.dias.forEach(d => Object.keys((p.porDia[d].canais[k]) || {}).forEach(c => contas.add(c))); return `<tr><td><div class="who">${plogo_(k)}<span>${PMETA[k].nome}</span></div></td><td class="r num">${porParceiro[k].v}</td><td class="r num"><b style="font-weight:600">${fmtMoney(porParceiro[k].g)}</b></td><td class="r" style="white-space:normal;font-size:12px;color:var(--text-2)">${contas.size ? Array.from(contas).map(escapeHtml).join(', ') : '<span class="muted">sem venda</span>'}</td></tr>`; }).join('')}
       </tbody></table></div>
       <p class="muted" style="font-size:12px;margin:8px 0 0">Cada arquivo vira um dia (o dia do relatório). Nada muda até você confirmar.</p>`;
+  } else if(p && p.tipo === 'crm_pedidos'){
+    const sb = parceirosDia.welcome_salesbound || {};
+    const linhas = p.dias.map(d => { const n = p.porDia[d], a = ((sb[d] || {}).c || {}).CRM; const igual = a && (a.v || 0) === n.v && Math.round((a.g || 0) * 100) === Math.round(n.g * 100);
+      return `<tr><td>${diaLbl_(d)}</td><td class="r num">${a ? `${a.v || 0} · ${fmtMoney(a.g || 0)}` : '<span class="muted">sem lançamento</span>'}</td><td class="r num"><b>${n.v} · ${fmtMoney(n.g)}</b></td><td>${igual ? '<span class="muted">igual</span>' : '<span class="pill warn"><i></i>muda</span>'}</td></tr>`; }).join('');
+    corpo = `<div class="det"><span class="pill ok"><i></i>${escapeHtml(p.tipoLbl)}</span><span class="tag">${p.dias.length} dias · ${diaLbl_(p.dias[0])} a ${diaLbl_(p.dias[p.dias.length-1])}</span></div>
+      <div class="alert-warn">Último pedido do arquivo: ${diaLbl_(p.ultimo.slice(0,10))} às ${p.ultimo.slice(11,16)} — se o arquivo foi exportado nesse dia, esse dia pode estar incompleto. ${p.antigos ? `${int_(p.antigos)} pedidos de antes de ${diaLbl_(p.desde)} ficam de fora (esses meses usam o fechamento oficial).` : ''}</div>
+      <div class="preview"><table><thead><tr><th>Dia</th><th class="r">No painel</th><th class="r">Pelos pedidos</th><th></th></tr></thead><tbody>${linhas}</tbody></table></div>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Entra por dia: pedidos, bruto e, por oferta, quantos pedidos tiveram a oferta e a receita dela. O reembolso de cada dia continua o do resumo do CRM. Nenhum dado de cliente é guardado.</p>`;
   } else if(!p){
     corpo = `<label class="drop" id="dropZone"><input type="file" id="impFile" accept=".xls,.xlsx" multiple hidden>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
@@ -1791,6 +1856,7 @@ function renderImport_(erro, lendo){
       <div class="opt-list">
         <div class="opt"><b>Master Affiliates (.xls)</b><small>Email, SMS, NuYu, Helpgrid, iSellForU — total do mês por parceiro (exporte do dia 1 até hoje)</small></div>
         <div class="opt"><b>Salesbound Financial Performance (.xlsx)</b><small>Sales Bound — meses completos com o split 55/45</small></div>
+        <div class="opt"><b>Pedidos do CRM da Sales Bound (.xlsx)</b><small>Checkout Champ → Order Details — pedidos e ofertas por dia (mês atual e anterior)</small></div>
         <div class="opt"><b>Relatório BuyGoods diário (.xlsx)</b><small>Helpgrid, Email e SMS dia a dia, por conta e produto — selecione todos os dias do mês de uma vez</small></div>
       </div>`;
   } else {
@@ -1807,7 +1873,7 @@ function renderImport_(erro, lendo){
   const m = $('#importModal');
   m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeAll));
   const back = m.querySelector('[data-back]'); if(back) back.addEventListener('click', () => { impPending = null; renderImport_(); });
-  const conf = m.querySelector('[data-confirm]'); if(conf) conf.addEventListener('click', () => { if(impPending && impPending.tipo === 'buygoods') confirmarBuyGoods_(impPending); else confirmarImport_(); });
+  const conf = m.querySelector('[data-confirm]'); if(conf) conf.addEventListener('click', () => { if(impPending && impPending.tipo === 'buygoods') confirmarBuyGoods_(impPending); else if(impPending && impPending.tipo === 'crm_pedidos') confirmarPedidosCRM_(impPending); else confirmarImport_(); });
   const inp = m.querySelector('#impFile');
   if(inp){
     inp.addEventListener('change', ev => { if(ev.target.files.length) lerArquivos_(Array.from(ev.target.files)); });
@@ -1827,6 +1893,7 @@ function lerArquivos_(files){
   }))).then(lidos => {
     const ruins = lidos.filter(x => x.erro);
     if(ruins.length){ renderImport_(`Não consegui ler: ${ruins.map(x => x.f.name).join(', ')}. Precisa ser .xls ou .xlsx.`); return; }
+    if(lidos.length === 1 && ehPedidosCRM_(lidos[0].wb)){ const r = parsePedidosCRM_(lidos[0].wb, lidos[0].f.name); if(r.erro){ renderImport_(r.erro); return; } impPending = r; renderImport_(); return; }
     const bg = lidos.filter(x => ehRelatorioBuyGoods_(x.wb));
     if(bg.length && bg.length === lidos.length){
       const rel = bg.map(x => parseRelatorioBuyGoods_(x.wb, x.f.name));
