@@ -1491,7 +1491,11 @@ function parsePedidosCRM_(wb, nome){
   const hpos = rows.findIndex(r => r && r.includes('orderStatus') && r.includes('product1 name'));
   const hidx = {}; rows[hpos].forEach((h, i) => { hidx[h] = i; });
   const desde = mesAnterior_(mesAtual_()) + '-01'; // só mês anterior e atual — meses antigos ficam com o fechamento oficial
-  const porDia = {}; let ultimo = '', primeiro = '', antigos = 0, total = 0;
+  const porDia = {}; let ultimo = '', primeiro = '', antigos = 0, total = 0, foraStatus = 0;
+  // venda = pedido aprovado (COMPLETE), reembolsado ou cancelado depois — igual ao "Sales" do Dashboard do CRM;
+  // PARTIAL (carrinho sem pagamento) e DECLINED (cartão recusado) não são venda
+  const VENDA_ = new Set(['COMPLETE','REFUNDED','CANCELLED','SALE']);
+  const num = v => typeof v === 'number' ? v : (parseFloat(String(v || '').replace(/[^0-9.\-]/g, '')) || 0);
   for(let i = hpos + 1; i < rows.length; i++){
     const r = rows[i]; if(!r || !r[hidx['date']]) continue;
     // a data pode vir como texto ("2026-10-07 17:14:37") ou como número de série do Excel (46302.718…)
@@ -1504,12 +1508,13 @@ function parsePedidosCRM_(wb, nome){
     if(dt > ultimo) ultimo = dt;
     if(dia < desde){ antigos++; continue; }
     const d = porDia[dia] || (porDia[dia] = {v:0, g:0, pi:{}, pr:{}});
-    d.v++; d.g = Math.round((d.g + (parseFloat(r[hidx['total']]) || 0)) * 100) / 100;
+    if(!VENDA_.has(String(r[hidx['orderStatus']] || '').trim().toUpperCase())){ foraStatus++; continue; }
+    d.v++; d.g = Math.round((d.g + num(r[hidx['total']])) * 100) / 100;
     const vistos = new Set();
     for(let n = 1; n <= 10; n++){
-      const nm = r[hidx[`product${n} name`]]; if(!nm) continue;
+      const nm = r[hidx[`product${n} name`]]; if(!nm || !String(nm).trim()) continue;
       const o = nomeOferta_(nm);
-      d.pr[o] = Math.round(((d.pr[o] || 0) + (parseFloat(r[hidx[`product${n} price`]]) || 0)) * 100) / 100;
+      d.pr[o] = Math.round(((d.pr[o] || 0) + num(r[hidx[`product${n} price`]])) * 100) / 100;
       if(!vistos.has(o)){ d.pi[o] = (d.pi[o] || 0) + 1; vistos.add(o); }
     }
   }
@@ -1517,7 +1522,7 @@ function parsePedidosCRM_(wb, nome){
   const ultimoDia = ultimo.slice(0, 10);
   const dias = listaDias_(desde > primeiro ? desde : primeiro, ultimoDia);
   dias.forEach(d => { if(!porDia[d]) porDia[d] = {v:0, g:0, pi:{}, pr:{}}; });
-  return {tipo: 'crm_pedidos', tipoLbl: 'Pedidos do CRM · Sales Bound', arquivo: nome, porDia, dias, ultimo, antigos, desde};
+  return {tipo: 'crm_pedidos', tipoLbl: 'Pedidos do CRM · Sales Bound', arquivo: nome, porDia, dias, ultimo, antigos, desde, foraStatus};
 }
 async function confirmarPedidosCRM_(p){
   const sb = parceirosDia.welcome_salesbound || (parceirosDia.welcome_salesbound = {});
@@ -2108,7 +2113,7 @@ function renderImport_(erro, lendo){
     const linhas = p.dias.map(d => { const n = p.porDia[d], a = ((sb[d] || {}).c || {}).CRM; const igual = a && (a.v || 0) === n.v && Math.round((a.g || 0) * 100) === Math.round(n.g * 100);
       return `<tr><td>${diaLbl_(d)}</td><td class="r num">${a ? `${a.v || 0} · ${fmtMoney(a.g || 0)}` : '<span class="muted">sem lançamento</span>'}</td><td class="r num"><b>${n.v} · ${fmtMoney(n.g)}</b></td><td>${igual ? '<span class="muted">igual</span>' : '<span class="pill warn"><i></i>muda</span>'}</td></tr>`; }).join('');
     corpo = `<div class="det"><span class="pill ok"><i></i>${escapeHtml(p.tipoLbl)}</span><span class="tag">${p.dias.length} dias · ${diaLbl_(p.dias[0])} a ${diaLbl_(p.dias[p.dias.length-1])}</span></div>
-      <div class="alert-warn">Último pedido do arquivo: ${diaLbl_(p.ultimo.slice(0,10))} às ${p.ultimo.slice(11,16)} — se o arquivo foi exportado nesse dia, esse dia pode estar incompleto. ${p.antigos ? `${int_(p.antigos)} pedidos de antes de ${diaLbl_(p.desde)} ficam de fora (esses meses usam o fechamento oficial).` : ''}</div>
+      <div class="alert-warn">Último pedido do arquivo: ${diaLbl_(p.ultimo.slice(0,10))} às ${p.ultimo.slice(11,16)} — se o arquivo foi exportado nesse dia, esse dia pode estar incompleto. ${p.antigos ? `${int_(p.antigos)} pedidos de antes de ${diaLbl_(p.desde)} ficam de fora (esses meses usam o fechamento oficial).` : ''}${p.foraStatus ? ` ${int_(p.foraStatus)} pedidos parciais ou recusados não contam como venda.` : ''}</div>
       <div class="preview"><table><thead><tr><th>Dia</th><th class="r">No painel</th><th class="r">Pelos pedidos</th><th></th></tr></thead><tbody>${linhas}</tbody></table></div>
       <p class="muted" style="font-size:12px;margin:8px 0 0">Entra por dia: pedidos, bruto e, por oferta, quantos pedidos tiveram a oferta e a receita dela. O reembolso de cada dia continua o do resumo do CRM. Nenhum dado de cliente é guardado.</p>`;
   } else if(!p){
