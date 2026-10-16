@@ -941,7 +941,8 @@ function parseRelatorioBuyGoods_(wb, nome){
       const canc = row[hidx['Was Canceled']]; if(canc == 1 || canc === true) continue;
       const tipo = row[hidx['Action Type']];
       const idItem = 'Order Item Id' in hidx ? row[hidx['Order Item Id']] : null;
-      if(idItem){ const kId = idItem + '|' + tipo; if(vistos.has(kId)) continue; vistos.add(kId); }
+      // o Order Item Id só é único dentro do produto (cada produto é uma conta BuyGoods com a própria numeração) — sem o produto na chave, pedido de outro produto com o mesmo número era descartado como repetido
+      if(idItem){ const kId = sn + '|' + idItem + '|' + tipo; if(vistos.has(kId)) continue; vistos.add(kId); }
       linhas.push({row, hidx, sn, tipo});
     }
   });
